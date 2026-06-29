@@ -78,29 +78,40 @@ async function checkStatusAndNavigate(uid, navigate, setError) {
   navigate("/pending");
 }
 
-async function saveUser(user, resolvedRole, displayName, permitUrl = "", shopNameStr = "") {
-  const finalRole = resolvedRole || "Customer";
-  const isOwner = finalRole.toLowerCase() === "owner";
-  const userData = {
-    email: user.email,
-    displayName: displayName || user.displayName || user.email,
-    role: finalRole,
-    status: "pending",
-    createdAt: serverTimestamp(),
-  };
+const saveUser = async (user, resolvedRole, namesObj, permitUrl = "", shopNameStr = "") => {
+    const finalRole = resolvedRole || "Customer";
+    const isOwner = finalRole.toLowerCase() === "owner";
+    
+    const fName = namesObj?.firstName || "";
+    const mName = namesObj?.middleName || "";
+    const lName = namesObj?.lastName || "";
+    const computedDisplayName = [fName, mName, lName].filter(Boolean).join(" ");
+    
+    const dName = computedDisplayName || user.displayName || user.email;
+
+    const userData = {
+      email: user.email,
+      displayName: dName,
+      firstName: fName,
+      middleName: mName,
+      lastName: lName,
+      role: finalRole,
+      status: "pending",
+      createdAt: serverTimestamp(),
+    };
   if (isOwner) {
     userData.businessPermitUrl = permitUrl;
     userData.shopName = shopNameStr;
   }
   await setDoc(doc(db, "users", user.uid), userData);
 
-  await addDoc(collection(db, "adminAlerts"), {
-    type: "new_user",
-    title: "New User Registration 👤",
-    message: `${displayName || user.email} just registered as a ${finalRole} and is waiting for approval.`,
-    read: false,
-    createdAt: serverTimestamp(),
-  });
+    await addDoc(collection(db, "adminAlerts"), {
+      type: "new_user",
+      title: "New User Registration 👤",
+      message: `${dName} just registered as a ${finalRole} and is waiting for approval.`,
+      read: false,
+      createdAt: serverTimestamp(),
+    });
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -250,7 +261,9 @@ function LandingContent({ onSignup, onLogin }) {
 /* ─── Signup Form ─────────────────────────────────────────────── */
 function SignupForm({ goBack, navigate }) {
   const [step, setStep] = useState(1);
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -275,7 +288,7 @@ function SignupForm({ goBack, navigate }) {
   const handleNext = async (e) => {
     e.preventDefault();
     setError("");
-    if (!name.trim()) return setError("Please enter your full name.");
+    if (!firstName.trim() || !lastName.trim()) return setError("Please enter your first and last name.");
     if (password !== confirmPassword) return setError("Passwords do not match.");
     if (password.length < 6) return setError("Password must be at least 6 characters.");
     if (!role) return setError("Please select a role.");
@@ -290,13 +303,14 @@ function SignupForm({ goBack, navigate }) {
   const executeSignup = async (permitUrl = "", shopNameStr = "") => {
     setLoading(true);
     try {
+      let dName = [firstName.trim(), middleName.trim(), lastName.trim()].filter(Boolean).join(" ");
       let user = createdUser;
       if (!user) {
         const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
         user = newUser;
-        await updateProfile(user, { displayName: name.trim() });
+        await updateProfile(user, { displayName: dName });
       }
-      await saveUser(user, role, name.trim(), permitUrl, shopNameStr);
+      await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() }, permitUrl, shopNameStr);
       navigate("/pending");
     } catch (err) {
       setError(err.code === "auth/email-already-in-use" ? "This email is already registered." : err.message);
@@ -319,7 +333,12 @@ function SignupForm({ goBack, navigate }) {
         return;
       }
       setCreatedUser(user);
-      setName(user.displayName || "");
+      
+      const parts = (user.displayName || "").split(" ");
+      setFirstName(parts[0] || "");
+      setLastName(parts.length > 1 ? parts.slice(1).join(" ") : "");
+      setMiddleName("");
+      
       setEmail(user.email || "");
 
       if (role === "Owner") {
@@ -346,11 +365,12 @@ function SignupForm({ goBack, navigate }) {
       if (!user) {
         const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
         user = newUser;
-        await updateProfile(user, { displayName: name.trim() });
+        const dName = [firstName.trim(), middleName.trim(), lastName.trim()].filter(Boolean).join(" ");
+        await updateProfile(user, { displayName: dName });
       }
 
       const permitUrl = await uploadToCloudinary(permitFile);
-      await saveUser(user, role, name.trim() || user.displayName, permitUrl, shopName.trim());
+      await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() }, permitUrl, shopName.trim());
       navigate("/pending");
     } catch (err) {
       setError(err.code === "auth/email-already-in-use" ? "This email is already registered." : err.message);
@@ -370,10 +390,11 @@ function SignupForm({ goBack, navigate }) {
       if (!user) {
         const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
         user = newUser;
-        await updateProfile(user, { displayName: name.trim() });
+        const dName = [firstName.trim(), middleName.trim(), lastName.trim()].filter(Boolean).join(" ");
+        await updateProfile(user, { displayName: dName });
       }
       
-      await saveUser(user, role, name.trim() || user.displayName);
+      await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() });
 
       let vehiclePhotoUrl = null;
       if (vehiclePhotoFile) {
@@ -420,8 +441,14 @@ function SignupForm({ goBack, navigate }) {
         <div style={s.formCard}>
           {step === 1 ? (
             <>
-              <label style={s.label}>Full Name</label>
-              <input className="ab-input" type="text" placeholder="e.g. Juan dela Cruz" value={name} onChange={e => setName(e.target.value.replace(/[^a-zA-Z\s]/g, ''))} style={s.input} />
+              <label style={s.label}>First Name</label>
+              <input className="ab-input" type="text" placeholder="First name" value={firstName} onChange={e => setFirstName(e.target.value.replace(/[^a-zA-Z\s-]/g, ''))} style={s.input} />
+
+              <label style={s.label}>Middle Name</label>
+              <input className="ab-input" type="text" placeholder="Middle name (optional)" value={middleName} onChange={e => setMiddleName(e.target.value.replace(/[^a-zA-Z\s-]/g, ''))} style={s.input} />
+
+              <label style={s.label}>Last Name</label>
+              <input className="ab-input" type="text" placeholder="Last name" value={lastName} onChange={e => setLastName(e.target.value.replace(/[^a-zA-Z\s-]/g, ''))} style={s.input} />
 
               <label style={s.label}>Email Address</label>
               <input className="ab-input" type="email" placeholder="you@email.com" value={email} onChange={e => setEmail(e.target.value)} style={s.input} />
