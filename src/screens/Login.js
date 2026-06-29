@@ -132,7 +132,7 @@ export default function Login() {
 }
 
 const s = {
-  page: { minHeight: "100vh", background: "#f5f7fa", display: "flex", flexDirection: "column", fontFamily: "'Segoe UI', system-ui, sans-serif", position: "relative" },
+  page: { minHeight: "100vh", background: "#f5f7fa", display: "flex", flexDirection: "column", fontFamily: "'Inter', system-ui, -apple-system, sans-serif", position: "relative" },
   topAccent: { position: "absolute", top: 0, left: 0, right: 0, height: "220px", background: "linear-gradient(160deg, #1a3a5c 0%, #2a5298 100%)", zIndex: 0, borderBottomLeftRadius: "32px", borderBottomRightRadius: "32px" },
   scroll: { flex: 1, padding: "0 20px 40px", display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 1 },
   header: { display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "52px", marginBottom: "24px" },

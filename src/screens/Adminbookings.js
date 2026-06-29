@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { collection, getDocs, updateDoc, doc, getDoc, addDoc, serverTimestamp, query, where, deleteDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { sh, colors, getInitials } from "./dashboardShared";
+import { sh, colors, EmptyState, getInitials } from "./dashboardShared";
+import CarLoader from "./CarLoader";
 import TopbarAvatar from "./TopbarAvatar";
 
 const STATUS_TABS = ["All", "Pending", "In Progress", "Completed", "Cancelled"];
@@ -894,9 +895,13 @@ export default function AdminBookings() {
         </div>
 
         {loading ? (
-          <div style={{ ...sh.card, padding: "20px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>Loading bookings...</div>
+          <CarLoader text="Loading bookings" />
         ) : filtered.length === 0 ? (
-          <div style={{ ...sh.card, padding: "20px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>No bookings found.</div>
+          <EmptyState
+            icon="📅"
+            title="No bookings found"
+            subtitle="There are no bookings matching your current filter criteria."
+          />
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "16px" }}>
             {displayData.map((b) => renderBookingCard(b))}

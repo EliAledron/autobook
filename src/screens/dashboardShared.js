@@ -1,4 +1,5 @@
 // Shared styles, helpers, and components for AutoBook dashboards
+import React from "react";
 
 export function getGreeting() {
   const h = new Date().getHours();
@@ -33,14 +34,58 @@ export const colors = {
   dangerBg: "#fee2e2",
 };
 
+// ─── Reusable EmptyState Component ───────────────────────────────────────────
+export function EmptyState({ icon, title, subtitle, action }) {
+  return (
+    <div style={{
+      background: "#ffffff",
+      borderRadius: "24px",
+      border: `1px solid ${colors.border}`,
+      boxShadow: "0 4px 24px rgba(0,0,0,0.04)",
+      padding: "48px 24px",
+      textAlign: "center",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: "8px",
+      marginBottom: "1.5rem",
+    }}>
+      {/* Illustrated icon circle */}
+      <div style={{
+        width: "72px", height: "72px", borderRadius: "50%",
+        background: `linear-gradient(135deg, ${colors.navy}15, ${colors.blue}20)`,
+        border: `2px solid ${colors.border}`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: "32px", marginBottom: "8px",
+        boxShadow: "0 4px 16px rgba(26,58,92,0.08)",
+      }}>
+        {icon}
+      </div>
+      <div style={{ fontSize: "17px", fontWeight: "800", color: colors.textPrimary, letterSpacing: "-0.2px" }}>
+        {title}
+      </div>
+      {subtitle && (
+        <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500", maxWidth: "240px", lineHeight: "1.5" }}>
+          {subtitle}
+        </div>
+      )}
+      {action && (
+        <div style={{ marginTop: "16px" }}>
+          {action}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export const sh = {
   page: {
     minHeight: "100vh",
     background: colors.bg,
-    fontFamily: "'Segoe UI', system-ui, sans-serif",
+    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
     display: "flex",
     flexDirection: "column",
-    paddingBottom: "72px",
+    paddingBottom: "80px",
   },
   topbar: {
     background: colors.navy,
@@ -92,9 +137,11 @@ export const sh = {
     background: colors.white, borderRadius: "16px",
     padding: "1.25rem", boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
     border: `1px solid ${colors.border}`,
+    borderLeft: `4px solid ${colors.accent}`,
+    transition: "transform 0.2s ease, box-shadow 0.2s ease",
   },
-  statLabel: { fontSize: "12px", color: colors.textSecondary, marginBottom: "4px" },
-  statValue: { fontSize: "24px", fontWeight: "700", color: colors.textPrimary },
+  statLabel: { fontSize: "12px", fontWeight: "600", color: colors.textSecondary, marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.4px" },
+  statValue: { fontSize: "28px", fontWeight: "800", color: colors.textPrimary, letterSpacing: "-0.5px", lineHeight: 1 },
   actionGrid: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px", marginBottom: "1rem" },
   actionBtn: {
     background: colors.white, border: `1.5px solid ${colors.border}`,

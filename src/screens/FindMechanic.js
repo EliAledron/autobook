@@ -4,6 +4,7 @@ import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 import { sh, colors } from "./dashboardShared";
+import CarLoader from "./CarLoader";
 
 export default function FindMechanic() {
   const navigate = useNavigate();

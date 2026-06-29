@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, where, getDocs, updateDoc, doc, orderBy, writeBatch } from "firebase/firestore";
-import { sh, colors } from "./dashboardShared";
+import { sh, colors, EmptyState } from "./dashboardShared";
+import CarLoader from "./CarLoader";
 
 const typeIcon = (type) => {
   switch (type) {
@@ -129,12 +130,13 @@ export default function Alerts() {
 
       <div style={sh.content}>
         {loading ? (
-          <div style={{ padding: "40px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>Loading...</div>
+          <CarLoader text="Loading alerts" />
         ) : notifications.length === 0 ? (
-          <div style={{ ...sh.card, textAlign: "center", padding: "2.5rem 1rem" }}>
-            <div style={{ fontSize: "48px", marginBottom: "10px" }}>🔔</div>
-            <div style={{ fontSize: "14px", color: colors.textMuted }}>No notifications yet.</div>
-          </div>
+          <EmptyState
+            icon="🔔"
+            title="You're all caught up!"
+            subtitle="Notifications about your bookings and maintenance will appear here."
+          />
         ) : (
           <>
             {unreadCount > 0 && (

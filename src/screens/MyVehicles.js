@@ -4,7 +4,8 @@ import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { sh, colors } from "./dashboardShared";
+import { sh, colors, EmptyState } from "./dashboardShared";
+import CarLoader from "./CarLoader";
 
 const emptyVehicle = () => ({ make: "", model: "", year: "", plate: "", color: "", photoURL: "", photoFile: null, localPreview: null });
 
@@ -252,17 +253,19 @@ export default function MyVehicles() {
           <>
             <div style={{ ...sh.sectionLabel, fontSize: "13px", color: colors.textPrimary, letterSpacing: "0.5px" }}>Your vehicles ({vehicles.length})</div>
             {vehicles.length === 0 ? (
-              <div style={{ background: colors.white, borderRadius: "20px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 20px rgba(0,0,0,0.05)", padding: "40px 20px", textAlign: "center", marginBottom: "1.5rem" }}>
-                <div style={{ fontSize: "40px", marginBottom: "10px" }}>🚗</div>
-                <div style={{ fontSize: "15px", fontWeight: "700", color: colors.textPrimary, marginBottom: "8px" }}>No vehicles added yet.</div>
-                <div style={{ fontSize: "13px", color: colors.textSecondary, marginBottom: "1.5rem" }}>Register your car to easily book services.</div>
-                <button
-                  onClick={() => { setForm(emptyVehicle()); setEditingId(null); setShowForm(true); }}
-                  style={{ ...sh.primaryBtn, width: "auto", padding: "14px 28px", borderRadius: "14px" }}
-                >
-                  + Add your first vehicle
-                </button>
-              </div>
+              <EmptyState
+                icon="🚗"
+                title="No vehicles added yet"
+                subtitle="Register your car to easily book services and track maintenance."
+                action={
+                  <button
+                    onClick={() => { setForm(emptyVehicle()); setEditingId(null); setShowForm(true); }}
+                    style={{ ...sh.primaryBtn, width: "auto", padding: "14px 28px", borderRadius: "14px", fontSize: "14px" }}
+                  >
+                    + Add Your First Vehicle
+                  </button>
+                }
+              />
             ) : (
               vehicles.map((v) => (
                 <div key={v.id} style={{ background: colors.white, borderRadius: "20px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 20px rgba(0,0,0,0.05)", padding: "16px", marginBottom: "1.25rem" }}>

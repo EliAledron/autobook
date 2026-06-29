@@ -6,7 +6,8 @@ import {
   collection, query, where, getDocs, updateDoc, doc,
   orderBy, addDoc, serverTimestamp, getDoc,
 } from "firebase/firestore";
-import { sh, colors, getInitials } from "./dashboardShared";
+import { sh, colors, getInitials, EmptyState } from "./dashboardShared";
+import CarLoader from "./CarLoader";
 
 const STATUS_TABS = ["All", "Pending", "Accepted", "Completed", "Declined", "Cancelled"];
 
@@ -422,12 +423,13 @@ export default function MechanicRequests() {
         <div style={sh.sectionLabel}>Requests ({filtered.length})</div>
         <div style={sh.card}>
           {loading ? (
-            <div style={{ padding: "20px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>Loading requests...</div>
+            <CarLoader text="Loading requests" />
           ) : filtered.length === 0 ? (
-            <div style={{ padding: "30px", textAlign: "center" }}>
-              <div style={{ fontSize: "36px", marginBottom: "8px" }}>📍</div>
-              <div style={{ fontSize: "13px", color: colors.textMuted }}>No {activeTab !== "All" ? activeTab.toLowerCase() : ""} requests yet.</div>
-            </div>
+            <EmptyState
+              icon="📍"
+              title={`No ${activeTab !== "All" ? activeTab.toLowerCase() + " " : ""}requests`}
+              subtitle="There are currently no requests matching this filter."
+            />
           ) : (
             filtered.map((r, i) => {
               const isNewRequest = !r.assignedMechanicId && (r.status || "Pending").toLowerCase() === "pending";

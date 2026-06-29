@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { collection, getDocs, doc, getDoc, updateDoc, query, where, writeBatch } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { sh, colors, getInitials } from "./dashboardShared";
+import { sh, colors, getInitials, EmptyState } from "./dashboardShared";
+import CarLoader from "./CarLoader";
 import TopbarAvatar from "./TopbarAvatar";
 
 function timeAgo(timestamp) {
@@ -154,7 +155,7 @@ export default function AdminReviews() {
 
       <div style={sh.content}>
         {loading ? (
-          <div style={{ padding: "40px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>Loading reviews...</div>
+          <CarLoader text="Loading reviews" />
         ) : (
           <>
             {/* OVERALL RATING CARD */}
@@ -177,11 +178,11 @@ export default function AdminReviews() {
             <div style={{ ...sh.sectionLabel, marginBottom: "1rem" }}>All Reviews ({reviews.length})</div>
 
             {reviews.length === 0 ? (
-              <div style={{ ...sh.card, textAlign: "center", padding: "3rem 1rem" }}>
-                <div style={{ fontSize: "48px", marginBottom: "12px" }}>⭐</div>
-                <div style={{ fontSize: "15px", fontWeight: "700", color: colors.textPrimary, marginBottom: "6px" }}>No reviews yet</div>
-                <div style={{ fontSize: "13px", color: colors.textMuted }}>When customers complete a service and leave a rating, it will appear here.</div>
-              </div>
+              <EmptyState
+                icon="⭐"
+                title="No reviews yet"
+                subtitle="When customers complete a service and leave a rating, it will appear here."
+              />
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 {reviews.map(r => (

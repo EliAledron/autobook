@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { collection, getDocs, updateDoc, doc, orderBy, query, writeBatch, where } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { sh, colors, getInitials } from "./dashboardShared";
+import { sh, colors, getInitials, EmptyState } from "./dashboardShared";
+import CarLoader from "./CarLoader";
 
 const typeIcon = (type) => {
   switch (type) {
@@ -272,15 +273,13 @@ export default function AdminAlerts() {
 
       <div style={sh.content}>
         {loading ? (
-          <div style={{ padding: "40px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>Loading alerts...</div>
+          <CarLoader text="Loading alerts" />
         ) : alerts.length === 0 ? (
-          <div style={{ ...sh.card, textAlign: "center", padding: "2.5rem 1rem" }}>
-            <div style={{ fontSize: "48px", marginBottom: "10px" }}>🔔</div>
-            <div style={{ fontSize: "14px", color: colors.textMuted }}>No system alerts yet.</div>
-            <div style={{ fontSize: "12px", color: colors.textMuted, marginTop: "6px" }}>
-              Activity from mechanics and bookings will appear here.
-            </div>
-          </div>
+          <EmptyState
+            icon="🔔"
+            title="No system alerts yet"
+            subtitle="Activity from mechanics and bookings will appear here."
+          />
         ) : (
           <>
             {unreadAlerts.length > 0 && (

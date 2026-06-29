@@ -10,6 +10,33 @@ import { onAuthStateChanged } from "firebase/auth";
 import { sh, colors, getGreeting, getInitials } from "./dashboardShared";
 import TopbarAvatar from "./TopbarAvatar";
 
+// ─── Quick Action SVG Icons ────────────────────────────────────────────────────
+const IcoUsers    = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.87"/></svg>;
+const IcoShop     = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l1-5h16l1 5"/><path d="M3 9a5 5 0 005 5 5 5 0 005-5 5 5 0 005 5"/><path d="M5 21V14h14v7"/></svg>;
+const IcoWrench   = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>;
+const IcoClip     = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>;
+const IcoStar     = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>;
+const IcoChart    = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>;
+const IcoGear     = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>;
+const IcoPlus     = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>;
+const IcoMega     = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>;
+const IcoFeed     = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16M4 10h16M4 14h10M4 18h7"/></svg>;
+const IcoPin      = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>;
+
+const OWNER_ACTIONS = {
+  users:    { Icon: IcoUsers,  iconColor: "#2a5298", iconBg: "#dbeafe" },
+  profile:  { Icon: IcoShop,   iconColor: "#059669", iconBg: "#d1fae5" },
+  mechanics:{ Icon: IcoWrench, iconColor: "#d97706", iconBg: "#fef3c7" },
+  bookings: { Icon: IcoClip,   iconColor: "#7c3aed", iconBg: "#ede9fe" },
+  reviews:  { Icon: IcoStar,   iconColor: "#f59e0b", iconBg: "#fffbeb" },
+  reports:  { Icon: IcoChart,  iconColor: "#0891b2", iconBg: "#e0f7fa" },
+  parts:    { Icon: IcoGear,   iconColor: "#1a3a5c", iconBg: "#e0f2fe" },
+  order:    { Icon: IcoPlus,   iconColor: "#dc2626", iconBg: "#fee2e2" },
+  post:     { Icon: IcoMega,   iconColor: "#7c3aed", iconBg: "#ede9fe" },
+  feed:     { Icon: IcoFeed,   iconColor: "#d97706", iconBg: "#fef3c7" },
+  requests: { Icon: IcoPin,    iconColor: "#059669", iconBg: "#d1fae5" },
+};
+
 // ─── Cloudinary config (same as Profile.js) ───────────────────────────────────
 const CLOUDINARY_CLOUD = "dpwojan8w";
 const CLOUDINARY_PRESET = "autobook_uploads";
@@ -679,27 +706,33 @@ export default function OwnerDashboard({ user }) {
         <SectionTitle title="Shop Management" />
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", marginBottom: "1.5rem" }}>
           {[
-            isAdmin ? { id: "users", icon: "👥", label: "Users", sub: pendingUsers.length > 0 ? `${pendingUsers.length} pending` : "Approve & manage", path: "/admin/users", badge: pendingUsers.length } : null,
-            !isAdmin ? { id: "profile", icon: "🏪", label: "Shop Profile", sub: "View & Edit", onClick: () => navigate("/customer/shop-profile", { state: { shop: shopData || { ownerId: user?.uid || user?.id, name: user?.shopName || "My Shop" }, isOwner: true } }) } : null,
-            !isAdmin ? { id: "mechanics", icon: "👷", label: "Mechanic", sub: "Manage team", path: "/admin/mechanics" } : null,
-            !isAdmin ? { id: "bookings", icon: "📋", label: "Bookings", sub: pendingBookings > 0 ? `${pendingBookings} pending` : "Monitor services", path: "/admin/bookings", badge: pendingBookings } : null,
-            !isAdmin ? { id: "reviews", icon: "⭐", label: "Reviews", sub: unreadReviewAlertsCount > 0 ? `${unreadReviewAlertsCount} new review${unreadReviewAlertsCount > 1 ? "s" : ""}` : "Read feedback", path: "/admin/reviews", badge: unreadReviewAlertsCount } : null,
-            !isAdmin ? { id: "reports", icon: "📊", label: "Reports", sub: "Analytics", path: "/admin/reports" } : null,
-            !isAdmin ? { id: "parts", icon: "🔩", label: "All Parts", sub: newCarParts > 0 ? `${newCarParts} new today` : "Parts ordered", path: "/admin/carparts", badge: newCarParts } : null,
-            !isAdmin ? { id: "order", icon: "➕", label: "Order Parts", sub: "Record car parts", onClick: () => setShowPartsModal(true) } : null,
-            { id: "post", icon: "📢", label: "Post Update", sub: "Promote on feed", onClick: () => setShowPostModal(true) },
-            { id: "feed", icon: "📰", label: "Shop Feed", sub: "View community", path: "/customer/feed" },
-            !isAdmin ? { id: "requests", icon: "📍", label: "Requests", sub: pendingRequests.length > 0 ? `${pendingRequests.length} to assign` : "Visit requests", path: "/mechanic/requests", badge: pendingRequests.length } : null,
-          ].filter(Boolean).map((item) => (
-            <div key={item.id} className="owner-card" style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "12px", cursor: "pointer", border: `1px solid ${colors.border}`, position: "relative" }} onClick={item.onClick || (() => navigate(item.path))}>
-              {item.badge > 0 && <span style={{ position: "absolute", top: "12px", right: "12px", background: colors.danger, color: "#fff", fontSize: "11px", fontWeight: "800", borderRadius: "12px", padding: "3px 8px" }}>{item.badge}</span>}
-              <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px" }}>{item.icon}</div>
-              <div>
-                <div style={{ fontSize: "15px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>{item.label}</div>
-                <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "500" }}>{item.sub}</div>
+            isAdmin ? { id: "users", label: "Users", sub: pendingUsers.length > 0 ? `${pendingUsers.length} pending` : "Approve & manage", path: "/admin/users", badge: pendingUsers.length } : null,
+            !isAdmin ? { id: "profile", label: "Shop Profile", sub: "View & Edit", onClick: () => navigate("/customer/shop-profile", { state: { shop: shopData || { ownerId: user?.uid || user?.id, name: user?.shopName || "My Shop" }, isOwner: true } }) } : null,
+            !isAdmin ? { id: "mechanics", label: "Mechanic", sub: "Manage team", path: "/admin/mechanics" } : null,
+            !isAdmin ? { id: "bookings", label: "Bookings", sub: pendingBookings > 0 ? `${pendingBookings} pending` : "Monitor services", path: "/admin/bookings", badge: pendingBookings } : null,
+            !isAdmin ? { id: "reviews", label: "Reviews", sub: unreadReviewAlertsCount > 0 ? `${unreadReviewAlertsCount} new review${unreadReviewAlertsCount > 1 ? "s" : ""}` : "Read feedback", path: "/admin/reviews", badge: unreadReviewAlertsCount } : null,
+            !isAdmin ? { id: "reports", label: "Reports", sub: "Analytics", path: "/admin/reports" } : null,
+            !isAdmin ? { id: "parts", label: "All Parts", sub: newCarParts > 0 ? `${newCarParts} new today` : "Parts ordered", path: "/admin/carparts", badge: newCarParts } : null,
+            !isAdmin ? { id: "order", label: "Order Parts", sub: "Record car parts", onClick: () => setShowPartsModal(true) } : null,
+            { id: "post", label: "Post Update", sub: "Promote on feed", onClick: () => setShowPostModal(true) },
+            { id: "feed", label: "Shop Feed", sub: "View community", path: "/customer/feed" },
+            !isAdmin ? { id: "requests", label: "Requests", sub: pendingRequests.length > 0 ? `${pendingRequests.length} to assign` : "Visit requests", path: "/mechanic/requests", badge: pendingRequests.length } : null,
+          ].filter(Boolean).map((item) => {
+            const iconData = OWNER_ACTIONS[item.id] || { Icon: IcoFeed, iconColor: colors.navy, iconBg: colors.infoBg };
+            const { Icon, iconColor, iconBg } = iconData;
+            return (
+              <div key={item.id} className="owner-card" style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "12px", cursor: "pointer", border: `1px solid ${colors.border}`, position: "relative", boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }} onClick={item.onClick || (() => navigate(item.path))}>
+                {item.badge > 0 && <span style={{ position: "absolute", top: "12px", right: "12px", background: colors.danger, color: "#fff", fontSize: "11px", fontWeight: "800", borderRadius: "12px", padding: "3px 8px" }}>{item.badge}</span>}
+                <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", color: iconColor }}>
+                  <Icon />
+                </div>
+                <div>
+                  <div style={{ fontSize: "15px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>{item.label}</div>
+                  <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "500" }}>{item.sub}</div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {isAdmin && (

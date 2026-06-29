@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, where, getDocs, orderBy, updateDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
-import { sh, colors, getInitials } from "./dashboardShared";
+import { sh, colors, EmptyState, getInitials } from "./dashboardShared";
+import CarLoader from "./CarLoader";
 
 const STATUS_TABS = ["All", "Pending", "In Progress", "Completed", "Cancelled"];
 
@@ -319,11 +320,13 @@ export default function BookingHistory() {
         {/* BOOKINGS LIST */}
         <div style={{ ...sh.sectionLabel, fontSize: "13px", color: colors.textPrimary, letterSpacing: "0.5px" }}>Bookings ({filtered.length})</div>
         {loading ? (
-          <div style={{ ...sh.card, padding: "20px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>Loading...</div>
+          <CarLoader text="Loading bookings" />
         ) : filtered.length === 0 ? (
-          <div style={{ ...sh.card, padding: "20px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>
-            No {activeTab !== "All" ? activeTab.toLowerCase() : ""} bookings found.
-          </div>
+          <EmptyState
+            icon="📋"
+            title={`No ${activeTab !== "All" ? activeTab.toLowerCase() + " " : ""}bookings found`}
+            subtitle="Your service history will appear here once you book a service."
+          />
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "16px", marginBottom: "1.5rem" }}>
             {filtered.map((b) => (

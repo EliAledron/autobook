@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { collection, getDocs, orderBy, query, doc, getDoc, where } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { sh, colors, getInitials } from "./dashboardShared";
+import { sh, colors, EmptyState, getInitials } from "./dashboardShared";
+import CarLoader from "./CarLoader";
 import TopbarAvatar from "./TopbarAvatar";
 
 function formatDate(createdAt) {
@@ -274,17 +275,13 @@ export default function AdminCarParts() {
 
         {/* CONTENT */}
         {loading ? (
-          <div style={{ textAlign: "center", padding: "40px", color: colors.textMuted, fontSize: "13px" }}>
-            Loading parts...
-          </div>
+          <CarLoader text="Loading parts" />
         ) : filtered.length === 0 ? (
-          <div style={{ ...sh.card, padding: "40px 20px", textAlign: "center" }}>
-            <div style={{ fontSize: "36px", marginBottom: "10px" }}>🔩</div>
-            <div style={{ fontSize: "14px", fontWeight: "700", color: colors.textPrimary, marginBottom: "6px" }}>No parts found</div>
-            <div style={{ fontSize: "12px", color: colors.textMuted }}>
-              {search ? "Try a different search term." : "No car parts have been ordered yet."}
-            </div>
-          </div>
+          <EmptyState
+            icon="🔩"
+            title="No parts found"
+            subtitle={search ? "Try a different search term." : "No car parts have been ordered yet."}
+          />
         ) : (
           groupKeys.map((dateKey) => {
             const groupParts = grouped[dateKey];

@@ -667,7 +667,7 @@ const s = {
     position: "relative",
     minHeight: "100vh",
     overflow: "hidden",
-    fontFamily: "'Segoe UI', system-ui, sans-serif",
+    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
     background: "#ffffff",
   },
 

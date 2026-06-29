@@ -46,7 +46,9 @@ const GoogleIcon = () => (
 
 export default function Signup() {
   const [step, setStep] = useState(1);
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -72,12 +74,23 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const saveUser = async (user, resolvedRole, displayName, permitUrl = "", shopNameStr = "") => {
+  const saveUser = async (user, resolvedRole, names, permitUrl = "", shopNameStr = "") => {
     const finalRole = resolvedRole || "Customer";
     const isOwner = finalRole.toLowerCase() === "owner";
+    
+    const fName = names?.firstName || "";
+    const mName = names?.middleName || "";
+    const lName = names?.lastName || "";
+    const computedDisplayName = [fName, mName, lName].filter(Boolean).join(" ");
+    
+    const dName = computedDisplayName || user.displayName || user.email;
+
     const userData = {
       email: user.email,
-      displayName: displayName || user.displayName || user.email,
+      displayName: dName,
+      firstName: fName,
+      middleName: mName,
+      lastName: lName,
       role: finalRole,
       status: "pending",
       createdAt: serverTimestamp(),
@@ -92,7 +105,7 @@ export default function Signup() {
     await addDoc(collection(db, "adminAlerts"), {
       type: "new_user",
       title: "New User Registration 👤",
-      message: `${displayName || user.email} just registered as a ${finalRole} and is waiting for approval.`,
+      message: `${dName} just registered as a ${finalRole} and is waiting for approval.`,
       read: false,
       createdAt: serverTimestamp(),
     });
@@ -101,7 +114,7 @@ export default function Signup() {
   const handleNext = async (e) => {
     e.preventDefault();
     setError("");
-    if (!name.trim()) return setError("Please enter your full name.");
+    if (!firstName.trim() || !lastName.trim()) return setError("Please enter your first and last name.");
     if (password !== confirmPassword) return setError("Passwords do not match.");
     if (password.length < 6) return setError("Password must be at least 6 characters.");
     if (!role) return setError("Please select a role.");
@@ -116,13 +129,14 @@ export default function Signup() {
   const executeSignup = async (permitUrl = "", shopNameStr = "") => {
     setLoading(true);
     try {
+      let dName = [firstName.trim(), middleName.trim(), lastName.trim()].filter(Boolean).join(" ");
       let user = createdUser;
       if (!user) {
         const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
         user = newUser;
-        await updateProfile(user, { displayName: name.trim() });
+        await updateProfile(user, { displayName: dName });
       }
-      await saveUser(user, role, name.trim(), permitUrl, shopNameStr);
+      await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() }, permitUrl, shopNameStr);
       navigate("/pending");
     } catch (err) {
       setError(
@@ -151,7 +165,12 @@ export default function Signup() {
       }
 
       setCreatedUser(user);
-      setName(user.displayName || "");
+      
+      const parts = (user.displayName || "").split(" ");
+      setFirstName(parts[0] || "");
+      setLastName(parts.length > 1 ? parts.slice(1).join(" ") : "");
+      setMiddleName("");
+      
       setEmail(user.email || "");
 
       if (role === "Owner") {
@@ -195,11 +214,12 @@ export default function Signup() {
       if (!user) {
         const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
         user = newUser;
-        await updateProfile(user, { displayName: name.trim() });
+        const dName = [firstName.trim(), middleName.trim(), lastName.trim()].filter(Boolean).join(" ");
+        await updateProfile(user, { displayName: dName });
       }
       
       // Save user data to 'users' collection
-      await saveUser(user, role, name.trim() || user.displayName);
+      await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() });
 
       // Upload vehicle photo if it exists
       let vehiclePhotoUrl = null;
@@ -252,12 +272,31 @@ export default function Signup() {
         <div style={s.card}>
           {step === 1 ? (
             <>
-              <label style={s.label}>Full name</label>
+              <label style={s.label}>First Name</label>
               <input
                 type="text"
-                placeholder="Your full name"
-                value={name}
-                onChange={(e) => setName(e.target.value.replace(/[^a-zA-Z\s]/g, ''))}
+                placeholder="First name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value.replace(/[^a-zA-Z\s-]/g, ''))}
+                style={s.input}
+                required
+              />
+
+              <label style={s.label}>Middle Name</label>
+              <input
+                type="text"
+                placeholder="Middle name (optional)"
+                value={middleName}
+                onChange={(e) => setMiddleName(e.target.value.replace(/[^a-zA-Z\s-]/g, ''))}
+                style={s.input}
+              />
+
+              <label style={s.label}>Last Name</label>
+              <input
+                type="text"
+                placeholder="Last name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value.replace(/[^a-zA-Z\s-]/g, ''))}
                 style={s.input}
                 required
               />

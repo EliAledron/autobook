@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
-import { sh, colors } from "./dashboardShared";
+import { sh, colors, EmptyState } from "./dashboardShared";
+import CarLoader from "./CarLoader";
 
 export default function ShopSelect() {
   const navigate = useNavigate();
@@ -117,9 +118,13 @@ export default function ShopSelect() {
         </div>
 
         {loading ? (
-          <div style={{ padding: "40px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>Loading shops...</div>
+          <CarLoader text="Loading shops" />
         ) : filteredShops.length === 0 ? (
-          <div style={{ padding: "40px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>{search || minRating > 0 ? "No shops match your search criteria." : "No shops available right now."}</div>
+          <EmptyState
+            icon="🏪"
+            title="No shops found"
+            subtitle={search || minRating > 0 ? "No shops match your search criteria." : "No shops available right now."}
+          />
         ) : (
           filteredShops.map((shop) => (
             <div

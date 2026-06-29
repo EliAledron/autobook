@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, getDocs, updateDoc, doc, orderBy, arrayUnion, arrayRemove, deleteDoc, getDoc, serverTimestamp, where } from "firebase/firestore";
-import { sh, colors, getInitials } from "./dashboardShared";
+import { sh, colors, getInitials, EmptyState } from "./dashboardShared";
+import CarLoader from "./CarLoader";
 
 const CLOUDINARY_CLOUD = "dpwojan8w";
 const CLOUDINARY_PRESET = "autobook_uploads";
@@ -299,13 +300,13 @@ export default function ShopFeed() {
         </div>
 
         {loading ? (
-          <div style={{ padding: "40px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>Loading feed...</div>
+          <CarLoader text="Loading feed" />
         ) : filteredPosts.length === 0 ? (
-          <div style={{ ...sh.card, textAlign: "center", padding: "3rem 1rem" }}>
-            <div style={{ fontSize: "48px", marginBottom: "12px" }}>📰</div>
-            <div style={{ fontSize: "16px", fontWeight: "700", color: colors.textPrimary, marginBottom: "6px" }}>{search || minRating > 0 ? "No matching posts found" : "No posts yet"}</div>
-            <div style={{ fontSize: "13px", color: colors.textMuted }}>{search || minRating > 0 ? "Try adjusting your search or rating filter." : "Check back later for shop announcements and promos!"}</div>
-          </div>
+          <EmptyState
+            icon="📰"
+            title={search || minRating > 0 ? "No matching posts found" : "No posts yet"}
+            subtitle={search || minRating > 0 ? "Try adjusting your search or rating filter." : "Check back later for shop announcements and promos!"}
+          />
         ) : (
           filteredPosts.map(post => {
             const hasLiked = post.likes?.includes(uid);

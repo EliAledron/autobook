@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { db, auth } from "../firebase";
 import { collection, getDocs, updateDoc, doc, getDoc, query, where, deleteDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import { sh, colors, getInitials } from "./dashboardShared";
+import { sh, colors, getInitials, EmptyState } from "./dashboardShared";
+import CarLoader from "./CarLoader";
 import TopbarAvatar from "./TopbarAvatar";
 
 const FILTER_TABS = ["pending", "approved", "rejected"];
@@ -352,13 +353,13 @@ export default function AdminUsers() {
         </div>
         <div style={sh.card}>
           {loading ? (
-            <div style={{ padding: "20px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>
-              Loading users...
-            </div>
+            <CarLoader text="Loading users" />
           ) : filteredUsers.length === 0 ? (
-            <div style={{ padding: "20px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>
-              No {filter} users.
-            </div>
+            <EmptyState
+              icon="👥"
+              title={`No ${filter} users`}
+              subtitle={`There are currently no users registered as ${filter}.`}
+            />
           ) : (
             filteredUsers.map((u, i) => (
               <div

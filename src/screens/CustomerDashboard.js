@@ -3,9 +3,26 @@ import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, collection, query, where, getDocs, orderBy, addDoc, serverTimestamp, updateDoc } from "firebase/firestore";
-import { sh, colors, getGreeting } from "./dashboardShared";
+import { sh, colors, getGreeting, EmptyState } from "./dashboardShared";
 import TopbarAvatar from "./TopbarAvatar";
 import CarLoader from "./CarLoader";
+
+// ─── Quick Action SVG Icons ────────────────────────────────────────────────────
+const IcoBook    = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>;
+const IcoDiag    = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>;
+const IcoFeed    = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16M4 10h16M4 14h10M4 18h7"/></svg>;
+const IcoSearch  = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>;
+const IcoCar     = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 17H3v-5l2-5h14l2 5v5h-2"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>;
+const IcoHistory = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>;
+
+const QUICK_ACTIONS = [
+  { id: "book",     Icon: IcoBook,    label: "Book a Service",   sub: "Schedule a repair",    path: "/customer/shop-select", iconColor: "#2a5298", iconBg: "#dbeafe" },
+  { id: "checkup",  Icon: IcoDiag,    label: "Diagnostic Check", sub: "Analyze symptoms",     path: "/customer/checkup",     iconColor: "#7c3aed", iconBg: "#ede9fe" },
+  { id: "feed",     Icon: IcoFeed,    label: "Shop Feed",        sub: "News & promos",        path: "/customer/feed",        iconColor: "#d97706", iconBg: "#fef3c7" },
+  { id: "mechanic", Icon: IcoSearch,  label: "Find Mechanic",    sub: "Browse available",     path: "/customer/mechanics",  iconColor: "#059669", iconBg: "#d1fae5" },
+  { id: "vehicles", Icon: IcoCar,     label: "My Vehicles",      sub: "Manage your cars",     path: "/customer/vehicles",   iconColor: "#1a3a5c", iconBg: "#e0f2fe" },
+  { id: "history",  Icon: IcoHistory, label: "History",          sub: "Past services",        path: "/customer/history",    iconColor: "#dc2626", iconBg: "#fee2e2" },
+];
 
 const keyframes = `
   @keyframes ab-pulse {
@@ -316,21 +333,19 @@ export default function CustomerDashboard() {
 
         <SectionTitle title="Quick Actions" />
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", marginBottom: "1.5rem" }}>
-          {[
-            { id: "book", icon: "📅", label: "Book a service", sub: "Schedule a repair", path: "/customer/shop-select" },
-            { id: "checkup", icon: "🩺", label: "Diagnostic Check", sub: "Analyze symptoms", path: "/customer/checkup" },
-            { id: "feed", icon: "📰", label: "Shop Feed", sub: "News & promos", path: "/customer/feed" },
-            { id: "mechanic", icon: "🔍", label: "Find mechanic", sub: "Browse available", path: "/customer/mechanics" },
-            { id: "vehicles", icon: "🚗", label: "My vehicles", sub: "Manage your cars", path: "/customer/vehicles" },
-            { id: "history", icon: "📋", label: "History", sub: "Past services", path: "/customer/history" },
-          ].map((item) => (
-            <div key={item.id} className="customer-card" style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "12px", cursor: "pointer", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }} onClick={() => navigate(item.path)}>
-              <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px" }}>
-                {item.icon}
+          {QUICK_ACTIONS.map(({ id, Icon, label, sub, path, iconColor, iconBg }) => (
+            <div
+              key={id}
+              className="customer-card"
+              style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "12px", cursor: "pointer", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}
+              onClick={() => navigate(path)}
+            >
+              <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", color: iconColor }}>
+                <Icon />
               </div>
               <div>
-                <div style={{ fontSize: "15px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>{item.label}</div>
-                <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "500" }}>{item.sub}</div>
+                <div style={{ fontSize: "15px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>{label}</div>
+                <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "500" }}>{sub}</div>
               </div>
             </div>
           ))}
@@ -420,12 +435,16 @@ export default function CustomerDashboard() {
         } />
         <div style={{ background: colors.white, borderRadius: "24px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 24px rgba(0,0,0,0.04)", overflow: "hidden", marginBottom: "1.5rem" }}>
           {bookings.length === 0 ? (
-            <div style={{ padding: "32px 24px", textAlign: "center" }}>
-              <div style={{ fontSize: "40px", marginBottom: "12px" }}>📅</div>
-              <div style={{ fontSize: "15px", fontWeight: "700", color: colors.textPrimary, marginBottom: "6px" }}>No bookings yet.</div>
-              <div style={{ fontSize: "13px", color: colors.textSecondary, marginBottom: "16px" }}>Book your first service!</div>
-              <button onClick={() => navigate("/customer/shop-select")} style={{ ...sh.primaryBtn, width: "auto", padding: "10px 24px", fontSize: "14px", borderRadius: "14px" }}>Book a Service</button>
-            </div>
+            <EmptyState
+              icon="📅"
+              title="No bookings yet"
+              subtitle="Book your first service and it'll show up right here."
+              action={
+                <button onClick={() => navigate("/customer/shop-select")} style={{ ...sh.primaryBtn, width: "auto", padding: "12px 28px", fontSize: "14px", borderRadius: "14px" }}>
+                  Book a Service
+                </button>
+              }
+            />
           ) : (
             bookings.slice(0, 5).map((b, i) => (
               <div key={b.id} className="customer-list-item" style={{ ...sh.rowItem, padding: "16px", borderBottom: i === Math.min(bookings.length, 5) - 1 ? "none" : `1px solid #f1f5f9` }}>

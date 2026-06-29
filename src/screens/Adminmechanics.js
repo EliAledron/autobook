@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { collection, getDocs, updateDoc, doc, getDoc, query, where, addDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { sh, colors, getInitials } from "./dashboardShared";
+import { sh, colors, getInitials, EmptyState } from "./dashboardShared";
+import CarLoader from "./CarLoader";
 import TopbarAvatar from "./TopbarAvatar";
 
 const verifyStyle = (verified) =>
@@ -798,13 +799,13 @@ export default function AdminMechanics() {
         </div>
         <div style={sh.card}>
           {loading ? (
-            <div style={{ padding: "20px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>
-              Loading mechanics...
-            </div>
+            <CarLoader text="Loading mechanics" />
           ) : filteredMechanics.length === 0 ? (
-            <div style={{ padding: "20px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>
-              {search ? "No mechanics match your search." : "No mechanics found."}
-            </div>
+            <EmptyState
+              icon="🔧"
+              title="No mechanics found"
+              subtitle={search ? "No mechanics match your search." : "There are currently no mechanics registered."}
+            />
           ) : (
             filteredMechanics.map((m, i) => {
               const assigned = getAssignedCount(m.id);

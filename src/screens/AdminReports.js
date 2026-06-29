@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { collection, getDocs, doc, getDoc, query, where } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { sh, colors, getInitials } from "./dashboardShared";
+import { sh, colors, getInitials, EmptyState } from "./dashboardShared";
+import CarLoader from "./CarLoader";
 import TopbarAvatar from "./TopbarAvatar";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -280,9 +281,7 @@ export default function AdminReports() {
       <div style={sh.content}>
 
         {loading ? (
-          <div style={{ padding: "40px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>
-            Loading reports...
-          </div>
+          <CarLoader text="Loading reports" />
         ) : (
           <>
             <div style={sh.sectionLabel}>📊 Monthly Analytics</div>
@@ -449,9 +448,11 @@ export default function AdminReports() {
             <div style={sh.sectionLabel}>Car services</div>
             <div style={{ ...sh.card, marginBottom: "1.5rem", padding: 0, overflow: "hidden", borderRadius: "20px" }}>
               {eodBookings.length === 0 ? (
-                <div style={{ padding: "20px", fontSize: "13px", color: colors.textMuted, textAlign: "center" }}>
-                  No bookings recorded for this day.
-                </div>
+                <EmptyState
+                  icon="📅"
+                  title="No bookings recorded"
+                  subtitle="No bookings were completed on this day."
+                />
               ) : (
                 <>
                   {eodBookings.map((b, i) => (
@@ -489,9 +490,11 @@ export default function AdminReports() {
             <div style={sh.sectionLabel}>Car parts ordered</div>
             <div style={{ ...sh.card, marginBottom: "1.5rem", padding: 0, overflow: "hidden", borderRadius: "20px" }}>
               {eodParts.length === 0 ? (
-                <div style={{ padding: "20px", fontSize: "13px", color: colors.textMuted, textAlign: "center" }}>
-                  No parts ordered for this day.
-                </div>
+                <EmptyState
+                  icon="🔩"
+                  title="No parts ordered"
+                  subtitle="No car parts were ordered on this day."
+                />
               ) : (
                 <>
                   {eodParts.map((p, i) => (
