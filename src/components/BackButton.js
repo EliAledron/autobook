@@ -32,9 +32,11 @@ export default function BackButton({
     fontSize: '16px',
     fontWeight: '600',
     cursor: 'pointer',
-    padding: showText ? '10px 16px' : '12px',
-    minWidth: '44px',
-    minHeight: '44px',
+    padding: showText ? '10px 16px' : '8px',
+    marginLeft: showText ? '0' : '-8px', // Offset the padding so the icon aligns with the left edge
+    marginRight: showText ? '0' : '-4px', // Reduce the effective space on the right side
+    minWidth: '40px',
+    minHeight: '40px',
     borderRadius: '24px',
     opacity: isActive ? 0.6 : 1, // Touch feedback instead of hover
     transform: isActive ? 'scale(0.96)' : 'scale(1)',
