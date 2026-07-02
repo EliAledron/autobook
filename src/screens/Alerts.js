@@ -4,7 +4,8 @@ import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, where, getDocs, updateDoc, doc, orderBy, writeBatch } from "firebase/firestore";
 import { sh, colors, EmptyState } from "./dashboardShared";
-import CarLoader from "./CarLoader";
+import SkeletonLoader from "./SkeletonLoader";
+import BackButton from "../components/BackButton";
 
 const typeIcon = (type) => {
   switch (type) {
@@ -107,7 +108,7 @@ export default function Alerts() {
     <div style={sh.page}>
       <div style={sh.topbar}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
-          <button onClick={() => navigate(-1)} style={{ background: "none", border: "none", color: colors.accent, fontSize: "18px", cursor: "pointer", padding: 0 }}>←</button>
+          <BackButton />
           <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
         </div>
         {unreadCount > 0 && (
@@ -130,7 +131,7 @@ export default function Alerts() {
 
       <div style={sh.content}>
         {loading ? (
-          <CarLoader text="Loading alerts" />
+          <SkeletonLoader count={3} type="card" />
         ) : notifications.length === 0 ? (
           <EmptyState
             icon="🔔"

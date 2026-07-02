@@ -151,28 +151,14 @@ export default function Onboarding() {
             background: #ffffff !important;
           }
           .ab-btn { transition: all 0.2s ease; }
-          .ab-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(42,82,152,0.3) !important;
-          }
           .ab-btn:active:not(:disabled) {
             transform: translateY(0);
           }
           .ab-glass-btn { transition: all 0.2s ease; }
-          .ab-glass-btn:hover {
-            transform: translateY(-2px);
-            background: rgba(255,255,255,0.15) !important;
-            border-color: rgba(255,255,255,0.4) !important;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.2) !important;
-          }
           .ab-glass-btn:active {
             transform: translateY(0);
           }
           .ab-back-btn { transition: all 0.2s ease; }
-          .ab-back-btn:hover {
-            transform: scale(1.1);
-            background: rgba(255,255,255,0.25) !important;
-          }
           .ab-back-btn:active {
             transform: scale(0.9);
           }
@@ -181,11 +167,6 @@ export default function Onboarding() {
             50% { transform: translateY(-8px); }
           }
           .ab-feature-card { transition: all 0.3s ease; }
-          .ab-feature-card:hover {
-            transform: translateY(-4px) scale(1.02);
-            background: rgba(255,255,255,0.12) !important;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.15) !important;
-          }
         `}
       </style>
       <div style={s.root}>

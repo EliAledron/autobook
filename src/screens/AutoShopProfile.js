@@ -4,6 +4,7 @@ import { sh, colors, getInitials } from "./dashboardShared";
 import { doc, updateDoc, addDoc, setDoc, collection, serverTimestamp, getDocs, query, where, orderBy, getDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import BackButton from "../components/BackButton";
 
 function timeAgo(timestamp) {
   if (!timestamp) return "Just now";
@@ -376,7 +377,7 @@ export default function AutoShopProfile() {
       <div style={sh.page}>
         <div style={sh.topbar}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <button onClick={() => navigate(-1)} style={{ background: "none", border: "none", color: colors.accent, fontSize: "18px", cursor: "pointer", padding: 0 }}>←</button>
+            <BackButton />
             <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
           </div>
         </div>
@@ -401,7 +402,7 @@ export default function AutoShopProfile() {
       {/* TOPBAR */}
       <div style={sh.topbar}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <button onClick={() => navigate(-1)} style={{ background: "none", border: "none", color: colors.accent, fontSize: "18px", cursor: "pointer", padding: 0, display: "flex", alignItems: "center" }}>←</button>
+          <BackButton />
           <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
         </div>
       </div>

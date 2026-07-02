@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { sh, colors } from "./dashboardShared";
+import BackButton from "../components/BackButton";
 
 const SYMPTOMS = [
   { 
@@ -326,14 +327,13 @@ export default function StrategicCheckup() {
         @keyframes sc-pulseGlow { 0% { box-shadow: 0 0 0 0 rgba(42, 82, 152, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(42, 82, 152, 0); } 100% { box-shadow: 0 0 0 0 rgba(42, 82, 152, 0); } }
         @keyframes sc-stagger { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         .sc-symptom-card { transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); position: relative; overflow: hidden; }
-        .sc-symptom-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.08) !important; }
         .sc-symptom-card:active { transform: scale(0.97); }
       `}</style>
 
       {/* TOPBAR */}
       <div style={sh.topbar}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <button onClick={() => navigate(-1)} style={{ background: "none", border: "none", color: colors.accent, fontSize: "18px", cursor: "pointer", padding: 0 }}>←</button>
+          <BackButton />
           <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
         </div>
       </div>

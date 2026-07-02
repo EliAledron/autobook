@@ -5,7 +5,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { sh, colors, EmptyState } from "./dashboardShared";
-import CarLoader from "./CarLoader";
+import BackButton from "../components/BackButton";
 
 const emptyVehicle = () => ({ make: "", model: "", year: "", plate: "", color: "", photoURL: "", photoFile: null, localPreview: null });
 
@@ -125,7 +125,7 @@ export default function MyVehicles() {
       {/* TOPBAR */}
       <div style={sh.topbar}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
-          <button onClick={() => navigate(-1)} style={{ background: "none", border: "none", color: colors.accent, fontSize: "18px", cursor: "pointer", padding: 0 }}>←</button>
+          <BackButton />
           <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
         </div>
         {!showForm && (
@@ -320,6 +320,6 @@ export default function MyVehicles() {
           </div>
         </div>
       )}
-    </div>
+          </div>
   );
 }

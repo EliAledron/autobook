@@ -4,7 +4,8 @@ import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 import { sh, colors } from "./dashboardShared";
-import CarLoader from "./CarLoader";
+import SkeletonLoader from "./SkeletonLoader";
+import BackButton from "../components/BackButton";
 
 export default function FindMechanic() {
   const navigate = useNavigate();
@@ -135,7 +136,7 @@ export default function FindMechanic() {
       {/* TOPBAR */}
       <div style={sh.topbar}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <button onClick={() => navigate(-1)} style={{ background: "none", border: "none", color: colors.accent, fontSize: "18px", cursor: "pointer", padding: 0 }}>←</button>
+          <BackButton />
           <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
         </div>
       </div>

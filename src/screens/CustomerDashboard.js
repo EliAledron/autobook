@@ -36,15 +36,8 @@ const keyframes = `
   .customer-card {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .customer-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 24px rgba(0,0,0,0.08) !important;
-  }
   .customer-list-item {
     transition: all 0.15s ease-in-out;
-  }
-  .customer-list-item:hover {
-    background: #f8fafc !important;
   }
   @property --fill-angle {
     syntax: "<angle>";
@@ -464,6 +457,6 @@ export default function CustomerDashboard() {
         </div>
       </div>
 
-    </div>
+          </div>
   );
 }

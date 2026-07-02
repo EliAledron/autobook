@@ -4,7 +4,8 @@ import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, addDoc, getDocs, getDoc, doc, query, where, serverTimestamp } from "firebase/firestore";
 import { sh, colors } from "./dashboardShared";
-import CarLoader from "./CarLoader";
+import SkeletonLoader from "./SkeletonLoader";
+import BackButton from "../components/BackButton";
 
 const CLOUDINARY_CLOUD = "dpwojan8w";
 const CLOUDINARY_PRESET = "autobook_uploads";
@@ -169,7 +170,7 @@ export default function BookService() {
     transition: "border-color 0.2s, box-shadow 0.2s",
   };
 
-  if (loading) return <CarLoader text="Loading" />;
+  if (loading) return <SkeletonLoader count={3} type="card" />;
 
   if (done) return (
     <div style={{ ...sh.page, justifyContent: "center", alignItems: "center", display: "flex", flexDirection: "column", padding: "2rem" }}>
@@ -188,7 +189,7 @@ export default function BookService() {
     <div style={sh.page}>
       <div style={sh.topbar}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <button onClick={() => navigate(-1)} style={{ background: "none", border: "none", color: colors.accent, fontSize: "18px", cursor: "pointer", padding: 0 }}>←</button>
+          <BackButton />
           <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
         </div>
       </div>

@@ -4,7 +4,8 @@ import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, getDocs, updateDoc, doc, orderBy, arrayUnion, arrayRemove, deleteDoc, getDoc, serverTimestamp, where } from "firebase/firestore";
 import { sh, colors, getInitials, EmptyState } from "./dashboardShared";
-import CarLoader from "./CarLoader";
+import SkeletonLoader from "./SkeletonLoader";
+import BackButton from "../components/BackButton";
 
 const CLOUDINARY_CLOUD = "dpwojan8w";
 const CLOUDINARY_PRESET = "autobook_uploads";
@@ -239,7 +240,7 @@ export default function ShopFeed() {
       {/* TOPBAR */}
       <div style={sh.topbar}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <button onClick={() => navigate(-1)} style={{ background: "none", border: "none", color: colors.accent, fontSize: "18px", cursor: "pointer", padding: 0 }}>←</button>
+          <BackButton />
           <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
         </div>
       </div>
@@ -300,7 +301,7 @@ export default function ShopFeed() {
         </div>
 
         {loading ? (
-          <CarLoader text="Loading feed" />
+          <SkeletonLoader count={3} type="card" />
         ) : filteredPosts.length === 0 ? (
           <EmptyState
             icon="📰"
@@ -426,6 +427,6 @@ export default function ShopFeed() {
         </div>
       )}
 
-    </div>
+          </div>
   );
 }

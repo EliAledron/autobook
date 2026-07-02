@@ -6,7 +6,6 @@ import {
   deleteDoc
 } from "firebase/firestore";
 import { db, auth } from "../firebase";
-import { onAuthStateChanged } from "firebase/auth";
 import { sh, colors, getGreeting, getInitials } from "./dashboardShared";
 import TopbarAvatar from "./TopbarAvatar";
 
@@ -107,15 +106,8 @@ const keyframes = `
   .owner-card {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .owner-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 24px rgba(0,0,0,0.08) !important;
-  }
   .owner-list-item {
     transition: all 0.15s ease-in-out;
-  }
-  .owner-list-item:hover {
-    background: #f8fafc !important;
   }
   ::-webkit-scrollbar { display: none; }
 `;
@@ -904,6 +896,6 @@ export default function OwnerDashboard({ user }) {
           </div>
         </div>
       )}
-    </div>
+          </div>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
+import BackButton from "../components/BackButton";
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
@@ -249,10 +250,9 @@ export default function Signup() {
   return (
     <div style={s.page}>
       <div style={s.topAccent} />
-      <button style={s.backBtn} onClick={() => navigate(-1)} aria-label="Back" onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7" /></svg>
-        <span>Back</span>
-      </button>
+      <div style={{position: "absolute", top: 20, left: 10, zIndex: 10}}>
+        <BackButton variant="light" />
+      </div>
       <div style={s.scroll}>
         <div style={s.header}>
           <div style={s.logoRing}>

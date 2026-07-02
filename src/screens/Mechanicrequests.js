@@ -7,7 +7,8 @@ import {
   orderBy, addDoc, serverTimestamp, getDoc,
 } from "firebase/firestore";
 import { sh, colors, getInitials, EmptyState } from "./dashboardShared";
-import CarLoader from "./CarLoader";
+import SkeletonLoader from "./SkeletonLoader";
+import BackButton from "../components/BackButton";
 
 const STATUS_TABS = ["All", "Pending", "Accepted", "Completed", "Declined", "Cancelled"];
 
@@ -297,7 +298,7 @@ export default function MechanicRequests() {
       {/* TOPBAR */}
       <div style={sh.topbar}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <button onClick={() => navigate(-1)} style={{ background: "none", border: "none", color: colors.accent, fontSize: "18px", cursor: "pointer", padding: 0 }}>←</button>
+          <BackButton />
           <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
         </div>
         {pendingCount > 0 && (
@@ -423,7 +424,7 @@ export default function MechanicRequests() {
         <div style={sh.sectionLabel}>Requests ({filtered.length})</div>
         <div style={sh.card}>
           {loading ? (
-            <CarLoader text="Loading requests" />
+            <SkeletonLoader count={3} type="card" />
           ) : filtered.length === 0 ? (
             <EmptyState
               icon="📍"
@@ -700,6 +701,6 @@ export default function MechanicRequests() {
         </div>
       )}
 
-    </div>
+          </div>
   );
 }

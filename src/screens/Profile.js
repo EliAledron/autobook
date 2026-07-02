@@ -5,6 +5,7 @@ import { onAuthStateChanged, updateProfile } from "firebase/auth";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { sh, colors, getInitials } from "./dashboardShared";
 import { useUser } from "../UserContext";
+import BackButton from "../components/BackButton";
 
 const CLOUDINARY_CLOUD = "dpwojan8w";
 const CLOUDINARY_PRESET = "autobook_uploads";
@@ -198,12 +199,7 @@ export default function Profile() {
       {/* TOPBAR */}
       <div style={sh.topbar}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
-          <button
-            onClick={() => navigate(-1)}
-            style={{ background: "none", border: "none", color: colors.accent, fontSize: "18px", cursor: "pointer", padding: 0 }}
-          >
-            ←
-          </button>
+          <BackButton />
           <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
         </div>
         <button

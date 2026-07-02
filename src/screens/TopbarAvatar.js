@@ -20,27 +20,47 @@ export default function TopbarAvatar({ onClick, size = 34 }) {
     <div style={{ position: "relative", display: "inline-block" }}>
     <div
       onClick={onClick}
+      className="touch-feedback"
       style={{
-        ...sh.avatar,
-        width: size,
-        height: size,
-        overflow: "hidden",
-        padding: 0,
-        flexShrink: 0,
+        width: size + 6,
+        height: size + 6,
+        borderRadius: "50%",
+        background: `linear-gradient(45deg, ${colors.accent}, ${colors.blue}, #8b5cf6)`,
+        padding: "2.5px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         cursor: "pointer",
+        flexShrink: 0,
+        boxShadow: "0 4px 12px rgba(37,99,235,0.25)"
       }}
     >
-      {photo ? (
-        <img
-          src={photo}
-          alt="avatar"
-          style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
-        />
-      ) : (
-        <span style={{ fontSize: size * 0.35, fontWeight: "700", color: colors.navy }}>
-          {getInitials(name)}
-        </span>
-      )}
+      <div
+        style={{
+          ...sh.avatar,
+          width: "100%",
+          height: "100%",
+          overflow: "hidden",
+          padding: 0,
+          background: photo ? "#fff" : `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`,
+          border: "2px solid #fff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        }}
+      >
+        {photo ? (
+          <img
+            src={photo}
+            alt="avatar"
+            style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+          />
+        ) : (
+          <span style={{ fontSize: size * 0.35, fontWeight: "800", color: "#fff" }}>
+            {getInitials(name)}
+          </span>
+        )}
+      </div>
     </div>
       {unreadAlertsCount > 0 && (
         <div style={{

@@ -4,8 +4,9 @@ import { collection, getDocs, doc, getDoc, updateDoc, query, where, writeBatch }
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { sh, colors, getInitials, EmptyState } from "./dashboardShared";
-import CarLoader from "./CarLoader";
+import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
+import BackButton from "../components/BackButton";
 
 function timeAgo(timestamp) {
   if (!timestamp) return "Just now";
@@ -134,7 +135,7 @@ export default function AdminReviews() {
       {/* TOPBAR */}
       <div style={sh.topbar}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <button onClick={() => navigate(-1)} style={{ background: "none", border: "none", color: colors.accent, fontSize: "18px", cursor: "pointer", padding: 0 }}>←</button>
+          <BackButton />
           <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
         </div>
         <div style={sh.topbarRight}>
@@ -155,7 +156,7 @@ export default function AdminReviews() {
 
       <div style={sh.content}>
         {loading ? (
-          <CarLoader text="Loading reviews" />
+          <SkeletonLoader count={3} type="card" />
         ) : (
           <>
             {/* OVERALL RATING CARD */}

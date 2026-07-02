@@ -4,7 +4,8 @@ import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, where, getDocs, orderBy, updateDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
 import { sh, colors, EmptyState, getInitials } from "./dashboardShared";
-import CarLoader from "./CarLoader";
+import SkeletonLoader from "./SkeletonLoader";
+import BackButton from "../components/BackButton";
 
 const STATUS_TABS = ["All", "Pending", "In Progress", "Completed", "Cancelled"];
 
@@ -191,7 +192,7 @@ export default function BookingHistory() {
       {/* TOPBAR */}
       <div style={sh.topbar}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <button onClick={() => navigate(-1)} style={{ background: "none", border: "none", color: colors.accent, fontSize: "18px", cursor: "pointer", padding: 0 }}>←</button>
+          <BackButton />
           <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
         </div>
       </div>
@@ -320,7 +321,7 @@ export default function BookingHistory() {
         {/* BOOKINGS LIST */}
         <div style={{ ...sh.sectionLabel, fontSize: "13px", color: colors.textPrimary, letterSpacing: "0.5px" }}>Bookings ({filtered.length})</div>
         {loading ? (
-          <CarLoader text="Loading bookings" />
+          <SkeletonLoader count={3} type="card" />
         ) : filtered.length === 0 ? (
           <EmptyState
             icon="📋"
@@ -497,6 +498,6 @@ export default function BookingHistory() {
         </div>
       )}
 
-    </div>
+          </div>
   );
 }

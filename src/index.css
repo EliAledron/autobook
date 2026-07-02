@@ -15,10 +15,18 @@ input, button, select, textarea {
   font-family: inherit;
 }
 
-/* Mobile tap feedback — buttons feel snappy on touch */
-button:active:not(:disabled) {
+/* Mobile tap feedback — universally applied to buttons and interactive cards */
+button:active:not(:disabled), 
+.touch-feedback:active {
   transform: scale(0.96) !important;
-  transition: transform 0.1s ease !important;
+  transition: transform 0.05s ease !important; /* Extremely fast for instant touch feedback */
+}
+
+/* Ensure smooth return animation when touch is released */
+button:not(:disabled),
+.touch-feedback {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
 }
 
 code {

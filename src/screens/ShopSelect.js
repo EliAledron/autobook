@@ -3,7 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { sh, colors, EmptyState } from "./dashboardShared";
-import CarLoader from "./CarLoader";
+import SkeletonLoader from "./SkeletonLoader";
+import BackButton from "../components/BackButton";
 
 export default function ShopSelect() {
   const navigate = useNavigate();
@@ -66,7 +67,7 @@ export default function ShopSelect() {
       {/* TOPBAR */}
       <div style={sh.topbar}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <button onClick={() => navigate(-1)} style={{ background: "none", border: "none", color: colors.accent, fontSize: "18px", cursor: "pointer", padding: 0 }}>←</button>
+          <BackButton />
           <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
         </div>
       </div>
@@ -118,7 +119,7 @@ export default function ShopSelect() {
         </div>
 
         {loading ? (
-          <CarLoader text="Loading shops" />
+          <SkeletonLoader count={3} type="card" />
         ) : filteredShops.length === 0 ? (
           <EmptyState
             icon="🏪"
