@@ -9,7 +9,6 @@ import Onboarding from "./screens/Onboarding";
 import ScrollToTop from "./components/ScrollToTop";
 
 // Owner/Admin screens
-import OwnerDashboard from "./screens/OwnerDashboard";
 import AdminUsers from "./screens/AdminUsers";
 import PendingApproval from "./screens/Pendingapproval";
 import AdminBookings from "./screens/Adminbookings";
@@ -31,6 +30,11 @@ import Alerts from "./screens/Alerts";
 import ShopFeed from "./screens/ShopFeed";
 import GlobalBottomNav from "./screens/GlobalBottomNav";
 import StrategicCheckup from "./screens/StrategicCheckup";
+
+// Mechanic screens
+import MechanicDashboard from "./screens/MechanicDashboard";
+import MechanicBookings from "./screens/MechanicBookings";
+import MechanicVisitRequests from "./screens/MechanicVisitRequests";
 
 // Mechanic/job screens
 import MechanicRequests from "./screens/Mechanicrequests";
@@ -74,6 +78,11 @@ function App() {
           <Route path="/customer/feed" element={<ShopFeed />} />
           <Route path="/customer/checkup" element={<StrategicCheckup />} />
           <Route path="/customer/shop-profile" element={<AutoShopProfile />} />
+
+          {/* Mechanic */}
+          <Route path="/mechanic/dashboard" element={<MechanicDashboard />} />
+          <Route path="/mechanic/bookings" element={<MechanicBookings />} />
+          <Route path="/mechanic/requests" element={<MechanicVisitRequests />} />
         </Routes>
         <GlobalBottomNav />
       </Router>

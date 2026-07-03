@@ -54,6 +54,19 @@ const IconProfile = ({ active }) => (
   </svg>
 );
 
+const IconWrench2 = ({ active }) => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? colors.navy : "#9ca3af"} strokeWidth={active ? "2.2" : "1.8"} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
+  </svg>
+);
+
+const IconPin = ({ active }) => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? colors.navy : "#9ca3af"} strokeWidth={active ? "2.2" : "1.8"} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z" />
+    <circle cx="12" cy="10" r="3" />
+  </svg>
+);
+
 // ─── Badge Component ───────────────────────────────────────────────────────────
 const Badge = ({ count }) => {
   if (!count || count <= 0) return null;
@@ -219,6 +232,39 @@ export default function GlobalBottomNav() {
             />
           </>
         )}
+      </div>
+    );
+  }
+
+  // ─── MECHANIC NAV ───
+  if (role === "mechanic") {
+    return (
+      <div style={navStyle}>
+        <NavItem
+          icon={IconHome}
+          label="Home"
+          isActive={path === "/mechanic/dashboard" || path === "/dashboard"}
+          onClick={() => navigate("/mechanic/dashboard")}
+        />
+        <NavItem
+          icon={IconWrench2}
+          label="Jobs"
+          isActive={path === "/mechanic/bookings"}
+          onClick={() => navigate("/mechanic/bookings")}
+          badge={unreadAlertsCount}
+        />
+        <NavItem
+          icon={IconPin}
+          label="Requests"
+          isActive={path === "/mechanic/requests"}
+          onClick={() => navigate("/mechanic/requests")}
+        />
+        <NavItem
+          icon={IconProfile}
+          label="Profile"
+          isActive={path === "/profile"}
+          onClick={() => navigate("/profile")}
+        />
       </div>
     );
   }

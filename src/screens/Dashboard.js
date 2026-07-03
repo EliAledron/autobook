@@ -6,6 +6,7 @@ import { doc, getDoc } from "firebase/firestore";
 import CarLoader from "./CarLoader";
 import CustomerDashboard from "./CustomerDashboard";
 import OwnerDashboard from "./OwnerDashboard";
+import MechanicDashboard from "./MechanicDashboard";
 
 function isEmail(str) {
   return typeof str === "string" && str.includes("@");
@@ -78,5 +79,6 @@ export default function Dashboard() {
 
   // Owner covers both "owner" and legacy "admin" roles
   if (role === "owner" || role === "admin") return <OwnerDashboard {...props} />;
+  if (role === "mechanic") return <MechanicDashboard {...props} />;
   return <CustomerDashboard {...props} />;
 }

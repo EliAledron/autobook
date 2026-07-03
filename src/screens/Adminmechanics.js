@@ -260,6 +260,10 @@ function MechanicFormModal({ existing, onClose, onSaved, ownerId, shopId }) {
 // ─── Mechanic Detail / Drill-in Modal ─────────────────────────────────────────
 function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, onClose, onEdit, onDelete, onToggleVerify, savingVerify }) {
   const [activeTab, setActiveTab] = useState("overview");
+  const [linkEmail, setLinkEmail] = useState("");
+  const [linkLoading, setLinkLoading] = useState(false);
+  const [linkMsg, setLinkMsg] = useState(null);
+  const [linkedUserId, setLinkedUserId] = useState(mechanic.userId || null);
 
   const mJobs = allBookings.filter(b => b.mechanicId === mechanic.id);
   const mParts = allCarParts.filter(p => p.mechanicId === mechanic.id);
@@ -386,6 +390,70 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
                 <><span style={{ fontSize: "16px" }}>✓</span> Verify Mechanic</>
               )}
             </button>
+
+            {/* Link User Account */}
+            <div style={{ background: linkedUserId ? colors.successBg : colors.bg, border: `1.5px solid ${linkedUserId ? colors.success + "50" : colors.border}`, borderRadius: "16px", padding: "16px", marginBottom: "1rem" }}>
+              <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px", display: "flex", alignItems: "center", gap: "6px" }}>
+                🔗 Linked App Account
+                {linkedUserId && <span style={{ ...sh.badge(colors.successBg, colors.success), marginLeft: "6px" }}>Linked ✓</span>}
+              </div>
+              {linkedUserId ? (
+                <div style={{ fontSize: "13px", color: colors.success, fontWeight: "600" }}>
+                  ✅ This mechanic has a linked AutoBook account. They receive job notifications directly.
+                  <button
+                    onClick={async () => {
+                      try {
+                        const { updateDoc, doc } = await import("firebase/firestore");
+                        await updateDoc(doc(db, "shopMechanics", mechanic.id), { userId: null });
+                        setLinkedUserId(null);
+                        setLinkMsg({ type: "success", text: "Account unlinked." });
+                      } catch (e) { setLinkMsg({ type: "error", text: "Failed to unlink." }); }
+                    }}
+                    style={{ display: "block", marginTop: "10px", background: "none", border: `1px solid ${colors.danger}`, color: colors.danger, borderRadius: "10px", padding: "8px 14px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit" }}
+                  >
+                    Unlink Account
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div style={{ fontSize: "12px", color: colors.textMuted, marginBottom: "10px" }}>Link this mechanic to their AutoBook account so they receive notifications when assigned a job.</div>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <input
+                      type="email"
+                      placeholder="Mechanic's registered email"
+                      value={linkEmail}
+                      onChange={e => { setLinkEmail(e.target.value); setLinkMsg(null); }}
+                      style={{ flex: 1, padding: "10px 12px", borderRadius: "10px", border: `1.5px solid ${colors.border}`, fontSize: "13px", outline: "none", background: colors.white, fontFamily: "inherit" }}
+                    />
+                    <button
+                      disabled={linkLoading || !linkEmail.trim()}
+                      onClick={async () => {
+                        setLinkLoading(true); setLinkMsg(null);
+                        try {
+                          const { getDocs, collection, query, where, updateDoc, doc } = await import("firebase/firestore");
+                          const uSnap = await getDocs(query(collection(db, "users"), where("email", "==", linkEmail.trim())));
+                          if (uSnap.empty) { setLinkMsg({ type: "error", text: "No user found with that email." }); setLinkLoading(false); return; }
+                          const found = uSnap.docs[0];
+                          await updateDoc(doc(db, "shopMechanics", mechanic.id), { userId: found.id });
+                          setLinkedUserId(found.id);
+                          setLinkEmail("");
+                          setLinkMsg({ type: "success", text: `Linked to ${found.data().displayName || linkEmail}!` });
+                        } catch (e) { setLinkMsg({ type: "error", text: "Link failed. Try again." }); }
+                        setLinkLoading(false);
+                      }}
+                      style={{ padding: "10px 16px", borderRadius: "10px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", fontSize: "13px", fontWeight: "700", border: "none", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}
+                    >
+                      {linkLoading ? "..." : "Link"}
+                    </button>
+                  </div>
+                  {linkMsg && (
+                    <div style={{ marginTop: "8px", fontSize: "12px", fontWeight: "600", color: linkMsg.type === "success" ? colors.success : colors.danger }}>
+                      {linkMsg.type === "success" ? "✅ " : "❌ "}{linkMsg.text}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </>
         )}
 

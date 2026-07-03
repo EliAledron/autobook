@@ -10,7 +10,13 @@ import {
 } from "firebase/auth";
 import { doc, setDoc, getDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
 
-const ROLES = ["Customer", "Owner"];
+const ROLES = ["Customer", "Owner", "Mechanic"];
+
+const MECHANIC_SPECIALTIES = [
+  "General Mechanic", "Engine Specialist", "Electrical Specialist",
+  "Aircon Specialist", "Underchassis/Suspension", "Brake Specialist",
+  "Transmission Specialist", "Body & Paint",
+];
 
 const COLORS_LIST = ["White", "Black", "Silver", "Gray", "Red", "Blue", "Green", "Yellow", "Orange", "Brown", "Other"];
 
@@ -60,6 +66,10 @@ export default function Signup() {
   const [permitFile, setPermitFile] = useState(null);
   const [permitPreview, setPermitPreview] = useState(null);
 
+  // Step 2 Mechanic fields
+  const [mechShopName, setMechShopName] = useState("");
+  const [mechSpecialization, setMechSpecialization] = useState("");
+
   // Step 3 Customer fields
   const [vehicleMake, setVehicleMake] = useState("");
   const [vehicleModel, setVehicleModel] = useState("");
@@ -75,9 +85,10 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const saveUser = async (user, resolvedRole, names, permitUrl = "", shopNameStr = "") => {
+  const saveUser = async (user, resolvedRole, names, permitUrl = "", shopNameStr = "", extraData = {}) => {
     const finalRole = resolvedRole || "Customer";
     const isOwner = finalRole.toLowerCase() === "owner";
+    const isMechanic = finalRole.toLowerCase() === "mechanic";
     
     const fName = names?.firstName || "";
     const mName = names?.middleName || "";
@@ -99,6 +110,10 @@ export default function Signup() {
     if (isOwner) {
       userData.businessPermitUrl = permitUrl;
       userData.shopName = shopNameStr;
+    }
+    if (isMechanic) {
+      userData.shopName = extraData.shopName || "";
+      userData.specialization = extraData.specialization || "";
     }
     await setDoc(doc(db, "users", user.uid), userData);
 
@@ -122,6 +137,8 @@ export default function Signup() {
 
     if (role === "Owner") {
       setStep(2);
+    } else if (role === "Mechanic") {
+      setStep(2); // mechanic step 2
     } else {
       setStep(3);
     }
@@ -174,7 +191,7 @@ export default function Signup() {
       
       setEmail(user.email || "");
 
-      if (role === "Owner") {
+      if (role === "Owner" || role === "Mechanic") {
         setStep(2);
       } else {
         setStep(3);
@@ -182,6 +199,34 @@ export default function Signup() {
     } catch (err) {
       setError("Google sign-up failed. Please try again.");
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMechanicSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (!mechShopName.trim()) return setError("Please enter the shop name you work at.");
+    if (!mechSpecialization) return setError("Please select your specialization.");
+
+    setLoading(true);
+    try {
+      let user = createdUser;
+      if (!user) {
+        const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
+        user = newUser;
+        const dName = [firstName.trim(), middleName.trim(), lastName.trim()].filter(Boolean).join(" ");
+        await updateProfile(user, { displayName: dName });
+      }
+      await saveUser(
+        user, role,
+        { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() },
+        "", "",
+        { shopName: mechShopName.trim(), specialization: mechSpecialization }
+      );
+      navigate("/pending");
+    } catch (err) {
+      setError(err.code === "auth/email-already-in-use" ? "This email is already registered." : err.message);
       setLoading(false);
     }
   };
@@ -332,27 +377,29 @@ export default function Signup() {
               />
 
               <label style={s.label}>I am a…</label>
-              <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-                {ROLES.map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => { setRole(r); setError(""); }}
-                    style={{
-                      flex: 1, padding: "14px", borderRadius: "12px", fontSize: "14px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit",
-                      border: role === r ? "none" : "1.5px solid #e5e7eb",
-                      background: role === r ? "linear-gradient(135deg, #1a3a5c, #2a5298)" : "#f9fafb",
-                      color: role === r ? "#fff" : "#6b7280",
-                      boxShadow: role === r ? "0 4px 12px rgba(26,58,92,0.25)" : "none",
-                      transition: "all 0.15s ease",
-                    }}
-                  >
-                    {r === "Customer" ? "🚗 Customer" : "🏪 Owner"}
-                    <div style={{ fontSize: "10px", fontWeight: "500", marginTop: "4px", opacity: 0.75 }}>
-                      {r === "Customer" ? "Book services" : "Manage the shop"}
-                    </div>
-                  </button>
-                ))}
+              <div style={{ display: "flex", gap: "8px", marginBottom: "20px", flexWrap: "wrap" }}>
+                {ROLES.map((r) => {
+                  const roleIcon = r === "Customer" ? "🚗" : r === "Owner" ? "🏪" : "🔧";
+                  const roleSub  = r === "Customer" ? "Book services" : r === "Owner" ? "Manage the shop" : "Fix & repair";
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => { setRole(r); setError(""); }}
+                      style={{
+                        flex: 1, minWidth: "90px", padding: "14px 8px", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit",
+                        border: role === r ? "none" : "1.5px solid #e5e7eb",
+                        background: role === r ? "linear-gradient(135deg, #1a3a5c, #2a5298)" : "#f9fafb",
+                        color: role === r ? "#fff" : "#6b7280",
+                        boxShadow: role === r ? "0 4px 12px rgba(26,58,92,0.25)" : "none",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      {roleIcon} {r}
+                      <div style={{ fontSize: "10px", fontWeight: "500", marginTop: "4px", opacity: 0.75 }}>{roleSub}</div>
+                    </button>
+                  );
+                })}
               </div>
 
               <button
@@ -373,6 +420,49 @@ export default function Signup() {
                 <GoogleIcon />
                 Continue with Google
               </button>
+            </>
+          ) : step === 2 && role === "Mechanic" ? (
+            <>
+              <h3 style={{ marginTop: 0, color: "#111827", fontSize: "18px", fontWeight: "700" }}>🔧 Mechanic Details</h3>
+              <p style={{ fontSize: "13px", color: "#6b7280", marginBottom: "16px", marginTop: "-4px" }}>Tell us about your skills and the shop you work at.</p>
+
+              <label style={s.label}>Shop Name You Work At *</label>
+              <input
+                type="text"
+                placeholder="e.g. JME Auto Shop"
+                value={mechShopName}
+                onChange={(e) => setMechShopName(e.target.value)}
+                style={s.input}
+                required
+              />
+
+              <label style={s.label}>Your Specialization *</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "20px" }}>
+                {MECHANIC_SPECIALTIES.map((spec) => (
+                  <button
+                    key={spec}
+                    type="button"
+                    onClick={() => setMechSpecialization(spec)}
+                    style={{
+                      padding: "8px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit",
+                      border: mechSpecialization === spec ? "none" : "1.5px solid #e5e7eb",
+                      background: mechSpecialization === spec ? "linear-gradient(135deg, #1a3a5c, #2a5298)" : "#f9fafb",
+                      color: mechSpecialization === spec ? "#fff" : "#6b7280",
+                      boxShadow: mechSpecialization === spec ? "0 4px 12px rgba(26,58,92,0.25)" : "none",
+                      transition: "all 0.15s ease",
+                    }}
+                  >{spec}</button>
+                ))}
+              </div>
+
+              <button
+                onClick={handleMechanicSubmit}
+                style={{ ...s.primaryBtn, opacity: loading ? 0.75 : 1 }}
+                disabled={loading}
+              >
+                {loading ? "Submitting…" : "Complete Sign Up"}
+              </button>
+              <button onClick={() => setStep(1)} style={{ ...s.outlineBtn, marginTop: "8px" }} disabled={loading}>Back</button>
             </>
           ) : step === 2 ? (
             <>

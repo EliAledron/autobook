@@ -6,10 +6,11 @@ import { auth, db } from "./firebase";
 const UserContext = createContext(null);
 
 export function UserProvider({ children }) {
-  const [userProfile, setUserProfile] = useState(null); // { uid, displayName, photoURL, role, phone, address, ... }
+  const [userProfile, setUserProfile] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [unreadAlertsCount, setUnreadAlertsCount] = useState(0);
   const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
+  const [assignedJobsCount, setAssignedJobsCount] = useState(0);
 
   useEffect(() => {
     let notifUnsub = null;
@@ -21,6 +22,7 @@ export function UserProvider({ children }) {
         setLoadingUser(false);
         setUnreadAlertsCount(0);
         setPendingBookingsCount(0);
+        setAssignedJobsCount(0);
         if (notifUnsub) { notifUnsub(); notifUnsub = null; }
         if (bookingsUnsub) { bookingsUnsub(); bookingsUnsub = null; }
         return;
@@ -85,6 +87,16 @@ export function UserProvider({ children }) {
             } else {
               initOwnerListeners(shopId);
             }
+          } else if (role === "mechanic") {
+            // Mechanic: listen to personal notifications + assigned bookings count
+            const notifQuery = query(collection(db, "notifications"), where("userId", "==", firebaseUser.uid), where("read", "==", false));
+            notifUnsub = onSnapshot(notifQuery, (snapshot) => setUnreadAlertsCount(snapshot.size));
+
+            // Track pending/active assigned bookings
+            const jobQuery1 = query(collection(db, "bookings"), where("mechanicId", "==", firebaseUser.uid), where("status", "==", "Pending"));
+            const jobQuery2 = query(collection(db, "bookings"), where("assignedMechanicId", "==", firebaseUser.uid), where("status", "==", "Pending"));
+            // Use first query for live count (both overlap is okay for badge)
+            bookingsUnsub = onSnapshot(jobQuery1, (snap) => setAssignedJobsCount(snap.size));
           } else {
              const notifQuery = query(collection(db, "notifications"), where("userId", "==", firebaseUser.uid), where("read", "==", false));
              notifUnsub = onSnapshot(notifQuery, (snapshot) => setUnreadAlertsCount(snapshot.size));
@@ -127,7 +139,7 @@ export function UserProvider({ children }) {
   };
 
   return (
-    <UserContext.Provider value={{ userProfile, loadingUser, refreshUserProfile, setUserProfile, unreadAlertsCount, pendingBookingsCount }}>
+    <UserContext.Provider value={{ userProfile, loadingUser, refreshUserProfile, setUserProfile, unreadAlertsCount, pendingBookingsCount, assignedJobsCount }}>
       {children}
     </UserContext.Provider>
   );

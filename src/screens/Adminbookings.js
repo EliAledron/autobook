@@ -453,6 +453,8 @@ export default function AdminBookings() {
 
       if (assignedMechanicId && assignedMechanicId !== previousMechanicId) {
         const mechanicName = getMechanicName(assignedMechanicId);
+        const mechanicRecord = mechanics.find(m => m.id === assignedMechanicId);
+
         // Notify the customer
         if (selected.customerId) {
           await addDoc(collection(db, "notifications"), {
@@ -465,6 +467,20 @@ export default function AdminBookings() {
             createdAt: serverTimestamp(),
           });
         }
+
+        // Notify the mechanic if they have a linked user account
+        if (mechanicRecord?.userId) {
+          await addDoc(collection(db, "notifications"), {
+            userId: mechanicRecord.userId,
+            title: "New Job Assigned 🔧",
+            message: `You have been assigned to a ${selected.serviceType || "service"} booking for ${selected.customerName || "a customer"} on ${selected.date || "an upcoming date"} at ${selected.shopName || "the shop"}.`,
+            type: "job_assigned",
+            bookingId: selected.id,
+            read: false,
+            createdAt: serverTimestamp(),
+          });
+        }
+
         showToast(`✅ Assigned to ${mechanicName} — notified!`);
       } else {
         showToast("✅ Booking updated successfully!");
