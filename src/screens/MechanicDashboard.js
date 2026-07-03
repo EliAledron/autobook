@@ -129,7 +129,7 @@ export default function MechanicDashboard() {
       {/* HERO */}
       <div style={{
         background: `linear-gradient(135deg, #0f2942 0%, #1a3a5c 50%, #1e4d8c 100%)`,
-        padding: "1.5rem 1.25rem 3rem", position: "relative", overflow: "hidden",
+        padding: "1.5rem 1.25rem 4.5rem", position: "relative", overflow: "hidden",
       }}>
         {/* Decorative wrenches */}
         <div style={{ position: "absolute", right: "-20px", top: "-20px", opacity: 0.06, fontSize: "120px", transform: "rotate(30deg)", userSelect: "none" }}>🔧</div>
