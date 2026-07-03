@@ -39,7 +39,13 @@ const FEATURES = [
   },
 ];
 
-const ROLES = ["Customer", "Owner"];
+const ROLES = ["Customer", "Owner", "Mechanic"];
+
+const MECHANIC_SPECIALTIES = [
+  "General Mechanic", "Electrician", "Aircon Tech",
+  "Transmission", "Engine Specialist", "Underside/Suspension",
+  "Paint & Body", "Tire & Alignment"
+];
 
 const COLORS_LIST = ["White", "Black", "Silver", "Gray", "Red", "Blue", "Green", "Yellow", "Orange", "Brown", "Other"];
 
@@ -78,9 +84,10 @@ async function checkStatusAndNavigate(uid, navigate, setError) {
   navigate("/pending");
 }
 
-const saveUser = async (user, resolvedRole, namesObj, permitUrl = "", shopNameStr = "") => {
+const saveUser = async (user, resolvedRole, namesObj, permitUrl = "", shopNameStr = "", specializationStr = "") => {
     const finalRole = resolvedRole || "Customer";
     const isOwner = finalRole.toLowerCase() === "owner";
+    const isMechanic = finalRole.toLowerCase() === "mechanic";
     
     const fName = namesObj?.firstName || "";
     const mName = namesObj?.middleName || "";
@@ -102,6 +109,9 @@ const saveUser = async (user, resolvedRole, namesObj, permitUrl = "", shopNameSt
   if (isOwner) {
     userData.businessPermitUrl = permitUrl;
     userData.shopName = shopNameStr;
+  } else if (isMechanic) {
+    userData.shopName = shopNameStr;
+    userData.specialization = specializationStr;
   }
   await setDoc(doc(db, "users", user.uid), userData);
 
@@ -255,6 +265,9 @@ function SignupForm({ goBack, navigate }) {
   const [permitPreview, setPermitPreview] = useState(null);
   const [createdUser, setCreatedUser] = useState(null);
 
+  const [mechanicShopName, setMechanicShopName] = useState("");
+  const [mechanicSpecialization, setMechanicSpecialization] = useState("");
+
   const [vehicleMake, setVehicleMake] = useState("");
   const [vehicleModel, setVehicleModel] = useState("");
   const [vehicleYear, setVehicleYear] = useState("");
@@ -276,6 +289,8 @@ function SignupForm({ goBack, navigate }) {
 
     if (role === "Owner") {
       setStep(2);
+    } else if (role === "Mechanic") {
+      setStep(4);
     } else {
       setStep(3);
     }
@@ -324,6 +339,8 @@ function SignupForm({ goBack, navigate }) {
 
       if (role === "Owner") {
         setStep(2);
+      } else if (role === "Mechanic") {
+        setStep(4);
       } else {
         setStep(3);
       }
@@ -400,6 +417,30 @@ function SignupForm({ goBack, navigate }) {
     }
   };
 
+  const handleMechanicSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (!mechanicShopName.trim()) return setError("Please enter your shop name or employer.");
+    if (!mechanicSpecialization.trim()) return setError("Please select your specialization.");
+
+    setLoading(true);
+    try {
+      let user = createdUser;
+      if (!user) {
+        const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
+        user = newUser;
+        const dName = [firstName.trim(), middleName.trim(), lastName.trim()].filter(Boolean).join(" ");
+        await updateProfile(user, { displayName: dName });
+      }
+
+      await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() }, "", mechanicShopName.trim(), mechanicSpecialization);
+      navigate("/pending");
+    } catch (err) {
+      setError(err.code === "auth/email-already-in-use" ? "This email is already registered." : err.message);
+      setLoading(false);
+    }
+  };
+
   return (
     <div style={s.formPage}>
       {/* Header stripe */}
@@ -441,7 +482,7 @@ function SignupForm({ goBack, navigate }) {
               <input className="ab-input" type="password" placeholder="Re-enter your password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} style={s.input} />
 
               <label style={s.label}>Select Your Role</label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "28px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginBottom: "28px" }}>
                 {ROLES.map((r) => {
                   const isSelected = role === r;
                   return (
@@ -460,13 +501,13 @@ function SignupForm({ goBack, navigate }) {
                       boxShadow: isSelected ? "0 8px 16px rgba(42,82,152,0.12)" : "0 2px 4px rgba(0,0,0,0.02)",
                     }}
                   >
-                    <div style={{ fontSize: "28px" }}>{r === "Customer" ? "🚗" : "🏪"}</div>
+                    <div style={{ fontSize: "28px" }}>{r === "Customer" ? "🚗" : r === "Owner" ? "🏪" : "🔧"}</div>
                     <div style={{ textAlign: "center" }}>
                       <div style={{ fontSize: "14px", fontWeight: "800", color: isSelected ? "#1a3a5c" : "#374151" }}>
                         {r} {isSelected && "✅"}
                       </div>
                       <div style={{ fontSize: "11px", fontWeight: "600", color: "#6b7280", marginTop: "4px" }}>
-                      {r === "Customer" ? "Book services" : "Manage the shop"}
+                      {r === "Customer" ? "Book services" : r === "Owner" ? "Manage the shop" : "Service vehicles"}
                       </div>
                     </div>
                   </div>
@@ -508,7 +549,7 @@ function SignupForm({ goBack, navigate }) {
                 Back
               </button>
             </>
-          ) : (
+          ) : step === 3 ? (
             <>
               <h3 style={{ marginTop: 0, color: "#111827", fontSize: "18px", fontWeight: "700" }}>Vehicle Details</h3>
               <p style={{ fontSize: "13px", color: "#6b7280", marginBottom: "16px", marginTop: "-4px" }}>Please register your primary vehicle to continue.</p>
@@ -585,7 +626,30 @@ function SignupForm({ goBack, navigate }) {
                 Back
               </button>
             </>
-          )}
+          ) : step === 4 ? (
+            <>
+              <h3 style={{ marginTop: 0, color: "#111827", fontSize: "18px", fontWeight: "700" }}>Mechanic Details</h3>
+              <p style={{ fontSize: "13px", color: "#6b7280", marginBottom: "16px", marginTop: "-4px" }}>Please provide your professional details.</p>
+
+              <label style={s.label}>Shop / Employer Name</label>
+              <input className="ab-input" type="text" placeholder="Where do you work?" value={mechanicShopName} onChange={e => setMechanicShopName(e.target.value)} style={s.input} />
+
+              <label style={s.label}>Primary Specialization</label>
+              <select className="ab-input" value={mechanicSpecialization} onChange={e => setMechanicSpecialization(e.target.value)} style={{...s.input, backgroundColor: '#fff', cursor: 'pointer', appearance: 'none' }}>
+                <option value="" disabled>Select specialization...</option>
+                {MECHANIC_SPECIALTIES.map(spec => (
+                  <option key={spec} value={spec}>{spec}</option>
+                ))}
+              </select>
+
+              <button onClick={handleMechanicSubmit} className="ab-btn" style={{ ...s.primaryBtn, opacity: loading ? 0.75 : 1 }} disabled={loading}>
+                {loading ? "Submitting…" : "Complete Sign Up"}
+              </button>
+              <button onClick={() => setStep(1)} className="ab-btn" style={s.outlineBtn} disabled={loading}>
+                Back
+              </button>
+            </>
+          ) : null}
         </div>
       </div>
     </div>
