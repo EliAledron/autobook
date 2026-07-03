@@ -6,6 +6,8 @@ import Dashboard from "./screens/Dashboard";
 import Profile from "./screens/Profile";
 import Onboarding from "./screens/Onboarding";
 
+import ScrollToTop from "./components/ScrollToTop";
+
 // Owner/Admin screens
 import OwnerDashboard from "./screens/OwnerDashboard";
 import AdminUsers from "./screens/AdminUsers";
@@ -37,6 +39,7 @@ function App() {
   return (
     <UserProvider>
       <Router>
+        <ScrollToTop />
         <Routes>
           {/* Auth */}
           <Route path="/" element={<Onboarding />} />
