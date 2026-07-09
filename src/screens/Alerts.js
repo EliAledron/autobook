@@ -35,11 +35,17 @@ function timeAgo(timestamp) {
   if (!timestamp?.seconds) return "";
   const diff = Date.now() - timestamp.seconds * 1000;
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  
+  if (hrs < 48) {
+    if (mins < 1) return "Just now";
+    if (mins < 60) return `${mins}m ago`;
+    if (hrs < 24) return `${hrs}h ago`;
+    return `1d ago`;
+  }
+  
+  const date = new Date(timestamp.seconds * 1000);
+  return date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
 export default function Alerts() {
@@ -180,39 +186,59 @@ export default function Alerts() {
               </>
             )}
 
-            {notifications.filter((n) => n.read).length > 0 && (
-              <>
-                <div style={sh.sectionLabel}>Earlier</div>
-                <div style={sh.card}>
-                  {notifications.filter((n) => n.read).map((n, i, arr) => (
-                    <div
-                      key={n.id}
-                      style={{
-                        display: "flex", gap: "12px", padding: "0.75rem 0",
-                        borderBottom: i < arr.length - 1 ? `1px solid ${colors.border}` : "none",
-                        opacity: 0.65,
-                      }}
-                    >
-                      <div style={{
-                        width: "40px", height: "40px", borderRadius: "12px",
-                        background: typeBg(n.type), display: "flex",
-                        alignItems: "center", justifyContent: "center",
-                        fontSize: "18px", flexShrink: 0,
-                      }}>
-                        {typeIcon(n.type)}
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                          <div style={{ fontWeight: "600", fontSize: "13px", color: colors.textPrimary, flex: 1, paddingRight: "8px" }}>{n.title}</div>
-                          <div style={{ fontSize: "10px", color: colors.textMuted, whiteSpace: "nowrap" }}>{timeAgo(n.createdAt)}</div>
+            {(() => {
+              const groupedRead = [];
+              notifications.filter((n) => n.read).forEach((n) => {
+                let label = "Older";
+                if (n.createdAt?.seconds) {
+                  const d = new Date(n.createdAt.seconds * 1000);
+                  const today = new Date();
+                  const yesterday = new Date();
+                  yesterday.setDate(today.getDate() - 1);
+                  if (d.toDateString() === today.toDateString()) label = "Today";
+                  else if (d.toDateString() === yesterday.toDateString()) label = "Yesterday";
+                  else label = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                }
+                const last = groupedRead[groupedRead.length - 1];
+                if (last && last.label === label) last.items.push(n);
+                else groupedRead.push({ label, items: [n] });
+              });
+
+              return groupedRead.map((group) => (
+                <React.Fragment key={group.label}>
+                  <div style={sh.sectionLabel}>{group.label}</div>
+                  <div style={sh.card}>
+                    {group.items.map((n, i, arr) => (
+                      <div
+                        key={n.id}
+                        style={{
+                          display: "flex", gap: "12px", padding: "0.75rem 0",
+                          borderBottom: i < arr.length - 1 ? `1px solid ${colors.border}` : "none",
+                          opacity: 0.65,
+                        }}
+                      >
+                        <div style={{
+                          width: "40px", height: "40px", borderRadius: "12px",
+                          background: typeBg(n.type), display: "flex",
+                          alignItems: "center", justifyContent: "center",
+                          fontSize: "18px", flexShrink: 0,
+                        }}>
+                          {typeIcon(n.type)}
                         </div>
-                        <div style={{ fontSize: "12px", color: colors.textSecondary, marginTop: "3px", lineHeight: "1.4" }}>{n.message}</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                            <div style={{ fontWeight: "600", fontSize: "13px", color: colors.textPrimary, flex: 1, paddingRight: "8px" }}>{n.title}</div>
+                            <div style={{ fontSize: "10px", color: colors.textMuted, whiteSpace: "nowrap" }}>{timeAgo(n.createdAt)}</div>
+                          </div>
+                          <div style={{ fontSize: "12px", color: colors.textSecondary, marginTop: "3px", lineHeight: "1.4" }}>{n.message}</div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
+                    ))}
+                  </div>
+                  <div style={{ height: "16px" }} />
+                </React.Fragment>
+              ));
+            })()}
           </>
         )}
       </div>

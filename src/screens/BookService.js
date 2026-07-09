@@ -147,7 +147,7 @@ export default function BookService() {
 
       await addDoc(collection(db, "notifications"), {
         userId: uid,
-        title: "Booking Confirmed! 🎉",
+        title: "Booking Confirmed! ✅",
         message: `Your booking for ${finalService} at ${shop.name} on ${date} at ${time} has been received.`,
         type: "booking_confirmed",
         read: false,
@@ -174,7 +174,11 @@ export default function BookService() {
 
   if (done) return (
     <div style={{ ...sh.page, justifyContent: "center", alignItems: "center", display: "flex", flexDirection: "column", padding: "2rem" }}>
-      <div style={{ fontSize: "60px", marginBottom: "1rem" }}>🎉</div>
+      <div style={{ width: "80px", height: "80px", borderRadius: "50%", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1.5rem" }}>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={colors.info} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
       <div style={{ fontSize: "20px", fontWeight: "700", color: colors.textPrimary, marginBottom: "8px", textAlign: "center" }}>Booking Submitted!</div>
       <div style={{ fontSize: "14px", color: colors.textSecondary, textAlign: "center", marginBottom: "2rem" }}>
         Your booking at {shop?.name} has been received. You'll be notified once it's confirmed.

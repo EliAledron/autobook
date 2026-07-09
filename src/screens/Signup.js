@@ -79,6 +79,9 @@ export default function Signup() {
   const [vehiclePhotoFile, setVehiclePhotoFile] = useState(null);
   const [vehiclePhotoPreview, setVehiclePhotoPreview] = useState(null);
 
+  const [licenseFile, setLicenseFile] = useState(null);
+  const [licensePreview, setLicensePreview] = useState(null);
+
   const [createdUser, setCreatedUser] = useState(null);
 
   const [error, setError] = useState("");
@@ -114,6 +117,9 @@ export default function Signup() {
     if (isMechanic) {
       userData.shopName = extraData.shopName || "";
       userData.specialization = extraData.specialization || "";
+    }
+    if (extraData.licenseUrl) {
+      userData.licenseUrl = extraData.licenseUrl;
     }
     await setDoc(doc(db, "users", user.uid), userData);
 
@@ -250,6 +256,7 @@ export default function Signup() {
   const handleCustomerSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    if (!licenseFile) return setError("Driver's license is required.");
     if (!vehicleMake.trim() || !vehicleModel.trim()) return setError("Vehicle make and model are required.");
     if (!vehiclePlate.trim()) return setError("Vehicle plate number is required.");
 
@@ -264,8 +271,13 @@ export default function Signup() {
         await updateProfile(user, { displayName: dName });
       }
       
+      let licenseUrl = null;
+      if (licenseFile) {
+        licenseUrl = await uploadToCloudinary(licenseFile);
+      }
+
       // Save user data to 'users' collection
-      await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() });
+      await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() }, "", "", { licenseUrl });
 
       // Upload vehicle photo if it exists
       let vehiclePhotoUrl = null;
@@ -308,9 +320,13 @@ export default function Signup() {
         </div>
 
         {error && (
-          <div style={s.errorBox}>
-            <span style={s.errorDot} />
-            {error}
+          <div style={s.errorOverlay}>
+            <div style={s.errorModal}>
+              <div style={s.errorModalIcon}>⚠️</div>
+              <h3 style={s.errorModalTitle}>Oops!</h3>
+              <p style={s.errorModalText}>{error}</p>
+              <button style={s.errorModalBtn} onClick={() => setError("")}>Okay</button>
+            </div>
           </div>
         )}
 
@@ -527,8 +543,39 @@ export default function Signup() {
             </>
           ) : ( // Step 3: Customer Vehicle Registration
             <>
-              <h3 style={{ marginTop: 0, color: "#111827", fontSize: "18px", fontWeight: "700" }}>Vehicle Details</h3>
-              <p style={{ fontSize: "13px", color: "#6b7280", marginBottom: "16px", marginTop: "-4px" }}>Please register your primary vehicle to continue.</p>
+              <h3 style={{ marginTop: 0, color: "#111827", fontSize: "18px", fontWeight: "700" }}>Verification & Vehicle Details</h3>
+              <p style={{ fontSize: "13px", color: "#6b7280", marginBottom: "16px", marginTop: "-4px" }}>Please provide your driver's license and register your primary vehicle to continue.</p>
+
+              <label style={s.label}>Driver's License *</label>
+              <input
+                type="file"
+                accept="image/*"
+                id="licenseUpload"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    setLicenseFile(file);
+                    setLicensePreview(URL.createObjectURL(file));
+                  }
+                }}
+              />
+              <div
+                onClick={() => document.getElementById("licenseUpload").click()}
+                style={{
+                  width: "100%", height: licensePreview ? "160px" : "100px",
+                  background: "#f9fafb", borderRadius: "10px",
+                  border: "1.5px dashed #e5e7eb",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer", overflow: "hidden", marginBottom: "20px",
+                  fontSize: "13px", color: "#9ca3af",
+                }}
+              >
+                {licensePreview
+                  ? <img src={licensePreview} alt="license" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} />
+                  : "💳 Tap to upload driver's license"
+                }
+              </div>
 
               <label style={s.label}>Vehicle Photo (Optional)</label>
               <input
@@ -665,16 +712,61 @@ const s = {
   appName: { fontSize: "22px", fontWeight: "700", color: "#fff", margin: "0 0 4px", letterSpacing: "0.5px" },
   tagline: { fontSize: "14px", color: "rgba(255,255,255,0.75)", margin: 0 },
   backBtn: { position: "absolute", top: "24px", left: "24px", background: "transparent", border: "none", display: "flex", alignItems: "center", gap: "6px", color: "#fff", fontSize: "15px", fontWeight: "600", cursor: "pointer", zIndex: 10, padding: "8px 12px", borderRadius: "20px", transition: "background 0.2s ease" },
-  errorBox: {
-    width: "100%", maxWidth: "400px",
-    display: "flex", alignItems: "center", gap: "8px",
-    background: "#fff3f3", border: "1px solid #fca5a5",
-    borderRadius: "10px", padding: "10px 14px",
-    fontSize: "13px", color: "#b91c1c", marginBottom: "12px", boxSizing: "border-box",
+  errorOverlay: {
+    position: "fixed",
+    top: 0, left: 0, right: 0, bottom: 0,
+    background: "rgba(0,0,0,0.5)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    zIndex: 9999,
+    padding: "20px",
   },
-  errorDot: {
-    width: "6px", height: "6px", borderRadius: "50%",
-    background: "#ef4444", flexShrink: 0, display: "inline-block",
+  errorModal: {
+    background: "#ffffff",
+    borderRadius: "16px",
+    padding: "24px",
+    width: "100%",
+    maxWidth: "320px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    textAlign: "center",
+    boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+    animation: "ab-zoom-in 0.3s ease backwards",
+  },
+  errorModalIcon: {
+    width: "48px",
+    height: "48px",
+    borderRadius: "50%",
+    background: "#fee2e2",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "24px",
+    marginBottom: "16px",
+  },
+  errorModalTitle: {
+    fontSize: "18px",
+    fontWeight: "700",
+    color: "#111827",
+    margin: "0 0 8px 0",
+  },
+  errorModalText: {
+    fontSize: "14px",
+    color: "#4b5563",
+    margin: "0 0 24px 0",
+    lineHeight: "1.5",
+  },
+  errorModalBtn: {
+    width: "100%",
+    padding: "12px",
+    background: "#ef4444",
+    color: "#fff",
+    fontSize: "15px",
+    fontWeight: "700",
+    border: "none",
+    borderRadius: "12px",
+    cursor: "pointer",
+    fontFamily: "inherit",
   },
   card: {
     width: "100%", maxWidth: "400px",

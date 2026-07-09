@@ -96,9 +96,13 @@ export default function Login() {
         </div>
 
         {error && (
-          <div style={s.errorBox}>
-            <span style={s.errorDot} />
-            {error}
+          <div style={s.errorOverlay}>
+            <div style={s.errorModal}>
+              <div style={s.errorModalIcon}>⚠️</div>
+              <h3 style={s.errorModalTitle}>Oops!</h3>
+              <p style={s.errorModalText}>{error}</p>
+              <button style={s.errorModalBtn} onClick={() => setError("")}>Okay</button>
+            </div>
           </div>
         )}
 
@@ -141,8 +145,62 @@ const s = {
   appName: { fontSize: "22px", fontWeight: "700", color: "#fff", margin: "0 0 4px", letterSpacing: "0.5px" },
   tagline: { fontSize: "14px", color: "rgba(255,255,255,0.75)", margin: 0 },
   backBtn: { position: "absolute", top: "24px", left: "24px", background: "transparent", border: "none", display: "flex", alignItems: "center", gap: "6px", color: "#fff", fontSize: "15px", fontWeight: "600", cursor: "pointer", zIndex: 10, padding: "8px 12px", borderRadius: "20px", transition: "background 0.2s ease" },
-  errorBox: { width: "100%", maxWidth: "400px", display: "flex", alignItems: "center", gap: "8px", background: "#fff3f3", border: "1px solid #fca5a5", borderRadius: "10px", padding: "10px 14px", fontSize: "13px", color: "#b91c1c", marginBottom: "12px", boxSizing: "border-box" },
-  errorDot: { width: "6px", height: "6px", borderRadius: "50%", background: "#ef4444", flexShrink: 0, display: "inline-block" },
+  errorOverlay: {
+    position: "fixed",
+    top: 0, left: 0, right: 0, bottom: 0,
+    background: "rgba(0,0,0,0.5)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    zIndex: 9999,
+    padding: "20px",
+  },
+  errorModal: {
+    background: "#ffffff",
+    borderRadius: "16px",
+    padding: "24px",
+    width: "100%",
+    maxWidth: "320px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    textAlign: "center",
+    boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+    animation: "ab-zoom-in 0.3s ease backwards",
+  },
+  errorModalIcon: {
+    width: "48px",
+    height: "48px",
+    borderRadius: "50%",
+    background: "#fee2e2",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "24px",
+    marginBottom: "16px",
+  },
+  errorModalTitle: {
+    fontSize: "18px",
+    fontWeight: "700",
+    color: "#111827",
+    margin: "0 0 8px 0",
+  },
+  errorModalText: {
+    fontSize: "14px",
+    color: "#4b5563",
+    margin: "0 0 24px 0",
+    lineHeight: "1.5",
+  },
+  errorModalBtn: {
+    width: "100%",
+    padding: "12px",
+    background: "#ef4444",
+    color: "#fff",
+    fontSize: "15px",
+    fontWeight: "700",
+    border: "none",
+    borderRadius: "12px",
+    cursor: "pointer",
+    fontFamily: "inherit",
+  },
   card: { width: "100%", maxWidth: "400px", background: "#ffffff", borderRadius: "20px", padding: "24px 20px", boxSizing: "border-box", boxShadow: "0 4px 24px rgba(0,0,0,0.08)" },
   label: { display: "block", fontSize: "12px", fontWeight: "600", color: "#6b7280", letterSpacing: "0.4px", textTransform: "uppercase", marginBottom: "6px" },
   input: { display: "block", width: "100%", padding: "13px 14px", fontSize: "15px", border: "1.5px solid #e5e7eb", borderRadius: "10px", outline: "none", background: "#f9fafb", color: "#111827", boxSizing: "border-box", marginBottom: "16px", appearance: "none", fontFamily: "inherit" },

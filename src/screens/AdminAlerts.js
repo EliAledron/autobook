@@ -56,11 +56,17 @@ function timeAgo(timestamp) {
   if (!timestamp?.seconds) return "";
   const diff = Date.now() - timestamp.seconds * 1000;
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  
+  if (hrs < 48) {
+    if (mins < 1) return "Just now";
+    if (mins < 60) return `${mins}m ago`;
+    if (hrs < 24) return `${hrs}h ago`;
+    return `1d ago`;
+  }
+  
+  const date = new Date(timestamp.seconds * 1000);
+  return date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
 export default function AdminAlerts() {
@@ -289,16 +295,36 @@ export default function AdminAlerts() {
               </>
             )}
 
-            {readAlerts.length > 0 && (
-              <>
-                <div style={sh.sectionLabel}>Earlier</div>
-                <div style={sh.card}>
-                  {readAlerts.map((a, i) => (
-                    <AlertRow key={a.id} a={a} i={i} arr={readAlerts} isUnread={false} />
-                  ))}
-                </div>
-              </>
-            )}
+            {(() => {
+              const groupedRead = [];
+              readAlerts.forEach(a => {
+                let label = "Older";
+                if (a.createdAt?.seconds) {
+                  const d = new Date(a.createdAt.seconds * 1000);
+                  const today = new Date();
+                  const yesterday = new Date();
+                  yesterday.setDate(today.getDate() - 1);
+                  if (d.toDateString() === today.toDateString()) label = "Today";
+                  else if (d.toDateString() === yesterday.toDateString()) label = "Yesterday";
+                  else label = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                }
+                const last = groupedRead[groupedRead.length - 1];
+                if (last && last.label === label) last.items.push(a);
+                else groupedRead.push({ label, items: [a] });
+              });
+
+              return groupedRead.map(group => (
+                <React.Fragment key={group.label}>
+                  <div style={sh.sectionLabel}>{group.label}</div>
+                  <div style={sh.card}>
+                    {group.items.map((a, i, arr) => (
+                      <AlertRow key={a.id} a={a} i={i} arr={arr} isUnread={false} />
+                    ))}
+                  </div>
+                  <div style={{ height: "16px" }} />
+                </React.Fragment>
+              ));
+            })()}
           </>
         )}
       </div>
