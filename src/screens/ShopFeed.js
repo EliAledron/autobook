@@ -333,6 +333,16 @@ export default function ShopFeed() {
     }
   };
 
+  const handleMarkAnswered = async (commentId, postId, currentState) => {
+    try {
+      await updateDoc(doc(db, "posts", postId, "comments", commentId), {
+        isAnswered: !currentState
+      });
+    } catch (err) {
+      console.error("Failed to mark comment as answered:", err);
+    }
+  };
+
   const openEditModal = (post) => {
     setEditingPost(post);
     setEditContent(post.content || "");
@@ -629,11 +639,27 @@ export default function ShopFeed() {
                           {(comment.userRole || "").toLowerCase() === "owner" && (
                             <span style={{ fontSize: "10px", fontWeight: "800", background: colors.navy, color: "#fff", padding: "2px 7px", borderRadius: "8px", textTransform: "uppercase", letterSpacing: "0.5px", flexShrink: 0 }}>Shop Owner</span>
                           )}
+                          {comment.isAnswered && (
+                            <span style={{ fontSize: "10px", fontWeight: "800", background: "#dcfce7", color: "#15803d", padding: "2px 7px", borderRadius: "8px", textTransform: "uppercase", letterSpacing: "0.5px", flexShrink: 0, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                              Answered
+                            </span>
+                          )}
                         </div>
                         {/* Row 2: Timestamp + actions */}
                         <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
                           <span style={{ fontSize: "11px", color: colors.textMuted }}>{timeAgo(comment.createdAt)}{comment.isEdited ? " · edited" : ""}</span>
                           <div style={{ marginLeft: "auto", display: "flex", gap: "2px" }}>
+                            {/* Mark as Answered — only post owner can toggle, only on customer comments */}
+                            {activeCommentPost?.ownerId === uid && comment.userId !== activeCommentPost?.ownerId && !isReply && (
+                              <button
+                                onClick={() => handleMarkAnswered(comment.id, activeCommentPost.id, comment.isAnswered)}
+                                title={comment.isAnswered ? "Unmark as Answered" : "Mark as Answered"}
+                                style={{ background: comment.isAnswered ? "#dcfce7" : "none", border: comment.isAnswered ? "1px solid #86efac" : "none", borderRadius: "6px", color: comment.isAnswered ? "#15803d" : colors.textMuted, cursor: "pointer", padding: "3px 6px", display: "flex", alignItems: "center", gap: "4px", transition: "all 0.2s" }}
+                              >
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                              </button>
+                            )}
                             {comment.userId === uid && (
                               <button onClick={() => { setEditingCommentId(comment.id); setEditCommentText(comment.text); }} style={{ background: "none", border: "none", color: colors.textMuted, cursor: "pointer", padding: "4px", display: "flex" }} title="Edit Comment">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
