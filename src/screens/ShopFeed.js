@@ -69,6 +69,7 @@ export default function ShopFeed() {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editCommentText, setEditCommentText] = useState("");
   const [copiedPostId, setCopiedPostId] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null); // { type: 'post'|'comment', postId, commentId, label }
 
   // Edit post states
   const [editingPost, setEditingPost] = useState(null);
@@ -209,13 +210,7 @@ export default function ShopFeed() {
   };
 
   const handleDeletePost = async (postId) => {
-    if (!window.confirm("Are you sure you want to delete this post?")) return;
-    try {
-      await deleteDoc(doc(db, "posts", postId));
-      setPosts(prev => prev.filter(p => p.id !== postId));
-    } catch (e) {
-      console.error("Failed to delete post:", e);
-    }
+    setConfirmModal({ type: "post", postId, label: "post" });
   };
 
   const openCommentsModal = (post) => {
@@ -317,21 +312,31 @@ export default function ShopFeed() {
   };
 
   const handleDeleteComment = async (commentId, postId) => {
-    if (!window.confirm("Delete this comment?")) return;
-    try {
-      await deleteDoc(doc(db, "posts", postId, "comments", commentId));
-      await updateDoc(doc(db, "posts", postId), {
-        commentCount: increment(-1)
-      });
-      setPosts(prev => prev.map(p => {
-        if (p.id === postId) {
-          return { ...p, commentCount: Math.max(0, (p.commentCount || 1) - 1) };
-        }
-        return p;
-      }));
-    } catch (err) {
-      console.error("Failed to delete comment:", err);
+    setConfirmModal({ type: "comment", commentId, postId, label: "comment" });
+  };
+
+  const executeConfirmedDelete = async () => {
+    if (!confirmModal) return;
+    if (confirmModal.type === "post") {
+      try {
+        await deleteDoc(doc(db, "posts", confirmModal.postId));
+        setPosts(prev => prev.filter(p => p.id !== confirmModal.postId));
+      } catch (e) {
+        console.error("Failed to delete post:", e);
+      }
+    } else if (confirmModal.type === "comment") {
+      try {
+        await deleteDoc(doc(db, "posts", confirmModal.postId, "comments", confirmModal.commentId));
+        await updateDoc(doc(db, "posts", confirmModal.postId), { commentCount: increment(-1) });
+        setPosts(prev => prev.map(p => {
+          if (p.id === confirmModal.postId) return { ...p, commentCount: Math.max(0, (p.commentCount || 1) - 1) };
+          return p;
+        }));
+      } catch (e) {
+        console.error("Failed to delete comment:", e);
+      }
     }
+    setConfirmModal(null);
   };
 
   const handleMarkAnswered = async (commentId, postId, currentState) => {
@@ -845,6 +850,25 @@ export default function ShopFeed() {
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CONFIRM DELETE MODAL */}
+      {confirmModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 120, display: "flex", alignItems: "center", justifyContent: "center", animation: "ab-fade-in 0.2s ease-out" }} onClick={() => setConfirmModal(null)}>
+          <div style={{ background: colors.white, borderRadius: "24px", width: "90%", maxWidth: "340px", padding: "24px", textAlign: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
+            <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: colors.dangerBg || "#fee2e2", color: colors.danger, fontSize: "28px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>🗑️</div>
+            <h3 style={{ margin: "0 0 8px", fontSize: "18px", color: colors.textPrimary, fontWeight: "800" }}>Delete {confirmModal.label === "post" ? "Post" : "Comment"}?</h3>
+            <p style={{ margin: "0 0 24px", fontSize: "13px", color: colors.textSecondary, lineHeight: "1.5" }}>
+              Are you sure you want to delete this {confirmModal.label}? This action cannot be undone.
+            </p>
+            <div style={{ display: "flex", gap: "12px" }}>
+              <button onClick={() => setConfirmModal(null)} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.bg, border: `1px solid ${colors.border}`, color: colors.textSecondary, fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "14px" }}>Cancel</button>
+              <button onClick={executeConfirmedDelete} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.danger, border: "none", color: "#fff", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "14px" }}>
+                Yes, Delete
+              </button>
             </div>
           </div>
         </div>
