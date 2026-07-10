@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
-import { sh, colors, EmptyState } from "./dashboardShared";
+import { sh, colors, EmptyState, SharedSearchBar, SharedFilterSelect } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
 
@@ -84,38 +84,21 @@ export default function ShopSelect() {
 
         {/* SEARCH & FILTER */}
         <div style={{ display: "flex", gap: "10px", marginBottom: "1.5rem" }}>
-          <div style={{ position: "relative", flex: 1 }}>
-            <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", fontSize: "14px" }}>🔍</span>
-            <input
-              placeholder="Search shops or services..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{
-                width: "100%", padding: "12px 12px 12px 34px",
-                borderRadius: "14px", border: `1px solid ${colors.border}`,
-                fontSize: "13px", background: colors.white,
-                color: colors.textPrimary, fontFamily: "inherit",
-                boxSizing: "border-box", outline: "none",
-              }}
-            />
-            {search && (
-              <button onClick={() => setSearch("")} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", fontSize: "16px", cursor: "pointer", color: colors.textMuted }}>×</button>
-            )}
-          </div>
-          <select
+          <SharedSearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Search shops or services..."
+          />
+          <SharedFilterSelect
             value={minRating}
-            onChange={(e) => setMinRating(Number(e.target.value))}
-            style={{
-              padding: "12px 14px", borderRadius: "14px", border: `1px solid ${colors.border}`,
-              fontSize: "13px", background: colors.white, color: colors.textPrimary,
-              fontFamily: "inherit", outline: "none", cursor: "pointer"
-            }}
-          >
-            <option value={0}>All Ratings</option>
-            <option value={4.5}>4.5+ Stars</option>
-            <option value={4.0}>4.0+ Stars</option>
-            <option value={3.0}>3.0+ Stars</option>
-          </select>
+            onChange={(val) => setMinRating(Number(val))}
+            options={[
+              { label: "All Ratings", value: 0 },
+              { label: "4.5+ Stars", value: 4.5 },
+              { label: "4.0+ Stars", value: 4.0 },
+              { label: "3.0+ Stars", value: 3.0 },
+            ]}
+          />
         </div>
 
         {loading ? (

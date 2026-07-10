@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { collection, getDocs, updateDoc, doc, getDoc, query, where, addDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { sh, colors, getInitials, EmptyState } from "./dashboardShared";
+import { sh, colors, EmptyState, getInitials, SharedSearchBar } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
 import BackButton from "../components/BackButton";
@@ -829,31 +829,12 @@ export default function AdminMechanics() {
         </div>
 
         {/* SEARCH BAR */}
-        <div style={{ position: "relative", marginBottom: "1.5rem" }}>
-          <svg style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", width: "18px", height: "18px", color: colors.textMuted, pointerEvents: "none" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <input
-            placeholder="Search mechanics by name, specialty, phone..."
+        <div style={{ display: "flex", gap: "10px", marginBottom: "1.5rem" }}>
+          <SharedSearchBar
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: "100%", padding: "14px 40px",
-              borderRadius: "24px", border: `1px solid transparent`,
-              fontSize: "14px", backgroundColor: "#f1f5f9",
-              color: colors.textPrimary, fontFamily: "inherit",
-              boxSizing: "border-box", outline: "none",
-              transition: "all 0.2s ease",
-              boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)"
-            }}
-            onFocus={(e) => { e.target.style.border = `1px solid ${colors.blue}`; e.target.style.backgroundColor = colors.white; e.target.style.boxShadow = "0 4px 12px rgba(42,82,152,0.1)"; }}
-            onBlur={(e) => { e.target.style.border = `1px solid transparent`; e.target.style.backgroundColor = "#f1f5f9"; e.target.style.boxShadow = "inset 0 2px 4px rgba(0,0,0,0.02)"; }}
+            onChange={setSearch}
+            placeholder="Search mechanics by name, specialty, phone..."
           />
-          {search && (
-            <button onClick={() => setSearch("")} style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "#e2e8f0", border: "none", borderRadius: "50%", width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#475569" }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-            </button>
-          )}
         </div>
 
         {/* MECHANICS LIST */}

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, where, getDocs, orderBy, updateDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
-import { sh, colors, EmptyState, getInitials } from "./dashboardShared";
+import { sh, colors, EmptyState, getInitials, SharedSearchBar } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
 
@@ -299,23 +299,12 @@ export default function BookingHistory() {
         </div>
 
         {/* SEARCH BAR */}
-        <div style={{ position: "relative", marginBottom: "1.5rem" }}>
-          <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", fontSize: "14px" }}>🔍</span>
-          <input
-            placeholder="Search by service or shop name..."
+        <div style={{ display: "flex", gap: "10px", marginBottom: "1.5rem" }}>
+          <SharedSearchBar
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: "100%", padding: "12px 12px 12px 34px",
-              borderRadius: "14px", border: `1px solid ${colors.border}`,
-              fontSize: "13px", background: colors.white,
-              color: colors.textPrimary, fontFamily: "inherit",
-              boxSizing: "border-box", outline: "none",
-            }}
+            onChange={setSearch}
+            placeholder="Search by service or shop name..."
           />
-          {search && (
-            <button onClick={() => setSearch("")} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", fontSize: "16px", cursor: "pointer", color: colors.textMuted }}>×</button>
-          )}
         </div>
 
         {/* BOOKINGS LIST */}
