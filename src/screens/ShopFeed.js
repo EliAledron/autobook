@@ -254,6 +254,18 @@ export default function ShopFeed() {
         commentCount: increment(1)
       });
       
+      // Notify the post owner if it's someone else commenting
+      if (activeCommentPost.ownerId && activeCommentPost.ownerId !== uid) {
+        await addDoc(collection(db, "notifications"), {
+          userId: activeCommentPost.ownerId,
+          title: "New Comment on your Post",
+          message: `${currentUser?.name || "Someone"} commented: "${newCommentText.trim().substring(0, 50)}${newCommentText.trim().length > 50 ? '...' : ''}"`,
+          type: "comment",
+          read: false,
+          createdAt: serverTimestamp()
+        });
+      }
+      
       // Optimistically update post state
       setPosts(prev => prev.map(p => {
         if (p.id === activeCommentPost.id) {
