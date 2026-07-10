@@ -682,7 +682,7 @@ export default function ShopFeed() {
                         <div style={{ background: `linear-gradient(135deg, ${colors.navy}08, ${colors.navy}14)`, border: `1.5px solid ${colors.navy}30`, borderRadius: "16px", padding: "14px 16px", marginBottom: "4px" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
                             <svg width="13" height="13" viewBox="0 0 24 24" fill={colors.navy} stroke={colors.navy} strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
-                            <span style={{ fontSize: "11px", fontWeight: "800", color: colors.navy, textTransform: "uppercase", letterSpacing: "0.6px" }}>Owner's Response</span>
+                            <span style={{ fontSize: "11px", fontWeight: "800", color: colors.navy, textTransform: "uppercase", letterSpacing: "0.6px" }}>Owner's Comment</span>
                           </div>
                           <div style={{ display: "flex", gap: "10px" }}>
                             <div style={{ width: "34px", height: "34px", borderRadius: "50%", background: pinnedOwnerComment.userPhoto ? `url(${pinnedOwnerComment.userPhoto}) center/cover` : colors.navy, backgroundSize: "cover", backgroundPosition: "center", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "800", flexShrink: 0, border: "2px solid #fff", boxShadow: "0 2px 8px rgba(26,58,92,0.2)" }}>
