@@ -487,11 +487,11 @@ export default function ShopFeed() {
                   </div>
                   {((userProfile?.shopId && userProfile.shopId === post.shopId) || post.ownerId === uid) && (
                     <div style={{ display: "flex", gap: "8px" }}>
-                      <button onClick={() => openEditModal(post)} style={{ background: "none", border: "none", color: colors.textMuted, cursor: "pointer", fontSize: "16px", padding: "4px" }} title="Edit Post">
-                        ✏️
+                      <button onClick={() => openEditModal(post)} style={{ background: "none", border: "none", color: colors.textSecondary, cursor: "pointer", fontSize: "16px", padding: "4px", display: "flex", alignItems: "center", justifyContent: "center" }} title="Edit Post">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                       </button>
-                      <button onClick={() => handleDeletePost(post.id)} style={{ background: "none", border: "none", color: colors.textMuted, cursor: "pointer", fontSize: "16px", padding: "4px" }} title="Delete Post">
-                        🗑️
+                      <button onClick={() => handleDeletePost(post.id)} style={{ background: "none", border: "none", color: colors.danger, cursor: "pointer", fontSize: "16px", padding: "4px", display: "flex", alignItems: "center", justifyContent: "center" }} title="Delete Post">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                       </button>
                     </div>
                   )}
@@ -514,8 +514,8 @@ export default function ShopFeed() {
                     onClick={() => toggleLike(post)} 
                     style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", color: hasLiked ? colors.danger : colors.textSecondary, fontSize: "13px", fontWeight: "700", padding: 0, transition: "color 0.2s" }}
                   >
-                    <span style={{ fontSize: "18px", transition: "transform 0.2s", transform: hasLiked ? "scale(1.1)" : "scale(1)" }}>
-                      {hasLiked ? "❤️" : "🤍"}
+                    <span style={{ display: "flex", transition: "transform 0.2s", transform: hasLiked ? "scale(1.1)" : "scale(1)" }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill={hasLiked ? colors.danger : "none"} stroke={hasLiked ? colors.danger : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                     </span> 
                     {post.likes?.length || 0}
                   </button>
@@ -524,7 +524,9 @@ export default function ShopFeed() {
                     onClick={() => openCommentsModal(post)}
                     style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", color: colors.textSecondary, fontSize: "13px", fontWeight: "700", padding: 0, marginLeft: "20px" }}
                   >
-                    <span style={{ fontSize: "18px" }}>💬</span>
+                    <span style={{ display: "flex" }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    </span>
                     {post.commentCount || 0}
                   </button>
                 </div>
@@ -552,7 +554,10 @@ export default function ShopFeed() {
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 110, display: "flex", alignItems: "flex-end", animation: "ab-fade-in 0.2s ease-out" }} onClick={closeEditModal}>
           <div style={{ background: colors.white, borderRadius: "28px 28px 0 0", width: "100%", padding: "2rem 1.5rem", maxHeight: "90vh", overflowY: "auto", animation: "ab-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards", boxShadow: "0 -4px 24px rgba(0,0,0,0.15)" }} onClick={e => e.stopPropagation()}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-              <div style={{ fontWeight: "800", fontSize: "18px", color: colors.navy }}>✏️ Edit Post</div>
+              <div style={{ fontWeight: "800", fontSize: "18px", color: colors.navy, display: "flex", alignItems: "center", gap: "8px" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                Edit Post
+              </div>
               <button onClick={closeEditModal} style={{ background: colors.bg, border: "none", width: "32px", height: "32px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", cursor: "pointer", color: colors.textSecondary }}>×</button>
             </div>
 
@@ -575,7 +580,10 @@ export default function ShopFeed() {
                   <button onClick={() => { setEditImageFile(null); setEditImagePreview(null); }} style={{ position: "absolute", top: "8px", right: "8px", background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: "50%", width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: "16px" }}>×</button>
                 </div>
               ) : (
-                <button onClick={() => document.getElementById("editImageUpload").click()} style={{ width: "100%", padding: "14px", borderRadius: "14px", border: `1.5px dashed ${colors.border}`, background: colors.bg, color: colors.textSecondary, fontSize: "14px", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}><span style={{ fontSize: "18px" }}>📷</span> Add Photo (optional)</button>
+                <button onClick={() => document.getElementById("editImageUpload").click()} style={{ width: "100%", padding: "14px", borderRadius: "14px", border: `1.5px dashed ${colors.border}`, background: colors.bg, color: colors.textSecondary, fontSize: "14px", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                  Add Photo (optional)
+                </button>
               )}
             </div>
 
@@ -621,13 +629,13 @@ export default function ShopFeed() {
                           <span style={{ fontSize: "11px", color: colors.textMuted }}>{timeAgo(comment.createdAt)}{comment.isEdited ? " (edited)" : ""}</span>
                           <div style={{ marginLeft: "auto", display: "flex", gap: "4px" }}>
                             {comment.userId === uid && (
-                              <button onClick={() => { setEditingCommentId(comment.id); setEditCommentText(comment.text); }} style={{ background: "none", border: "none", color: colors.textMuted, cursor: "pointer", fontSize: "12px", padding: "0 4px" }} title="Edit Comment">
-                                ✏️
+                              <button onClick={() => { setEditingCommentId(comment.id); setEditCommentText(comment.text); }} style={{ background: "none", border: "none", color: colors.textMuted, cursor: "pointer", padding: "4px", display: "flex" }} title="Edit Comment">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                               </button>
                             )}
                             {(comment.userId === uid || activeCommentPost?.ownerId === uid) && (
-                              <button onClick={() => handleDeleteComment(comment.id, activeCommentPost.id)} style={{ background: "none", border: "none", color: colors.textMuted, cursor: "pointer", fontSize: "12px", padding: "0 4px" }} title="Delete Comment">
-                                🗑️
+                              <button onClick={() => handleDeleteComment(comment.id, activeCommentPost.id)} style={{ background: "none", border: "none", color: colors.danger, cursor: "pointer", padding: "4px", display: "flex" }} title="Delete Comment">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                               </button>
                             )}
                           </div>
@@ -642,7 +650,7 @@ export default function ShopFeed() {
                             />
                             <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
                               <button onClick={() => { setEditingCommentId(null); setEditCommentText(""); }} style={{ background: "none", border: "none", color: colors.textMuted, fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>Cancel</button>
-                              <button onClick={() => handleEditCommentSubmit(comment.id, activeCommentPost.id)} disabled={!editCommentText.trim()} style={{ background: colors.primary, color: "#fff", border: "none", borderRadius: "6px", padding: "4px 12px", fontSize: "12px", fontWeight: "700", cursor: "pointer", opacity: !editCommentText.trim() ? 0.6 : 1 }}>Save</button>
+                              <button onClick={() => handleEditCommentSubmit(comment.id, activeCommentPost.id)} disabled={!editCommentText.trim() || editCommentText.trim() === comment.text.trim()} style={{ background: (!editCommentText.trim() || editCommentText.trim() === comment.text.trim()) ? colors.bg : colors.primary, color: (!editCommentText.trim() || editCommentText.trim() === comment.text.trim()) ? colors.textMuted : "#fff", border: "none", borderRadius: "6px", padding: "4px 12px", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>Save</button>
                             </div>
                           </div>
                         ) : (
@@ -651,8 +659,8 @@ export default function ShopFeed() {
                               {comment.text}
                             </div>
                             {!isReply && !editingCommentId && (
-                              <button onClick={() => setReplyingToComment(comment)} style={{ background: "none", border: "none", color: colors.textMuted, fontSize: "12px", fontWeight: "700", cursor: "pointer", padding: "0", marginTop: "4px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                                ↪ Reply
+                              <button onClick={() => setReplyingToComment(comment)} style={{ background: "none", border: "none", color: colors.textSecondary, fontSize: "12px", fontWeight: "700", cursor: "pointer", padding: "4px 0", marginTop: "2px", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg> Reply
                               </button>
                             )}
                           </>
