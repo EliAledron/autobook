@@ -244,7 +244,7 @@ export default function CustomerDashboard() {
         <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.8)" }}>Ready to book your next service?</div>
       </div>
 
-      <div style={{ ...sh.content, position: "relative", zIndex: 2 }} className="stagger-slide-up">
+      <div style={{ ...sh.content, paddingTop: "2rem", position: "relative", zIndex: 2 }} className="stagger-slide-up">
 
         {unreadCount > 0 && (
           <div className="customer-card" onClick={() => navigate("/customer/alerts")} style={{ background: colors.white, borderRadius: "16px", padding: "16px", marginBottom: "12px", display: "flex", alignItems: "center", gap: "14px", cursor: "pointer", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}` }}>

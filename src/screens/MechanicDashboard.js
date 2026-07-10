@@ -165,7 +165,7 @@ export default function MechanicDashboard() {
         </div>
       </div>
 
-      <div style={{ ...sh.content, marginTop: "0", position: "relative", zIndex: 2 }} className="stagger-slide-up">
+      <div style={{ ...sh.content, marginTop: "0", paddingTop: "2rem", position: "relative", zIndex: 2 }} className="stagger-slide-up">
 
         {/* STAT GRID */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px", marginBottom: "1.5rem" }}>
