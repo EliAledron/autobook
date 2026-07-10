@@ -343,6 +343,18 @@ export default function ShopFeed() {
     }
   };
 
+  const handleCommentReaction = async (commentId, postId, reactions) => {
+    if (!uid) return;
+    const hasReacted = (reactions || []).includes(uid);
+    try {
+      await updateDoc(doc(db, "posts", postId, "comments", commentId), {
+        reactions: hasReacted ? arrayRemove(uid) : arrayUnion(uid)
+      });
+    } catch (err) {
+      console.error("Failed to react to comment:", err);
+    }
+  };
+
   const openEditModal = (post) => {
     setEditingPost(post);
     setEditContent(post.content || "");
@@ -690,11 +702,26 @@ export default function ShopFeed() {
                             <div style={{ fontSize: "14px", color: colors.textPrimary, lineHeight: "1.6", whiteSpace: "pre-wrap" }}>
                               {comment.text}
                             </div>
-                            {!isReply && !editingCommentId && (
-                              <button onClick={() => setReplyingToComment(comment)} style={{ background: "none", border: "none", color: colors.textSecondary, fontSize: "12px", fontWeight: "700", cursor: "pointer", padding: "4px 0", marginTop: "2px", display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg> Reply
-                              </button>
-                            )}
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "4px" }}>
+                              {!isReply && !editingCommentId && (
+                                <button onClick={() => setReplyingToComment(comment)} style={{ background: "none", border: "none", color: colors.textSecondary, fontSize: "12px", fontWeight: "700", cursor: "pointer", padding: "0", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg> Reply
+                                </button>
+                              )}
+                              {!editingCommentId && (() => {
+                                const hasReacted = (comment.reactions || []).includes(uid);
+                                const count = (comment.reactions || []).length;
+                                return (
+                                  <button
+                                    onClick={() => handleCommentReaction(comment.id, activeCommentPost.id, comment.reactions)}
+                                    style={{ background: "none", border: "none", cursor: "pointer", padding: "0", display: "inline-flex", alignItems: "center", gap: "4px", color: hasReacted ? colors.danger : colors.textMuted, fontSize: "12px", fontWeight: "700", transition: "color 0.2s" }}
+                                  >
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill={hasReacted ? colors.danger : "none"} stroke={hasReacted ? colors.danger : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "all 0.2s", transform: hasReacted ? "scale(1.2)" : "scale(1)" }}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                                    {count > 0 && <span>{count}</span>}
+                                  </button>
+                                );
+                              })()}
+                            </div>
                           </>
                         )}
                       </div>
