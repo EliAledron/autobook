@@ -281,6 +281,24 @@ export default function ShopFeed() {
     setSubmittingComment(false);
   };
 
+  const handleDeleteComment = async (commentId, postId) => {
+    if (!window.confirm("Delete this comment?")) return;
+    try {
+      await deleteDoc(doc(db, "posts", postId, "comments", commentId));
+      await updateDoc(doc(db, "posts", postId), {
+        commentCount: increment(-1)
+      });
+      setPosts(prev => prev.map(p => {
+        if (p.id === postId) {
+          return { ...p, commentCount: Math.max(0, (p.commentCount || 1) - 1) };
+        }
+        return p;
+      }));
+    } catch (err) {
+      console.error("Failed to delete comment:", err);
+    }
+  };
+
   const openEditModal = (post) => {
     setEditingPost(post);
     setEditContent(post.content || "");
@@ -563,6 +581,11 @@ export default function ShopFeed() {
                           <span style={{ fontSize: "10px", fontWeight: "800", background: colors.infoBg, color: colors.info, padding: "2px 6px", borderRadius: "8px", textTransform: "uppercase" }}>Shop Owner</span>
                         )}
                         <span style={{ fontSize: "11px", color: colors.textMuted }}>{timeAgo(comment.createdAt)}</span>
+                        {(comment.userId === uid || activeCommentPost?.ownerId === uid) && (
+                          <button onClick={() => handleDeleteComment(comment.id, activeCommentPost.id)} style={{ background: "none", border: "none", color: colors.textMuted, cursor: "pointer", fontSize: "12px", padding: "0 4px", marginLeft: "auto" }} title="Delete Comment">
+                            🗑️
+                          </button>
+                        )}
                       </div>
                       <div style={{ fontSize: "14px", color: colors.textSecondary, lineHeight: "1.5", whiteSpace: "pre-wrap" }}>
                         {comment.text}
