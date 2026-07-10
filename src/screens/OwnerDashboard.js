@@ -598,7 +598,7 @@ export default function OwnerDashboard({ user }) {
         </div>
       </div>
 
-      <div style={{ ...sh.content, paddingTop: 0, position: "relative", zIndex: 2 }}>
+      <div style={{ ...sh.content, paddingTop: 0, position: "relative", zIndex: 2 }} className="stagger-slide-up">
 
         {/* ALERT BANNERS */}
         {!isAdmin && pendingRequests.length > 0 && (
