@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, query, getDocs, updateDoc, doc, orderBy, arrayUnion, arrayRemove, deleteDoc, getDoc, serverTimestamp, where, limit, startAfter } from "firebase/firestore";
+import { collection, query, getDocs, updateDoc, doc, orderBy, arrayUnion, arrayRemove, deleteDoc, getDoc, serverTimestamp, where, limit, startAfter, onSnapshot, increment, addDoc } from "firebase/firestore";
 import { sh, colors, getInitials, EmptyState, SharedSearchBar, SharedFilterSelect } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
@@ -58,6 +58,12 @@ export default function ShopFeed() {
   const [lastVisible, setLastVisible] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  // Comments states
+  const [activeCommentPost, setActiveCommentPost] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [newCommentText, setNewCommentText] = useState("");
+  const [submittingComment, setSubmittingComment] = useState(false);
 
   // Edit post states
   const [editingPost, setEditingPost] = useState(null);
@@ -206,6 +212,60 @@ export default function ShopFeed() {
     } catch (e) {
       console.error("Failed to delete post:", e);
     }
+  };
+
+  const openCommentsModal = (post) => {
+    setActiveCommentPost(post);
+    setComments([]);
+    setNewCommentText("");
+    
+    // Subscribe to comments subcollection
+    const q = query(collection(db, "posts", post.id, "comments"), orderBy("createdAt", "asc"));
+    const unsub = onSnapshot(q, (snap) => {
+      setComments(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    // Attach unsub to window for simplicity or handle via effect
+    window.currentCommentsUnsub = unsub;
+  };
+
+  const closeCommentsModal = () => {
+    if (window.currentCommentsUnsub) {
+      window.currentCommentsUnsub();
+      window.currentCommentsUnsub = null;
+    }
+    setActiveCommentPost(null);
+    setComments([]);
+    setNewCommentText("");
+  };
+
+  const submitComment = async () => {
+    if (!newCommentText.trim() || !activeCommentPost || submittingComment) return;
+    setSubmittingComment(true);
+    try {
+      await addDoc(collection(db, "posts", activeCommentPost.id, "comments"), {
+        text: newCommentText.trim(),
+        userId: uid,
+        userName: currentUser?.name || "User",
+        userRole: currentUser?.role || "customer",
+        createdAt: serverTimestamp()
+      });
+      // Increment commentCount on post
+      await updateDoc(doc(db, "posts", activeCommentPost.id), {
+        commentCount: increment(1)
+      });
+      
+      // Optimistically update post state
+      setPosts(prev => prev.map(p => {
+        if (p.id === activeCommentPost.id) {
+          return { ...p, commentCount: (p.commentCount || 0) + 1 };
+        }
+        return p;
+      }));
+      setNewCommentText("");
+    } catch (err) {
+      console.error("Failed to add comment", err);
+    }
+    setSubmittingComment(false);
   };
 
   const openEditModal = (post) => {
@@ -394,6 +454,14 @@ export default function ShopFeed() {
                     </span> 
                     {post.likes?.length || 0}
                   </button>
+                  
+                  <button
+                    onClick={() => openCommentsModal(post)}
+                    style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", color: colors.textSecondary, fontSize: "13px", fontWeight: "700", padding: 0, marginLeft: "20px" }}
+                  >
+                    <span style={{ fontSize: "18px" }}>💬</span>
+                    {post.commentCount || 0}
+                  </button>
                 </div>
               </div>
             );
@@ -455,6 +523,64 @@ export default function ShopFeed() {
         </div>
       )}
 
+      {/* COMMENTS MODAL */}
+      {activeCommentPost && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 110, display: "flex", alignItems: "flex-end", animation: "ab-fade-in 0.2s ease-out" }} onClick={closeCommentsModal}>
+          <div style={{ background: colors.white, borderRadius: "28px 28px 0 0", width: "100%", padding: "0", maxHeight: "90vh", display: "flex", flexDirection: "column", animation: "ab-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards", boxShadow: "0 -4px 24px rgba(0,0,0,0.15)" }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: "1.5rem", borderBottom: `1px solid ${colors.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ fontWeight: "800", fontSize: "18px", color: colors.navy }}>Comments ({activeCommentPost.commentCount || 0})</div>
+              <button onClick={closeCommentsModal} style={{ background: colors.bg, border: "none", width: "32px", height: "32px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", cursor: "pointer", color: colors.textSecondary }}>×</button>
+            </div>
+            
+            <div style={{ padding: "1.5rem", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: "1.25rem", minHeight: "300px" }}>
+              {comments.length === 0 ? (
+                <div style={{ textAlign: "center", color: colors.textMuted, fontSize: "14px", marginTop: "2rem" }}>
+                  No comments yet. Be the first to comment!
+                </div>
+              ) : (
+                comments.map(comment => (
+                  <div key={comment.id} style={{ display: "flex", gap: "12px" }}>
+                    <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: (comment.userRole || "").toLowerCase() === "owner" ? colors.infoBg : colors.bg, color: (comment.userRole || "").toLowerCase() === "owner" ? colors.info : colors.textSecondary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: "800", flexShrink: 0, border: `1px solid ${colors.border}` }}>
+                      {getInitials(comment.userName || "U")}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                        <span style={{ fontWeight: "800", fontSize: "14px", color: colors.textPrimary }}>{comment.userName || "User"}</span>
+                        {(comment.userRole || "").toLowerCase() === "owner" && (
+                          <span style={{ fontSize: "10px", fontWeight: "800", background: colors.infoBg, color: colors.info, padding: "2px 6px", borderRadius: "8px", textTransform: "uppercase" }}>Shop Owner</span>
+                        )}
+                        <span style={{ fontSize: "11px", color: colors.textMuted }}>{timeAgo(comment.createdAt)}</span>
+                      </div>
+                      <div style={{ fontSize: "14px", color: colors.textSecondary, lineHeight: "1.5", whiteSpace: "pre-wrap" }}>
+                        {comment.text}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div style={{ padding: "1rem", borderTop: `1px solid ${colors.border}`, background: colors.white }}>
+              <div style={{ display: "flex", gap: "10px", alignItems: "flex-end" }}>
+                <textarea 
+                  value={newCommentText}
+                  onChange={(e) => setNewCommentText(e.target.value)}
+                  placeholder="Add a comment..."
+                  style={{ flex: 1, padding: "12px 16px", borderRadius: "20px", border: `1.5px solid ${colors.border}`, fontSize: "14px", background: "#f9fafb", color: colors.textPrimary, fontFamily: "inherit", boxSizing: "border-box", outline: "none", resize: "none", minHeight: "44px", maxHeight: "120px" }}
+                  rows={1}
+                />
+                <button 
+                  onClick={submitComment}
+                  disabled={submittingComment || !newCommentText.trim()}
+                  style={{ background: submittingComment || !newCommentText.trim() ? colors.bg : colors.blue, color: submittingComment || !newCommentText.trim() ? colors.textMuted : colors.white, border: "none", borderRadius: "50%", width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", cursor: submittingComment || !newCommentText.trim() ? "not-allowed" : "pointer", flexShrink: 0, transition: "background 0.2s" }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+              </div>
+            </div>
           </div>
+        </div>
+      )}
+    </div>
   );
 }
