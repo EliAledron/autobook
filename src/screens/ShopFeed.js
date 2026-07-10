@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, query, getDocs, updateDoc, doc, orderBy, arrayUnion, arrayRemove, deleteDoc, getDoc, serverTimestamp, where } from "firebase/firestore";
+import { collection, query, getDocs, updateDoc, doc, orderBy, arrayUnion, arrayRemove, deleteDoc, getDoc, serverTimestamp, where, limit, startAfter } from "firebase/firestore";
 import { sh, colors, getInitials, EmptyState, SharedSearchBar, SharedFilterSelect } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
@@ -55,6 +55,9 @@ export default function ShopFeed() {
   const [search, setSearch] = useState("");
   const [minRating, setMinRating] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [lastVisible, setLastVisible] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Edit post states
   const [editingPost, setEditingPost] = useState(null);
@@ -120,9 +123,18 @@ export default function ShopFeed() {
 
   const loadPosts = async () => {
     try {
-      const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+      const q = query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(20));
       const snap = await getDocs(q);
-      setPosts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      
+      const newPosts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setPosts(newPosts);
+      
+      if (snap.docs.length > 0) {
+        setLastVisible(snap.docs[snap.docs.length - 1]);
+        setHasMore(snap.docs.length === 20);
+      } else {
+        setHasMore(false);
+      }
     } catch (e) {
       // Fallback if index isn't ready
       try {
@@ -130,11 +142,34 @@ export default function ShopFeed() {
         const sorted = snap2.docs
           .map(d => ({ id: d.id, ...d.data() }))
           .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-        setPosts(sorted);
+        setPosts(sorted.slice(0, 20));
+        setHasMore(sorted.length > 20);
       } catch (e2) {
         setPosts([]);
       }
     }
+  };
+
+  const loadMorePosts = async () => {
+    if (!hasMore || loadingMore || !lastVisible) return;
+    setLoadingMore(true);
+    try {
+      const q = query(collection(db, "posts"), orderBy("createdAt", "desc"), startAfter(lastVisible), limit(20));
+      const snap = await getDocs(q);
+      
+      const newPosts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setPosts(prev => [...prev, ...newPosts]);
+      
+      if (snap.docs.length > 0) {
+        setLastVisible(snap.docs[snap.docs.length - 1]);
+        setHasMore(snap.docs.length === 20);
+      } else {
+        setHasMore(false);
+      }
+    } catch (e) {
+      console.error("Failed to load more posts", e);
+    }
+    setLoadingMore(false);
   };
 
   const toggleLike = async (post) => {
@@ -234,6 +269,11 @@ export default function ShopFeed() {
         {`
           @keyframes ab-fade-in { from { opacity: 0; } to { opacity: 1; } }
           @keyframes ab-slide-up { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+          @keyframes smooth-reveal { 
+            0% { opacity: 0; transform: translateY(10px); } 
+            100% { opacity: 1; transform: translateY(0); } 
+          }
+          .smooth-reveal { animation: smooth-reveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         `}
       </style>
 
@@ -273,15 +313,18 @@ export default function ShopFeed() {
         </div>
 
         {loading ? (
-          <SkeletonLoader count={3} type="card" />
+          <SkeletonLoader count={3} type="post" />
         ) : filteredPosts.length === 0 ? (
-          <EmptyState
-            icon="📰"
-            title={search || minRating > 0 ? "No matching posts found" : "No posts yet"}
-            subtitle={search || minRating > 0 ? "Try adjusting your search or rating filter." : "Check back later for shop announcements and promos!"}
-          />
+          <div className="smooth-reveal">
+            <EmptyState
+              icon="📰"
+              title={search || minRating > 0 ? "No matching posts found" : "No posts yet"}
+              subtitle={search || minRating > 0 ? "Try adjusting your search or rating filter." : "Check back later for shop announcements and promos!"}
+            />
+          </div>
         ) : (
-          filteredPosts.map(post => {
+          <div className="smooth-reveal">
+            {filteredPosts.map(post => {
             const hasLiked = post.likes?.includes(uid);
             const shopObj = shops.find(s => s.id === post.shopId || (s.ownerId && s.ownerId === post.ownerId) || (s.name && s.name === post.shopName) || (s.shortName && s.shortName === post.shopName));
             const targetShop = shopObj || { id: post.shopId || post.ownerId, name: post.shopName || "Shop", ownerId: post.ownerId };
@@ -354,7 +397,20 @@ export default function ShopFeed() {
                 </div>
               </div>
             );
-          })
+          })}
+          
+          {hasMore && (
+            <div style={{ display: "flex", justifyContent: "center", marginTop: "1rem", marginBottom: "2rem" }}>
+              <button 
+                onClick={loadMorePosts}
+                disabled={loadingMore}
+                style={{ ...sh.outlineBtn, width: "auto", padding: "12px 24px", fontSize: "14px", borderRadius: "20px" }}
+              >
+                {loadingMore ? "Loading..." : "Load More Posts"}
+              </button>
+            </div>
+          )}
+          </div>
         )}
       </div>
 
