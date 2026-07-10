@@ -245,7 +245,8 @@ export default function ShopFeed() {
       await addDoc(collection(db, "posts", activeCommentPost.id, "comments"), {
         text: newCommentText.trim(),
         userId: uid,
-        userName: currentUser?.name || "User",
+        userName: currentUser?.displayName || "User",
+        userPhoto: currentUser?.photoURL || "",
         userRole: currentUser?.role || "customer",
         createdAt: serverTimestamp()
       });
@@ -259,7 +260,7 @@ export default function ShopFeed() {
         await addDoc(collection(db, "notifications"), {
           userId: activeCommentPost.ownerId,
           title: "New Comment on your Post",
-          message: `${currentUser?.name || "Someone"} commented: "${newCommentText.trim().substring(0, 50)}${newCommentText.trim().length > 50 ? '...' : ''}"`,
+          message: `${currentUser?.displayName || "Someone"} commented: "${newCommentText.trim().substring(0, 50)}${newCommentText.trim().length > 50 ? '...' : ''}"`,
           type: "comment",
           read: false,
           createdAt: serverTimestamp()
@@ -552,8 +553,8 @@ export default function ShopFeed() {
               ) : (
                 comments.map(comment => (
                   <div key={comment.id} style={{ display: "flex", gap: "12px" }}>
-                    <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: (comment.userRole || "").toLowerCase() === "owner" ? colors.infoBg : colors.bg, color: (comment.userRole || "").toLowerCase() === "owner" ? colors.info : colors.textSecondary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: "800", flexShrink: 0, border: `1px solid ${colors.border}` }}>
-                      {getInitials(comment.userName || "U")}
+                    <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: comment.userPhoto ? `url(${comment.userPhoto}) center/cover` : ((comment.userRole || "").toLowerCase() === "owner" ? colors.infoBg : colors.bg), color: (comment.userRole || "").toLowerCase() === "owner" ? colors.info : colors.textSecondary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: "800", flexShrink: 0, border: `1px solid ${colors.border}` }}>
+                      {!comment.userPhoto && getInitials(comment.userName || "U")}
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
