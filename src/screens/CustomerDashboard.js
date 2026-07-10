@@ -238,13 +238,13 @@ export default function CustomerDashboard() {
       </div>
 
       {/* HERO */}
-      <div style={{ ...sh.hero, paddingBottom: "2.5rem", borderRadius: "0 0 24px 24px", marginBottom: "-1.5rem", position: "relative", zIndex: 1 }}>
+      <div style={{ ...sh.hero, paddingBottom: "2.5rem", borderRadius: "0 0 24px 24px", marginBottom: "0", position: "relative", zIndex: 1 }}>
         <div style={sh.rolePill}><div style={sh.roleDot} /><span style={sh.roleText}>Customer</span></div>
         <div style={{ fontSize: "24px", fontWeight: "800", color: "#fff", marginBottom: "0.25rem" }}>{getGreeting()}, {firstName}!</div>
         <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.8)" }}>Ready to book your next service?</div>
       </div>
 
-      <div style={{ ...sh.content, paddingTop: 0, position: "relative", zIndex: 2 }} className="stagger-slide-up">
+      <div style={{ ...sh.content, position: "relative", zIndex: 2 }} className="stagger-slide-up">
 
         {unreadCount > 0 && (
           <div className="customer-card" onClick={() => navigate("/customer/alerts")} style={{ background: colors.white, borderRadius: "16px", padding: "16px", marginBottom: "12px", display: "flex", alignItems: "center", gap: "14px", cursor: "pointer", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}` }}>

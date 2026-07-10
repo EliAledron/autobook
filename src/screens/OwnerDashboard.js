@@ -587,7 +587,7 @@ export default function OwnerDashboard({ user }) {
       </div>
 
       {/* HERO */}
-      <div style={{ ...sh.hero, paddingBottom: "2.5rem", borderRadius: "0 0 24px 24px", marginBottom: "-1.5rem", position: "relative", zIndex: 1 }}>
+      <div style={{ ...sh.hero, paddingBottom: "2.5rem", borderRadius: "0 0 24px 24px", marginBottom: "0", position: "relative", zIndex: 1 }}>
         <div style={sh.rolePill}>
           <div style={sh.roleDot} />
           <span style={sh.roleText}>{user?.role || "Owner"}{user?.shopName ? ` · ${user.shopName}` : ""}</span>
@@ -598,7 +598,7 @@ export default function OwnerDashboard({ user }) {
         </div>
       </div>
 
-      <div style={{ ...sh.content, paddingTop: 0, position: "relative", zIndex: 2 }} className="stagger-slide-up">
+      <div style={{ ...sh.content, position: "relative", zIndex: 2 }} className="stagger-slide-up">
 
         {/* ALERT BANNERS */}
         {!isAdmin && pendingRequests.length > 0 && (
