@@ -133,13 +133,17 @@ const saveUser = async (user, resolvedRole, namesObj, permitUrl = "", shopNameSt
 export default function Onboarding() {
   // null | "signup" | "login"
   const [drawerScreen, setDrawerScreen] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const navigate = useNavigate();
 
-  const openDrawer = (target) => setDrawerScreen(target);
-  const closeDrawer = () => setDrawerScreen(null);
-
-  const drawerOpen = drawerScreen !== null;
-
+  const openDrawer = (target) => {
+    setDrawerScreen(target);
+    setTimeout(() => setDrawerOpen(true), 10);
+  };
+  const closeDrawer = () => {
+    setDrawerOpen(false);
+    setTimeout(() => setDrawerScreen(null), 450); // wait for slide down animation
+  };
   return (
     <>
       <style>
@@ -801,7 +805,7 @@ const s = {
     minHeight: "100vh",
     overflow: "hidden",
     fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-    background: "#ffffff",
+    background: "#0f2640",
   },
 
   /* Drawer — slides up from bottom */
@@ -812,8 +816,9 @@ const s = {
   bottom: 0,
   willChange: "transform",
   height: "100%",
-  background: "#ffffff",
+  background: "#f5f7fa",
   borderRadius: "28px 28px 0 0",
+  overflow: "hidden",
   zIndex: 20,
   transform: "translateY(100%)",
   transition: "transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)",
