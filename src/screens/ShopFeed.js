@@ -65,6 +65,9 @@ export default function ShopFeed() {
   const [comments, setComments] = useState([]);
   const [newCommentText, setNewCommentText] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [replyingToComment, setReplyingToComment] = useState(null);
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editCommentText, setEditCommentText] = useState("");
 
   // Edit post states
   const [editingPost, setEditingPost] = useState(null);
@@ -236,6 +239,9 @@ export default function ShopFeed() {
     setActiveCommentPost(null);
     setComments([]);
     setNewCommentText("");
+    setReplyingToComment(null);
+    setEditingCommentId(null);
+    setEditCommentText("");
   };
 
   const submitComment = async () => {
@@ -248,6 +254,7 @@ export default function ShopFeed() {
         userName: userProfile?.displayName || userProfile?.firstName || "User",
         userPhoto: userProfile?.photoURL || userProfile?.profilePicture || "",
         userRole: userProfile?.role || "customer",
+        parentId: replyingToComment ? replyingToComment.id : null,
         createdAt: serverTimestamp()
       });
       // Increment commentCount on post
@@ -267,6 +274,18 @@ export default function ShopFeed() {
         });
       }
       
+      // Notify the parent comment owner if it's a reply
+      if (replyingToComment && replyingToComment.userId && replyingToComment.userId !== uid) {
+        await addDoc(collection(db, "notifications"), {
+          userId: replyingToComment.userId,
+          title: "New Reply to your Comment",
+          message: `${userProfile?.displayName || userProfile?.firstName || "Someone"} replied: "${newCommentText.trim().substring(0, 50)}${newCommentText.trim().length > 50 ? '...' : ''}"`,
+          type: "comment_reply",
+          read: false,
+          createdAt: serverTimestamp()
+        });
+      }
+      
       // Optimistically update post state
       setPosts(prev => prev.map(p => {
         if (p.id === activeCommentPost.id) {
@@ -275,10 +294,25 @@ export default function ShopFeed() {
         return p;
       }));
       setNewCommentText("");
+      setReplyingToComment(null);
     } catch (err) {
       console.error("Failed to add comment", err);
     }
     setSubmittingComment(false);
+  };
+
+  const handleEditCommentSubmit = async (commentId, postId) => {
+    if (!editCommentText.trim()) return;
+    try {
+      await updateDoc(doc(db, "posts", postId, "comments", commentId), {
+        text: editCommentText.trim(),
+        isEdited: true
+      });
+      setEditingCommentId(null);
+      setEditCommentText("");
+    } catch (err) {
+      console.error("Failed to edit comment:", err);
+    }
   };
 
   const handleDeleteComment = async (commentId, postId) => {
@@ -569,34 +603,85 @@ export default function ShopFeed() {
                   No comments yet. Be the first to comment!
                 </div>
               ) : (
-                comments.map(comment => (
-                  <div key={comment.id} style={{ display: "flex", gap: "12px" }}>
-                    <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: comment.userPhoto ? `url(${comment.userPhoto}) center/cover` : ((comment.userRole || "").toLowerCase() === "owner" ? colors.infoBg : colors.bg), color: (comment.userRole || "").toLowerCase() === "owner" ? colors.info : colors.textSecondary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: "800", flexShrink: 0, border: `1px solid ${colors.border}` }}>
-                      {!comment.userPhoto && getInitials(comment.userName || "U")}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                        <span style={{ fontWeight: "800", fontSize: "14px", color: colors.textPrimary }}>{comment.userName || "User"}</span>
-                        {(comment.userRole || "").toLowerCase() === "owner" && (
-                          <span style={{ fontSize: "10px", fontWeight: "800", background: colors.infoBg, color: colors.info, padding: "2px 6px", borderRadius: "8px", textTransform: "uppercase" }}>Shop Owner</span>
-                        )}
-                        <span style={{ fontSize: "11px", color: colors.textMuted }}>{timeAgo(comment.createdAt)}</span>
-                        {(comment.userId === uid || activeCommentPost?.ownerId === uid) && (
-                          <button onClick={() => handleDeleteComment(comment.id, activeCommentPost.id)} style={{ background: "none", border: "none", color: colors.textMuted, cursor: "pointer", fontSize: "12px", padding: "0 4px", marginLeft: "auto" }} title="Delete Comment">
-                            🗑️
-                          </button>
+                (() => {
+                  const topLevel = comments.filter(c => !c.parentId);
+                  const getReplies = (parentId) => comments.filter(c => c.parentId === parentId);
+                  
+                  const renderComment = (comment, isReply = false) => (
+                    <div key={comment.id} style={{ display: "flex", gap: "12px", marginTop: isReply ? "0" : "0" }}>
+                      <div style={{ width: isReply ? "28px" : "36px", height: isReply ? "28px" : "36px", borderRadius: "50%", background: comment.userPhoto ? `url(${comment.userPhoto}) center/cover` : ((comment.userRole || "").toLowerCase() === "owner" ? colors.infoBg : colors.bg), color: (comment.userRole || "").toLowerCase() === "owner" ? colors.info : colors.textSecondary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: isReply ? "12px" : "14px", fontWeight: "800", flexShrink: 0, border: `1px solid ${colors.border}` }}>
+                        {!comment.userPhoto && getInitials(comment.userName || "U")}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                          <span style={{ fontWeight: "800", fontSize: "14px", color: colors.textPrimary }}>{comment.userName || "User"}</span>
+                          {(comment.userRole || "").toLowerCase() === "owner" && (
+                            <span style={{ fontSize: "10px", fontWeight: "800", background: colors.infoBg, color: colors.info, padding: "2px 6px", borderRadius: "8px", textTransform: "uppercase" }}>Shop Owner</span>
+                          )}
+                          <span style={{ fontSize: "11px", color: colors.textMuted }}>{timeAgo(comment.createdAt)}{comment.isEdited ? " (edited)" : ""}</span>
+                          <div style={{ marginLeft: "auto", display: "flex", gap: "4px" }}>
+                            {comment.userId === uid && (
+                              <button onClick={() => { setEditingCommentId(comment.id); setEditCommentText(comment.text); }} style={{ background: "none", border: "none", color: colors.textMuted, cursor: "pointer", fontSize: "12px", padding: "0 4px" }} title="Edit Comment">
+                                ✏️
+                              </button>
+                            )}
+                            {(comment.userId === uid || activeCommentPost?.ownerId === uid) && (
+                              <button onClick={() => handleDeleteComment(comment.id, activeCommentPost.id)} style={{ background: "none", border: "none", color: colors.textMuted, cursor: "pointer", fontSize: "12px", padding: "0 4px" }} title="Delete Comment">
+                                🗑️
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        {editingCommentId === comment.id ? (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "4px" }}>
+                            <textarea 
+                              value={editCommentText} 
+                              onChange={e => setEditCommentText(e.target.value)} 
+                              style={{ width: "100%", padding: "8px", borderRadius: "8px", border: `1px solid ${colors.border}`, fontSize: "14px", fontFamily: "inherit", boxSizing: "border-box", resize: "none", background: "#fff", color: colors.textPrimary, outline: "none" }}
+                              rows={2}
+                            />
+                            <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                              <button onClick={() => { setEditingCommentId(null); setEditCommentText(""); }} style={{ background: "none", border: "none", color: colors.textMuted, fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>Cancel</button>
+                              <button onClick={() => handleEditCommentSubmit(comment.id, activeCommentPost.id)} disabled={!editCommentText.trim()} style={{ background: colors.primary, color: "#fff", border: "none", borderRadius: "6px", padding: "4px 12px", fontSize: "12px", fontWeight: "700", cursor: "pointer", opacity: !editCommentText.trim() ? 0.6 : 1 }}>Save</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div style={{ fontSize: "14px", color: colors.textSecondary, lineHeight: "1.5", whiteSpace: "pre-wrap" }}>
+                              {comment.text}
+                            </div>
+                            {!isReply && !editingCommentId && (
+                              <button onClick={() => setReplyingToComment(comment)} style={{ background: "none", border: "none", color: colors.textMuted, fontSize: "12px", fontWeight: "700", cursor: "pointer", padding: "0", marginTop: "4px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                                ↪ Reply
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
-                      <div style={{ fontSize: "14px", color: colors.textSecondary, lineHeight: "1.5", whiteSpace: "pre-wrap" }}>
-                        {comment.text}
-                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+
+                  return topLevel.map(comment => (
+                    <div key={comment.id} style={{ display: "flex", flexDirection: "column" }}>
+                      {renderComment(comment, false)}
+                      {getReplies(comment.id).length > 0 && (
+                        <div style={{ marginLeft: "36px", paddingLeft: "12px", borderLeft: `2px solid ${colors.border}`, marginTop: "12px", display: "flex", flexDirection: "column", gap: "12px" }}>
+                          {getReplies(comment.id).map(reply => renderComment(reply, true))}
+                        </div>
+                      )}
+                    </div>
+                  ));
+                })()
               )}
             </div>
 
             <div style={{ padding: "1rem", borderTop: `1px solid ${colors.border}`, background: colors.white }}>
+              {replyingToComment && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: colors.bg, borderRadius: "8px", marginBottom: "8px", fontSize: "12px", color: colors.textSecondary }}>
+                  <span>Replying to <strong style={{ color: colors.textPrimary }}>{replyingToComment.userName || "User"}</strong></span>
+                  <button onClick={() => setReplyingToComment(null)} style={{ background: "none", border: "none", color: colors.textMuted, cursor: "pointer", fontSize: "14px", padding: "0" }} title="Cancel Reply">×</button>
+                </div>
+              )}
               <div style={{ display: "flex", gap: "10px", alignItems: "flex-end" }}>
                 <textarea 
                   value={newCommentText}
