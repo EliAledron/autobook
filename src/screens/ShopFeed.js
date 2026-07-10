@@ -612,7 +612,9 @@ export default function ShopFeed() {
                 </div>
               ) : (
                 (() => {
-                  const topLevel = comments.filter(c => !c.parentId);
+                  const ownerComments = comments.filter(c => !c.parentId && (c.userId === activeCommentPost.ownerId || (c.userRole || "").toLowerCase() === "owner"));
+                  const pinnedOwnerComment = ownerComments.length > 0 ? ownerComments[ownerComments.length - 1] : null;
+                  const topLevel = comments.filter(c => !c.parentId && c.id !== pinnedOwnerComment?.id);
                   const getReplies = (parentId) => comments.filter(c => c.parentId === parentId);
                   
                   const renderComment = (comment, isReply = false) => (
@@ -673,16 +675,53 @@ export default function ShopFeed() {
                     </div>
                   );
 
-                  return topLevel.map(comment => (
-                    <div key={comment.id} style={{ display: "flex", flexDirection: "column" }}>
-                      {renderComment(comment, false)}
-                      {getReplies(comment.id).length > 0 && (
-                        <div style={{ marginLeft: "36px", paddingLeft: "12px", borderLeft: `2px solid ${colors.border}`, marginTop: "12px", display: "flex", flexDirection: "column", gap: "12px" }}>
-                          {getReplies(comment.id).map(reply => renderComment(reply, true))}
+                  return (
+                    <>
+                      {/* Pinned Owner Response */}
+                      {pinnedOwnerComment && (
+                        <div style={{ background: `linear-gradient(135deg, ${colors.navy}08, ${colors.navy}14)`, border: `1.5px solid ${colors.navy}30`, borderRadius: "16px", padding: "14px 16px", marginBottom: "4px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill={colors.navy} stroke={colors.navy} strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                            <span style={{ fontSize: "11px", fontWeight: "800", color: colors.navy, textTransform: "uppercase", letterSpacing: "0.6px" }}>Owner's Response</span>
+                          </div>
+                          <div style={{ display: "flex", gap: "10px" }}>
+                            <div style={{ width: "34px", height: "34px", borderRadius: "50%", background: pinnedOwnerComment.userPhoto ? `url(${pinnedOwnerComment.userPhoto}) center/cover` : colors.navy, backgroundSize: "cover", backgroundPosition: "center", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "800", flexShrink: 0, border: "2px solid #fff", boxShadow: "0 2px 8px rgba(26,58,92,0.2)" }}>
+                              {!pinnedOwnerComment.userPhoto && getInitials(pinnedOwnerComment.userName || "O")}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px" }}>
+                                <span style={{ fontWeight: "800", fontSize: "14px", color: colors.navy }}>{pinnedOwnerComment.userName || "Shop Owner"}</span>
+                                <span style={{ fontSize: "10px", fontWeight: "800", background: colors.navy, color: "#fff", padding: "2px 7px", borderRadius: "8px", textTransform: "uppercase", letterSpacing: "0.5px", flexShrink: 0 }}>Shop Owner</span>
+                              </div>
+                              <div style={{ fontSize: "11px", color: colors.textMuted, marginBottom: "6px" }}>{timeAgo(pinnedOwnerComment.createdAt)}{pinnedOwnerComment.isEdited ? " · edited" : ""}</div>
+                              <div style={{ fontSize: "14px", color: colors.textPrimary, lineHeight: "1.6", whiteSpace: "pre-wrap" }}>{pinnedOwnerComment.text}</div>
+                            </div>
+                          </div>
                         </div>
                       )}
-                    </div>
-                  ));
+
+                      {/* Regular Comments */}
+                      {topLevel.length > 0 && (
+                        <>
+                          {pinnedOwnerComment && topLevel.length > 0 && (
+                            <div style={{ fontSize: "11px", fontWeight: "700", color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.5px", paddingTop: "4px" }}>
+                              All Comments
+                            </div>
+                          )}
+                          {topLevel.map(comment => (
+                            <div key={comment.id} style={{ display: "flex", flexDirection: "column" }}>
+                              {renderComment(comment, false)}
+                              {getReplies(comment.id).length > 0 && (
+                                <div style={{ marginLeft: "36px", paddingLeft: "12px", borderLeft: `2px solid ${colors.border}`, marginTop: "12px", display: "flex", flexDirection: "column", gap: "12px" }}>
+                                  {getReplies(comment.id).map(reply => renderComment(reply, true))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </>
+                      )}
+                    </>
+                  );
                 })()
               )}
             </div>
