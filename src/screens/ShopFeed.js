@@ -659,7 +659,7 @@ export default function ShopFeed() {
                           </div>
                         ) : (
                           <>
-                            <div style={{ fontSize: "14px", color: colors.textSecondary, lineHeight: "1.5", whiteSpace: "pre-wrap" }}>
+                            <div style={{ fontSize: "14px", color: colors.textPrimary, lineHeight: "1.6", whiteSpace: "pre-wrap" }}>
                               {comment.text}
                             </div>
                             {!isReply && !editingCommentId && (
