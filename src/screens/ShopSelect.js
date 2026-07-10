@@ -79,7 +79,7 @@ export default function ShopSelect() {
         <div style={sh.heroSub}>Select which auto shop you'd like to book with.</div>
       </div>
 
-      <div style={sh.content}>
+      <div style={sh.content} className="stagger-slide-up">
         <div style={{ ...sh.sectionLabel, fontSize: "13px", color: colors.textPrimary, letterSpacing: "0.5px", marginBottom: "1rem" }}>Available shops</div>
 
         {/* SEARCH & FILTER */}

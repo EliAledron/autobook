@@ -374,7 +374,7 @@ export default function Profile() {
         </div>
       </div>
 
-      <div style={sh.content}>
+      <div style={sh.content} className="stagger-slide-up">
 
         {/* ERROR */}
         {error && (

@@ -662,7 +662,7 @@ export default function AdminBookings() {
         <div style={sh.heroSub}>Monitor, reassign, and manage all bookings.</div>
       </div>
 
-      <div style={sh.content}>
+      <div style={sh.content} className="stagger-slide-up">
         {/* STATS */}
         <div style={sh.sectionLabel}>Overview</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px", marginBottom: "1rem" }}>

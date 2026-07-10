@@ -362,7 +362,7 @@ export default function StrategicCheckup() {
         </div>
       </div>
 
-      <div style={{ ...sh.content, position: "relative", zIndex: 2 }}>
+      <div style={{ ...sh.content, position: "relative", zIndex: 2 }} className="stagger-slide-up">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "12px", marginBottom: "2rem" }}>
           {SYMPTOMS.map((s, idx) => {
             const isSelected = selected.includes(s.id);

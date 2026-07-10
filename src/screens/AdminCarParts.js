@@ -207,7 +207,7 @@ export default function AdminCarParts() {
         </div>
       </div>
 
-      <div style={sh.content}>
+      <div style={sh.content} className="stagger-slide-up">
 
         {/* SEARCH */}
         <div style={{ position: "relative", marginBottom: "0.75rem" }}>

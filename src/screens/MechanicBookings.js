@@ -158,7 +158,7 @@ export default function MechanicBookings() {
         </div>
       </div>
 
-      <div style={sh.content}>
+      <div style={sh.content} className="stagger-slide-up">
 
         {/* STATS ROW */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "1.25rem" }}>

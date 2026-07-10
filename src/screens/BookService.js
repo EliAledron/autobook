@@ -204,7 +204,7 @@ export default function BookService() {
         <div style={sh.heroSub}>{shop?.name}</div>
       </div>
 
-      <div style={sh.content}>
+      <div style={sh.content} className="stagger-slide-up">
         {error && (
           <div style={{ background: colors.dangerBg, border: `1px solid ${colors.danger}`, borderRadius: "12px", padding: "10px 14px", fontSize: "13px", color: colors.danger, marginBottom: "1rem" }}>
             {error}

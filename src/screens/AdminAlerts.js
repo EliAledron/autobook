@@ -273,7 +273,7 @@ export default function AdminAlerts() {
         </div>
       </div>
 
-      <div style={sh.content}>
+      <div style={sh.content} className="stagger-slide-up">
         {loading ? (
           <SkeletonLoader count={3} type="card" />
         ) : alerts.length === 0 ? (

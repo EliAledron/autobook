@@ -204,7 +204,7 @@ export default function BookingHistory() {
         <div style={sh.heroSub}>Track all your service appointments.</div>
       </div>
 
-      <div style={sh.content}>
+      <div style={sh.content} className="stagger-slide-up">
         {/* BOOK AGAIN CTA */}
         <button onClick={() => navigate("/customer/shop-select")} style={{ ...sh.primaryBtn, padding: "16px", borderRadius: "16px", fontSize: "15px", boxShadow: "0 8px 20px rgba(42,82,152,0.25)", marginBottom: "1.5rem" }}>
           + Book a New Service

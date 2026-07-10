@@ -252,7 +252,7 @@ export default function ShopFeed() {
         <div style={sh.heroSub}>Discover promos, news, and updates from autoshops.</div>
       </div>
 
-      <div style={sh.content}>
+      <div style={sh.content} className="stagger-slide-up">
         {/* SEARCH & FILTER */}
         <div style={{ display: "flex", gap: "10px", marginBottom: "1.5rem" }}>
           <div style={{ position: "relative", flex: 1 }}>

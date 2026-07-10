@@ -154,7 +154,7 @@ export default function AdminReviews() {
         <div style={sh.heroSub}>See what customers are saying about your services.</div>
       </div>
 
-      <div style={sh.content}>
+      <div style={sh.content} className="stagger-slide-up">
         {loading ? (
           <SkeletonLoader count={3} type="card" />
         ) : (

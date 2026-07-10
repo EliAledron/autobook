@@ -145,7 +145,7 @@ export default function MyVehicles() {
         <div style={sh.heroSub}>Manage your registered cars.</div>
       </div>
 
-      <div style={sh.content}>
+      <div style={sh.content} className="stagger-slide-up">
         {loading ? (
           <div style={{ padding: "40px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>Loading...</div>
         ) : showForm ? (

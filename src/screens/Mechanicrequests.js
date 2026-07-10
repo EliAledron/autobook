@@ -323,7 +323,7 @@ export default function MechanicRequests() {
         </div>
       </div>
 
-      <div style={sh.content}>
+      <div style={sh.content} className="stagger-slide-up">
 
         {/* STATS */}
         <div style={sh.sectionLabel}>Overview</div>

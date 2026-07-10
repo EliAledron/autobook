@@ -251,7 +251,7 @@ export default function AdminUsers() {
         <div style={sh.heroSub}>Approve, reject, and manage system accounts.</div>
       </div>
 
-      <div style={sh.content}>
+      <div style={sh.content} className="stagger-slide-up">
 
         {/* STATS */}
         <div style={sh.sectionLabel}>Overview</div>
