@@ -4,6 +4,7 @@ import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, getDocs, updateDoc, doc, orderBy, arrayUnion, arrayRemove, deleteDoc, getDoc, serverTimestamp, where, limit, startAfter, onSnapshot, increment, addDoc } from "firebase/firestore";
 import { sh, colors, getInitials, EmptyState, SharedSearchBar, SharedFilterSelect } from "./dashboardShared";
+import { useUser } from "../UserContext";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
 
@@ -49,7 +50,7 @@ function timeAgo(timestamp) {
 export default function ShopFeed() {
   const navigate = useNavigate();
   const [uid, setUid] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
+  const { userProfile } = useUser();
   const [posts, setPosts] = useState([]);
   const [shops, setShops] = useState([]);
   const [search, setSearch] = useState("");
@@ -78,8 +79,7 @@ export default function ShopFeed() {
       if (!u) { navigate("/login"); return; }
       setUid(u.uid);
       try {
-        const snap = await getDoc(doc(db, "users", u.uid));
-        if (snap.exists()) setCurrentUser(snap.data());
+        // We now rely on userProfile from UserContext for user data
       } catch (e) {}
       await Promise.all([loadPosts(), loadShops()]);
       setLoading(false);
@@ -245,9 +245,9 @@ export default function ShopFeed() {
       await addDoc(collection(db, "posts", activeCommentPost.id, "comments"), {
         text: newCommentText.trim(),
         userId: uid,
-        userName: currentUser?.displayName || "User",
-        userPhoto: currentUser?.photoURL || "",
-        userRole: currentUser?.role || "customer",
+        userName: userProfile?.displayName || userProfile?.firstName || "User",
+        userPhoto: userProfile?.photoURL || userProfile?.profilePicture || "",
+        userRole: userProfile?.role || "customer",
         createdAt: serverTimestamp()
       });
       // Increment commentCount on post
@@ -260,7 +260,7 @@ export default function ShopFeed() {
         await addDoc(collection(db, "notifications"), {
           userId: activeCommentPost.ownerId,
           title: "New Comment on your Post",
-          message: `${currentUser?.displayName || "Someone"} commented: "${newCommentText.trim().substring(0, 50)}${newCommentText.trim().length > 50 ? '...' : ''}"`,
+          message: `${userProfile?.displayName || userProfile?.firstName || "Someone"} commented: "${newCommentText.trim().substring(0, 50)}${newCommentText.trim().length > 50 ? '...' : ''}"`,
           type: "comment",
           read: false,
           createdAt: serverTimestamp()
@@ -323,7 +323,7 @@ export default function ShopFeed() {
     setSavingEdit(false);
   };
 
-  const role = currentUser?.role?.toLowerCase();
+  const role = userProfile?.role?.toLowerCase();
 
   // Filter posts based on the search input
   const filteredPosts = posts.filter((post) => {
@@ -433,7 +433,7 @@ export default function ShopFeed() {
                       </div>
                     </div>
                   </div>
-                  {((currentUser?.shopId && currentUser.shopId === post.shopId) || post.ownerId === uid) && (
+                  {((userProfile?.shopId && userProfile.shopId === post.shopId) || post.ownerId === uid) && (
                     <div style={{ display: "flex", gap: "8px" }}>
                       <button onClick={() => openEditModal(post)} style={{ background: "none", border: "none", color: colors.textMuted, cursor: "pointer", fontSize: "16px", padding: "4px" }} title="Edit Post">
                         ✏️
