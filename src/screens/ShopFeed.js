@@ -68,6 +68,7 @@ export default function ShopFeed() {
   const [replyingToComment, setReplyingToComment] = useState(null);
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editCommentText, setEditCommentText] = useState("");
+  const [copiedPostId, setCopiedPostId] = useState(null);
 
   // Edit post states
   const [editingPost, setEditingPost] = useState(null);
@@ -355,6 +356,29 @@ export default function ShopFeed() {
     }
   };
 
+  const handleSharePost = async (post) => {
+    const shopName = shops.find(s => s.id === post.shopId)?.name || "AutoBook Shop";
+    const shareText = `${shopName}: ${(post.content || "").substring(0, 100)}${post.content?.length > 100 ? "..." : ""}`;
+    const shareUrl = `${window.location.origin}${window.location.pathname}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: shopName, text: shareText, url: shareUrl });
+      } catch (e) {
+        // User cancelled — do nothing
+      }
+    } else {
+      // Fallback: copy link to clipboard
+      try {
+        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+        setCopiedPostId(post.id);
+        setTimeout(() => setCopiedPostId(null), 2000);
+      } catch (e) {
+        console.error("Failed to copy:", e);
+      }
+    }
+  };
+
   const openEditModal = (post) => {
     setEditingPost(post);
     setEditContent(post.content || "");
@@ -550,6 +574,25 @@ export default function ShopFeed() {
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                     </span>
                     {post.commentCount || 0}
+                  </button>
+
+                  {/* Share button — pushed to the right */}
+                  <button
+                    onClick={() => handleSharePost(post)}
+                    style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", color: copiedPostId === post.id ? colors.navy : colors.textSecondary, fontSize: "13px", fontWeight: "700", padding: 0, marginLeft: "auto", position: "relative", transition: "color 0.2s" }}
+                    title="Share post"
+                  >
+                    {copiedPostId === post.id ? (
+                      <span style={{ fontSize: "12px", fontWeight: "700", color: colors.navy }}>Copied!</span>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="18" cy="5" r="3"></circle>
+                        <circle cx="6" cy="12" r="3"></circle>
+                        <circle cx="18" cy="19" r="3"></circle>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                      </svg>
+                    )}
                   </button>
                 </div>
               </div>
