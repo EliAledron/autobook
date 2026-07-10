@@ -18,14 +18,28 @@ input, button, select, textarea {
 
 /* Mobile tap feedback — universally applied to buttons and interactive cards */
 button:active:not(:disabled), 
-.touch-feedback:active {
+.touch-feedback:active,
+[style*="cursor: pointer"]:active,
+[style*="cursor:pointer"]:active,
+.customer-card:active,
+.owner-card:active,
+.admin-card:active,
+.mechanic-card:active,
+.clickable:active {
   transform: scale(0.96) !important;
   transition: transform 0.05s ease !important; /* Extremely fast for instant touch feedback */
 }
 
 /* Ensure smooth return animation when touch is released */
 button:not(:disabled),
-.touch-feedback {
+.touch-feedback,
+[style*="cursor: pointer"],
+[style*="cursor:pointer"],
+.customer-card,
+.owner-card,
+.admin-card,
+.mechanic-card,
+.clickable {
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform;
 }
