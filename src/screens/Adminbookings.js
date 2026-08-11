@@ -149,6 +149,7 @@ export default function AdminBookings() {
   const [currentShop, setCurrentShop] = useState(null);
   const [dailyCapacity, setDailyCapacity] = useState(8);
   const [savingCapacity, setSavingCapacity] = useState(false);
+  const [viewMode, setViewMode] = useState("cards");
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -593,14 +594,14 @@ export default function AdminBookings() {
           {b.serviceType || "Service"}
         </div>
         <div style={{ fontSize: "13px", color: colors.textSecondary, display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-          <span style={{ fontSize: "14px" }}>👤</span> {getCustomerName(b)}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> {getCustomerName(b)}
         </div>
         <div style={{ fontSize: "13px", color: colors.textSecondary, display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-          <span style={{ fontSize: "14px" }}>📅</span> {b.date || "No date"} {b.time && `• ${b.time}`}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> {b.date || "No date"} {b.time && `• ${b.time}`}
         </div>
         {b.vehicleLabel && (
           <div style={{ fontSize: "13px", color: colors.textSecondary, display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "14px" }}>🚗</span> {b.vehicleLabel}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 11l2-6h10l2 6v6h-2v2h-2v-2H9v2H7v-2H5z"></path><circle cx="8" cy="14" r="1"></circle><circle cx="16" cy="14" r="1"></circle></svg> {b.vehicleLabel}
           </div>
         )}
       </div>
@@ -616,7 +617,7 @@ export default function AdminBookings() {
           </div>
         ) : (
           <div style={{ fontSize: "11px", color: colors.warning, fontWeight: "800", display: "flex", alignItems: "center", gap: "6px", background: colors.warningBg, padding: "4px 10px", borderRadius: "8px", border: `1px solid ${colors.warning}40`, animation: "pulse-warning 2s infinite" }}>
-            <span style={{ fontSize: "14px" }}>⚠️</span> Needs Mechanic
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Needs Mechanic
           </div>
         )}
         <div style={{ fontSize: "11px", color: colors.textMuted, fontWeight: "600" }}>{timeAgo(b.createdAt)}</div>
@@ -737,11 +738,10 @@ export default function AdminBookings() {
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <input 
-                type="number" 
+                type="text" 
                 style={{ width: "64px", padding: "8px 12px", borderRadius: "10px", border: `1.5px solid ${colors.border}`, outline: "none", fontSize: "14px", fontWeight: "700", textAlign: "center", color: colors.textPrimary }} 
                 value={dailyCapacity} 
-                onChange={(e) => setDailyCapacity(e.target.value)} 
-                min="1" 
+                onChange={(e) => setDailyCapacity(e.target.value.replace(/[^0-9]/g, ''))} 
               />
               <button 
                 onClick={handleSaveCapacity} 
@@ -888,8 +888,18 @@ export default function AdminBookings() {
         </div>
 
         {/* BOOKINGS LIST */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "10px" }}>
           <div style={{...sh.sectionLabel, marginBottom: 0}}>Bookings ({filtered.length})</div>
+          <div style={{ display: "flex", background: colors.bg, borderRadius: "10px", padding: "4px" }}>
+            <button onClick={() => setViewMode("cards")} style={{ border: "none", background: viewMode === "cards" ? colors.white : "transparent", color: viewMode === "cards" ? colors.navy : colors.textSecondary, padding: "6px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: "700", cursor: "pointer", boxShadow: viewMode === "cards" ? "0 2px 8px rgba(0,0,0,0.05)" : "none", transition: "all 0.2s", display: "flex", alignItems: "center", gap: "6px" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              Cards
+            </button>
+            <button onClick={() => setViewMode("table")} style={{ border: "none", background: viewMode === "table" ? colors.white : "transparent", color: viewMode === "table" ? colors.navy : colors.textSecondary, padding: "6px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: "700", cursor: "pointer", boxShadow: viewMode === "table" ? "0 2px 8px rgba(0,0,0,0.05)" : "none", transition: "all 0.2s", display: "flex", alignItems: "center", gap: "6px" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+              Table
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -900,6 +910,68 @@ export default function AdminBookings() {
             title="No bookings found"
             subtitle="There are no bookings matching your current filter criteria."
           />
+        ) : viewMode === "table" ? (
+          <div style={{ overflowX: "auto", borderRadius: "16px", border: `1px solid ${colors.border}`, background: colors.white }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "800px" }}>
+              <thead style={{ background: colors.bg, borderBottom: `2px solid ${colors.border}` }}>
+                <tr>
+                  <th style={{ padding: "14px 16px", textAlign: "left", fontSize: "12px", color: colors.textSecondary, fontWeight: "800", textTransform: "uppercase" }}>Customer & Service</th>
+                  <th style={{ padding: "14px 16px", textAlign: "left", fontSize: "12px", color: colors.textSecondary, fontWeight: "800", textTransform: "uppercase" }}>Schedule</th>
+                  <th style={{ padding: "14px 16px", textAlign: "left", fontSize: "12px", color: colors.textSecondary, fontWeight: "800", textTransform: "uppercase" }}>Vehicle</th>
+                  <th style={{ padding: "14px 16px", textAlign: "left", fontSize: "12px", color: colors.textSecondary, fontWeight: "800", textTransform: "uppercase" }}>Mechanic / Price</th>
+                  <th style={{ padding: "14px 16px", textAlign: "left", fontSize: "12px", color: colors.textSecondary, fontWeight: "800", textTransform: "uppercase" }}>Status</th>
+                  <th style={{ padding: "14px 16px", textAlign: "right", fontSize: "12px", color: colors.textSecondary, fontWeight: "800", textTransform: "uppercase" }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {displayData.map(b => (
+                  <tr key={b.id} style={{ borderBottom: `1px solid ${colors.border}`, transition: "background 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = colors.bg} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                    <td style={{ padding: "16px", verticalAlign: "middle" }}>
+                      <div style={{ fontWeight: "800", color: colors.textPrimary, fontSize: "14px", marginBottom: "6px" }}>{b.serviceType}</div>
+                      <div style={{ fontSize: "13px", color: colors.textSecondary, display: "flex", alignItems: "center", gap: "6px" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        {getCustomerName(b)}
+                      </div>
+                    </td>
+                    <td style={{ padding: "16px", verticalAlign: "middle" }}>
+                      <div style={{ fontSize: "13px", color: colors.textPrimary, fontWeight: "700", display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        {b.date || "N/A"}
+                      </div>
+                      <div style={{ fontSize: "13px", color: colors.textSecondary, display: "flex", alignItems: "center", gap: "6px", fontWeight: "600" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        {b.time || "N/A"}
+                      </div>
+                    </td>
+                    <td style={{ padding: "16px", verticalAlign: "middle" }}>
+                      <div style={{ fontSize: "13px", color: colors.textPrimary, fontWeight: "600", display: "flex", alignItems: "center", gap: "6px" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 11l2-6h10l2 6v6h-2v2h-2v-2H9v2H7v-2H5z"></path><circle cx="8" cy="14" r="1"></circle><circle cx="16" cy="14" r="1"></circle></svg>
+                        {b.vehicleLabel ? b.vehicleLabel.split('(')[0].trim() : "Unknown"}
+                      </div>
+                    </td>
+                    <td style={{ padding: "16px", verticalAlign: "middle" }}>
+                      <div style={{ fontSize: "13px", fontWeight: "800", color: b.mechanicId ? colors.navy : colors.warning, marginBottom: "6px" }}>
+                        {b.mechanicId ? getMechanicName(b.mechanicId, b.mechanicName) : "⚠ Unassigned"}
+                      </div>
+                      <div style={{ fontSize: "13px", fontWeight: "800", color: b.price !== undefined ? colors.success : colors.danger }}>
+                        {b.price !== undefined ? (String(b.price).includes('-') || String(b.price).includes('+') ? `₱${b.price}` : `₱${Number(b.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`) : "⚠ Needs Price"}
+                      </div>
+                    </td>
+                    <td style={{ padding: "16px", verticalAlign: "middle" }}>
+                      <span style={{ display: "inline-block", padding: "6px 12px", borderRadius: "8px", fontSize: "12px", fontWeight: "800", background: (b.status === "Pending" ? colors.warningBg : b.status === "In Progress" ? colors.infoBg : b.status === "Completed" ? colors.successBg : colors.dangerBg), color: (b.status === "Pending" ? colors.warning : b.status === "In Progress" ? colors.info : b.status === "Completed" ? colors.success : colors.danger) }}>
+                        {b.status || "Pending"}
+                      </span>
+                    </td>
+                    <td style={{ padding: "16px", verticalAlign: "middle", textAlign: "right" }}>
+                      <button onClick={() => setSelected(b)} style={{ background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", border: "none", padding: "6px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: "700", cursor: "pointer", transition: "all 0.2s ease", boxShadow: "0 2px 8px rgba(26,58,92,0.25)" }} onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(26,58,92,0.35)"; }} onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(26,58,92,0.25)"; }}>
+                        Manage
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "16px" }}>
             {displayData.map((b) => renderBookingCard(b))}

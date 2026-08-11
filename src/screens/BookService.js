@@ -419,11 +419,7 @@ export default function BookService() {
 
           <div>
             <div style={{ fontSize: "11px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>Select Time *</div>
-            <div className="time-scroll-container" style={{ 
-              display: "flex", overflowX: "auto", gap: "10px", paddingBottom: "12px", 
-              scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" 
-            }}>
-              <style>{`.time-scroll-container::-webkit-scrollbar { display: none; }`}</style>
+            <div>
               {(() => {
                 const allSlots = ["08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM"];
                 const today = new Date();
@@ -452,26 +448,50 @@ export default function BookService() {
                   return <div style={{ fontSize: "13px", color: colors.textSecondary, padding: "12px 0" }}>No more available times for today.</div>;
                 }
 
-                return filteredSlots.map((t) => {
+                const morningSlots = filteredSlots.filter(t => t.includes("AM") || t.startsWith("12:00 PM"));
+                const afternoonSlots = filteredSlots.filter(t => t.includes("PM") && !t.startsWith("12:00 PM"));
+
+                const renderSlotBtn = (t) => {
                   const isSelected = time === t;
                   return (
                     <button
                       key={t}
                       onClick={() => setTime(t)}
                       style={{
-                        flexShrink: 0, padding: "12px 20px", borderRadius: "14px", fontSize: "13px",
+                        padding: "10px", borderRadius: "10px", fontSize: "13px",
                         fontWeight: "700", cursor: "pointer", fontFamily: "inherit",
-                        background: isSelected ? `linear-gradient(135deg, ${colors.navy}, ${colors.blue})` : colors.white,
+                        background: isSelected ? `linear-gradient(135deg, ${colors.navy}, ${colors.blue})` : colors.bg,
                         color: isSelected ? "#fff" : colors.textPrimary,
-                        border: isSelected ? "none" : `1.5px solid ${colors.border}`,
-                        boxShadow: isSelected ? "0 4px 12px rgba(26,58,92,0.25)" : "0 2px 4px rgba(0,0,0,0.02)",
-                        transition: "all 0.2s ease",
+                        border: isSelected ? "none" : `1px solid ${colors.border}`,
+                        boxShadow: isSelected ? "0 4px 12px rgba(26,58,92,0.25)" : "none",
+                        transition: "all 0.2s ease", width: "100%", textAlign: "center"
                       }}
                     >
                       {t}
                     </button>
                   );
-                });
+                };
+
+                return (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                    {morningSlots.length > 0 && (
+                      <div>
+                        <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "600", marginBottom: "10px" }}>Morning</div>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: "8px" }}>
+                          {morningSlots.map(renderSlotBtn)}
+                        </div>
+                      </div>
+                    )}
+                    {afternoonSlots.length > 0 && (
+                      <div>
+                        <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "600", marginBottom: "10px" }}>Afternoon</div>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: "8px" }}>
+                          {afternoonSlots.map(renderSlotBtn)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
               })()}
             </div>
           </div>
