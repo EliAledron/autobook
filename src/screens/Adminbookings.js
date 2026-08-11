@@ -1190,20 +1190,14 @@ export default function AdminBookings() {
                   )}
                   <div style={{ position: "relative" }}>
                     <span style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", fontSize: "15px", fontWeight: "700", color: colors.textSecondary }}>₱</span>
-                    <select
-                      value={newPrice} onChange={(e) => setNewPrice(e.target.value)}
+                    <input
+                      type="text"
+                      placeholder="e.g. 500"
+                      value={newPrice} onChange={(e) => setNewPrice(e.target.value.replace(/[^0-9]/g, ''))}
                       style={{ ...inputStyle, paddingLeft: "36px" }}
                       onFocus={(e) => { e.target.style.border = `1.5px solid ${colors.blue}`; e.target.style.backgroundColor = colors.white; e.target.style.boxShadow = "0 4px 12px rgba(42,82,152,0.1)"; }}
                       onBlur={(e) => { e.target.style.border = `1.5px solid ${colors.border}`; e.target.style.backgroundColor = "#f9fafb"; e.target.style.boxShadow = "none"; }}
-                    >
-                      <option value="">Select a price range</option>
-                      <option value="100-200">100 - 200</option>
-                      <option value="200-500">200 - 500</option>
-                      <option value="500-1000">500 - 1,000</option>
-                      <option value="1000-2000">1,000 - 2,000</option>
-                      <option value="2000-5000">2,000 - 5,000</option>
-                      <option value="5000+">5,000+</option>
-                    </select>
+                    />
                   </div>
                 </>
               )}

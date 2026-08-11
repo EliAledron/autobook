@@ -115,6 +115,15 @@ export default function BookService() {
     const vehicle = vehicles.find((v) => v.id === vehicleId);
 
     try {
+      // Real-time concurrency check to prevent double bookings race condition
+      const existingSnap = await getDocs(query(collection(db, "bookings"), where("shopId", "==", shop.id), where("date", "==", date), where("time", "==", time)));
+      const activeBookings = existingSnap.docs.map(d => d.data()).filter(b => (b.status || "Pending").toLowerCase() !== "cancelled");
+      if (activeBookings.length > 0) {
+        setError("Sorry, this time slot was just booked by another customer. Please choose a different time.");
+        setSaving(false);
+        return;
+      }
+
       let imageUrl = null;
       if (issuePhotoFile) {
         imageUrl = await uploadToCloudinary(issuePhotoFile);
@@ -415,26 +424,55 @@ export default function BookService() {
               scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" 
             }}>
               <style>{`.time-scroll-container::-webkit-scrollbar { display: none; }`}</style>
-              {["08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM"].map((t) => {
-                const isSelected = time === t;
-                return (
-                  <button
-                    key={t}
-                    onClick={() => setTime(t)}
-                    style={{
-                      flexShrink: 0, padding: "12px 20px", borderRadius: "14px", fontSize: "13px",
-                      fontWeight: "700", cursor: "pointer", fontFamily: "inherit",
-                      background: isSelected ? `linear-gradient(135deg, ${colors.navy}, ${colors.blue})` : colors.white,
-                      color: isSelected ? "#fff" : colors.textPrimary,
-                      border: isSelected ? "none" : `1.5px solid ${colors.border}`,
-                      boxShadow: isSelected ? "0 4px 12px rgba(26,58,92,0.25)" : "0 2px 4px rgba(0,0,0,0.02)",
-                      transition: "all 0.2s ease",
-                    }}
-                  >
-                    {t}
-                  </button>
-                );
-              })}
+              {(() => {
+                const allSlots = ["08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM"];
+                const today = new Date();
+                const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                
+                const alreadyBookedTimes = shopBookings
+                  .filter((b) => b.date === date)
+                  .map((b) => b.time);
+                
+                const filteredSlots = allSlots.filter((t) => {
+                  if (alreadyBookedTimes.includes(t)) return false; // Filter out already booked slots
+                  
+                  if (date !== todayStr) return true;
+                  const [timePart, modifier] = t.split(" ");
+                  let [hours, minutes] = timePart.split(":");
+                  hours = parseInt(hours, 10);
+                  if (modifier === "PM" && hours !== 12) hours += 12;
+                  if (modifier === "AM" && hours === 12) hours = 0;
+                  
+                  const slotTime = new Date();
+                  slotTime.setHours(hours, parseInt(minutes, 10), 0, 0);
+                  return slotTime > today;
+                });
+
+                if (filteredSlots.length === 0) {
+                  return <div style={{ fontSize: "13px", color: colors.textSecondary, padding: "12px 0" }}>No more available times for today.</div>;
+                }
+
+                return filteredSlots.map((t) => {
+                  const isSelected = time === t;
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => setTime(t)}
+                      style={{
+                        flexShrink: 0, padding: "12px 20px", borderRadius: "14px", fontSize: "13px",
+                        fontWeight: "700", cursor: "pointer", fontFamily: "inherit",
+                        background: isSelected ? `linear-gradient(135deg, ${colors.navy}, ${colors.blue})` : colors.white,
+                        color: isSelected ? "#fff" : colors.textPrimary,
+                        border: isSelected ? "none" : `1.5px solid ${colors.border}`,
+                        boxShadow: isSelected ? "0 4px 12px rgba(26,58,92,0.25)" : "0 2px 4px rgba(0,0,0,0.02)",
+                        transition: "all 0.2s ease",
+                      }}
+                    >
+                      {t}
+                    </button>
+                  );
+                });
+              })()}
             </div>
           </div>
         </div>
