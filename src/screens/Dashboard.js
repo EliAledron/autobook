@@ -32,6 +32,11 @@ export default function Dashboard() {
       if (snap.exists()) {
         const data = snap.data();
 
+        if (data.status === "restricted") {
+          navigate("/restricted");
+          return;
+        }
+
         if (data.status !== "approved") {
           navigate("/pending");
           return;

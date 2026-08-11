@@ -238,7 +238,15 @@ export default function CustomerDashboard() {
       </div>
 
       {/* HERO */}
-      <div style={{ ...sh.hero, paddingBottom: "2.5rem", borderRadius: "0 0 24px 24px", marginBottom: "0", position: "relative", zIndex: 1 }}>
+      <div style={{ ...sh.hero, paddingBottom: "2.5rem", borderRadius: "0 0 24px 24px", marginBottom: "0", position: "relative", zIndex: 1, overflow: "hidden" }}>
+        {/* Decorative icons */}
+        <div style={{ position: "absolute", right: "-20px", top: "-20px", opacity: 0.08, transform: "rotate(30deg)", userSelect: "none", pointerEvents: "none" }}>
+          <svg width="140" height="140" viewBox="0 0 24 24" fill="#fff"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+        </div>
+        <div style={{ position: "absolute", right: "70px", bottom: "-30px", opacity: 0.05, transform: "rotate(-15deg)", userSelect: "none", pointerEvents: "none" }}>
+          <svg width="100" height="100" viewBox="0 0 24 24" fill="#fff"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+        </div>
+
         <div style={sh.rolePill}><div style={sh.roleDot} /><span style={sh.roleText}>Customer</span></div>
         <div style={{ fontSize: "24px", fontWeight: "800", color: "#fff", marginBottom: "0.25rem" }}>{getGreeting()}, {firstName}!</div>
         <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.8)" }}>Ready to book your next service?</div>

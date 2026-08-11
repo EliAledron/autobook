@@ -62,7 +62,7 @@ export function UserProvider({ children }) {
               bookingsUnsub = onSnapshot(bQuery, (snap) => setPendingBookingsCount(snap.size));
 
               if (role === "admin") {
-                const aQuery = query(collection(db, "adminAlerts"), where("type", "==", "new_user"), where("read", "==", false));
+                const aQuery = query(collection(db, "adminAlerts"), where("type", "in", ["new_user", "shop_report"]), where("read", "==", false));
                 notifUnsub = onSnapshot(aQuery, (snapshot) => setUnreadAlertsCount(snapshot.size));
               } else {
                 const aQuery = query(collection(db, "adminAlerts"), where("shopId", "==", finalShopId || ""), where("read", "==", false));

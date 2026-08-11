@@ -65,6 +65,8 @@ export default function Signup() {
   const [shopName, setShopName] = useState("");
   const [permitFile, setPermitFile] = useState(null);
   const [permitPreview, setPermitPreview] = useState(null);
+  const [dtiFile, setDtiFile] = useState(null);
+  const [dtiPreview, setDtiPreview] = useState(null);
 
   // Step 2 Mechanic fields
   const [mechShopName, setMechShopName] = useState("");
@@ -88,7 +90,7 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const saveUser = async (user, resolvedRole, names, permitUrl = "", shopNameStr = "", extraData = {}) => {
+  const saveUser = async (user, resolvedRole, names, permitUrl = "", shopNameStr = "", extraData = {}, dtiUrl = "") => {
     const finalRole = resolvedRole || "Customer";
     const isOwner = finalRole.toLowerCase() === "owner";
     const isMechanic = finalRole.toLowerCase() === "mechanic";
@@ -113,6 +115,7 @@ export default function Signup() {
     if (isOwner) {
       userData.businessPermitUrl = permitUrl;
       userData.shopName = shopNameStr;
+      userData.dtiUrl = dtiUrl;
     }
     if (isMechanic) {
       userData.shopName = extraData.shopName || "";
@@ -150,7 +153,7 @@ export default function Signup() {
     }
   };
 
-  const executeSignup = async (permitUrl = "", shopNameStr = "") => {
+  const executeSignup = async (permitUrl = "", shopNameStr = "", dtiUrl = "") => {
     setLoading(true);
     try {
       let dName = [firstName.trim(), middleName.trim(), lastName.trim()].filter(Boolean).join(" ");
@@ -160,7 +163,7 @@ export default function Signup() {
         user = newUser;
         await updateProfile(user, { displayName: dName });
       }
-      await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() }, permitUrl, shopNameStr);
+      await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() }, permitUrl, shopNameStr, {}, dtiUrl);
       navigate("/pending");
     } catch (err) {
       setError(
@@ -242,11 +245,13 @@ export default function Signup() {
     setError("");
     if (!shopName.trim()) return setError("Please enter your shop name.");
     if (!permitFile) return setError("Please upload your business permit.");
+    if (!dtiFile) return setError("Please upload your DTI Certificate.");
 
     setLoading(true);
     try {
       const permitUrl = await uploadToCloudinary(permitFile);
-      await executeSignup(permitUrl, shopName.trim());
+      const dtiUrl = await uploadToCloudinary(dtiFile);
+      await executeSignup(permitUrl, shopName.trim(), dtiUrl);
     } catch (err) {
       setError(err.message || "Failed to upload permit.");
       setLoading(false);
@@ -525,6 +530,38 @@ export default function Signup() {
                   : "📎 Tap to upload permit photo"
                 }
               </div>
+
+              <label style={s.label}>DTI Certificate *</label>
+              <input
+                type="file"
+                accept="image/*"
+                id="dtiUpload"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    setDtiFile(file);
+                    setDtiPreview(URL.createObjectURL(file));
+                  }
+                }}
+              />
+              <div
+                onClick={() => document.getElementById("dtiUpload").click()}
+                style={{
+                  width: "100%", height: dtiPreview ? "160px" : "100px",
+                  background: "#f9fafb", borderRadius: "10px",
+                  border: "1.5px dashed #e5e7eb",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer", overflow: "hidden", marginBottom: "20px",
+                  fontSize: "13px", color: "#9ca3af",
+                }}
+              >
+                {dtiPreview
+                  ? <img src={dtiPreview} alt="DTI" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} />
+                  : "📄 Tap to upload DTI Certificate"
+                }
+              </div>
+
 
               <button
                 onClick={handleOwnerSubmit}

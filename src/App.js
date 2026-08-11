@@ -8,6 +8,9 @@ import Onboarding from "./screens/Onboarding";
 
 import ScrollToTop from "./components/ScrollToTop";
 
+// Restricted Screen
+import Restricted from "./screens/Restricted";
+
 // Owner/Admin screens
 import AdminUsers from "./screens/AdminUsers";
 import PendingApproval from "./screens/Pendingapproval";
@@ -54,6 +57,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/pending" element={<PendingApproval />} />
+          <Route path="/restricted" element={<Restricted />} />
 
           {/* Owner/Admin management screens */}
           <Route path="/admin/users" element={<AdminUsers />} />
@@ -65,7 +69,7 @@ function App() {
           <Route path="/admin/reviews" element={<AdminReviews />} />
 
           {/* Owner's own job management */}
-          <Route path="/mechanic/requests" element={<MechanicRequests />} />
+          <Route path="/mechanic/job-requests" element={<MechanicRequests />} />
 
           {/* Customer */}
           <Route path="/customer/dashboard" element={<CustomerDashboard />} />

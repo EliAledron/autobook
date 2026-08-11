@@ -587,7 +587,15 @@ export default function OwnerDashboard({ user }) {
       </div>
 
       {/* HERO */}
-      <div style={{ ...sh.hero, paddingBottom: "2.5rem", borderRadius: "0 0 24px 24px", marginBottom: "0", position: "relative", zIndex: 1 }}>
+      <div style={{ ...sh.hero, paddingBottom: "2.5rem", borderRadius: "0 0 24px 24px", marginBottom: "0", position: "relative", zIndex: 1, overflow: "hidden" }}>
+        {/* Decorative icons */}
+        <div style={{ position: "absolute", right: "-20px", top: "-20px", opacity: 0.08, transform: "rotate(30deg)", userSelect: "none", pointerEvents: "none" }}>
+          <svg width="140" height="140" viewBox="0 0 24 24" fill="#fff"><path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/></svg>
+        </div>
+        <div style={{ position: "absolute", right: "70px", bottom: "-30px", opacity: 0.05, transform: "rotate(-15deg)", userSelect: "none", pointerEvents: "none" }}>
+          <svg width="100" height="100" viewBox="0 0 24 24" fill="#fff"><path d="M3 3v18h18v-2H5V3H3zm6 14h2v-6H9v6zm4 0h2V7h-2v10zm4 0h2v-4h-2v4z"/></svg>
+        </div>
+
         <div style={sh.rolePill}>
           <div style={sh.roleDot} />
           <span style={sh.roleText}>{user?.role || "Owner"}{user?.shopName ? ` · ${user.shopName}` : ""}</span>

@@ -109,6 +109,9 @@ const saveUser = async (user, resolvedRole, namesObj, permitUrl = "", shopNameSt
   if (isOwner) {
     userData.businessPermitUrl = permitUrl;
     userData.shopName = shopNameStr;
+    if (extraData.dtiUrl) {
+      userData.dtiUrl = extraData.dtiUrl;
+    }
   } else if (isMechanic) {
     userData.shopName = shopNameStr;
     userData.specialization = specializationStr;
@@ -270,6 +273,8 @@ function SignupForm({ goBack, navigate }) {
   const [shopName, setShopName] = useState("");
   const [permitFile, setPermitFile] = useState(null);
   const [permitPreview, setPermitPreview] = useState(null);
+  const [dtiFile, setDtiFile] = useState(null);
+  const [dtiPreview, setDtiPreview] = useState(null);
   const [createdUser, setCreatedUser] = useState(null);
 
   const [mechanicShopName, setMechanicShopName] = useState("");
@@ -316,7 +321,7 @@ function SignupForm({ goBack, navigate }) {
         user = newUser;
         await updateProfile(user, { displayName: dName });
       }
-      await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() }, permitUrl, shopNameStr);
+      await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() }, permitUrl, shopNameStr, "", { dtiUrl: "" });
       navigate("/pending");
     } catch (err) {
       setError(err.code === "auth/email-already-in-use" ? "This email is already registered." : err.message);
@@ -366,6 +371,7 @@ function SignupForm({ goBack, navigate }) {
     setError("");
     if (!shopName.trim()) return setError("Please enter your shop name.");
     if (!permitFile) return setError("Please upload your business permit.");
+    if (!dtiFile) return setError("Please upload your DTI Certificate.");
 
     setLoading(true);
     try {
@@ -378,7 +384,8 @@ function SignupForm({ goBack, navigate }) {
       }
 
       const permitUrl = await uploadToCloudinary(permitFile);
-      await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() }, permitUrl, shopName.trim());
+      const dtiUrl = await uploadToCloudinary(dtiFile);
+      await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() }, permitUrl, shopName.trim(), "", { dtiUrl });
       navigate("/pending");
     } catch (err) {
       setError(err.code === "auth/email-already-in-use" ? "This email is already registered." : err.message);
@@ -558,13 +565,22 @@ function SignupForm({ goBack, navigate }) {
               <label style={s.label}>Shop Name</label>
               <input className="ab-input" type="text" placeholder="Your shop name" value={shopName} onChange={e => setShopName(e.target.value.replace(/[^a-zA-Z\s]/g, ''))} style={s.input} />
 
-              <label style={s.label}>Business Permit / Proof</label>
+              <label style={s.label}>Business Permit / Proof *</label>
               <input type="file" accept="image/*" id="permitUpload" style={{ display: "none" }} onChange={(e) => {
                 const file = e.target.files[0];
                 if (file) { setPermitFile(file); setPermitPreview(URL.createObjectURL(file)); }
               }} />
               <div onClick={() => document.getElementById("permitUpload").click()} style={{ width: "100%", height: permitPreview ? "160px" : "100px", background: "#f9fafb", borderRadius: "14px", border: "1.5px dashed #d1d5db", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", marginBottom: "20px", fontSize: "13px", color: "#9ca3af" }}>
                 {permitPreview ? <img src={permitPreview} alt="permit" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} /> : "📎 Tap to upload permit photo"}
+              </div>
+
+              <label style={s.label}>DTI Certificate *</label>
+              <input type="file" accept="image/*" id="dtiUpload" style={{ display: "none" }} onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) { setDtiFile(file); setDtiPreview(URL.createObjectURL(file)); }
+              }} />
+              <div onClick={() => document.getElementById("dtiUpload").click()} style={{ width: "100%", height: dtiPreview ? "160px" : "100px", background: "#f9fafb", borderRadius: "14px", border: "1.5px dashed #d1d5db", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", marginBottom: "20px", fontSize: "13px", color: "#9ca3af" }}>
+                {dtiPreview ? <img src={dtiPreview} alt="DTI" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} /> : "📄 Tap to upload DTI Certificate"}
               </div>
 
               <button onClick={handleOwnerSubmit} className="ab-btn" style={{ ...s.primaryBtn, opacity: loading ? 0.75 : 1 }} disabled={loading}>

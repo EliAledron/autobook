@@ -36,9 +36,17 @@ export default function ShopSelect() {
                 const nSnap = await getDocs(nQuery);
                 ratedBookings = nSnap.docs.map(d => d.data()).filter(b => b.rating && !isNaN(Number(b.rating)) && Number(b.rating) > 0);
               }
-              if (ratedBookings.length > 0) {
-                const avg = ratedBookings.reduce((sum, b) => sum + Number(b.rating), 0) / ratedBookings.length;
-                return { ...shop, rating: avg, reviews: ratedBookings.length };
+
+              let directReviews = [];
+              try {
+                const rSnap = await getDocs(collection(db, "shops", shop.id, "reviews"));
+                directReviews = rSnap.docs.map(d => d.data()).filter(r => r.rating && !isNaN(Number(r.rating)) && Number(r.rating) > 0);
+              } catch(e) {}
+              
+              const allReviews = [...ratedBookings, ...directReviews];
+              if (allReviews.length > 0) {
+                const avg = allReviews.reduce((sum, b) => sum + Number(b.rating), 0) / allReviews.length;
+                return { ...shop, rating: avg, reviews: allReviews.length };
               }
             } catch(e) {}
             return shop;
@@ -55,6 +63,7 @@ export default function ShopSelect() {
   }, []);
 
   const filteredShops = shops.filter(shop => {
+    if (shop.status === "restricted") return false;
     const s = search.toLowerCase();
     const matchSearch = (shop.name || "").toLowerCase().includes(s) || (shop.tagline || "").toLowerCase().includes(s);
     const safeRating = shop.rating && !isNaN(Number(shop.rating)) ? Number(shop.rating) : 0;

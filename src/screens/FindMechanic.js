@@ -125,6 +125,7 @@ export default function FindMechanic() {
   };
 
   const filteredShops = shops.filter(shop => {
+    if (shop.status === "restricted") return false;
     const s = search.toLowerCase();
     const matchSearch = (shop.name || "").toLowerCase().includes(s) || (shop.tagline || "").toLowerCase().includes(s);
     const matchRating = (shop.rating || 0) >= minRating;

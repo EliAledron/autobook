@@ -8,7 +8,7 @@ import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
 import BackButton from "../components/BackButton";
 
-const FILTER_TABS = ["pending", "approved", "rejected"];
+const FILTER_TABS = ["pending", "approved", "rejected", "restricted"];
 
 const capitalize = (str) =>
   str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
@@ -22,6 +22,7 @@ const roleStyle = (r) => {
 const statusStyle = (s) => {
   if (s === "approved") return sh.badge(colors.successBg, colors.success);
   if (s === "rejected") return sh.badge(colors.dangerBg, colors.danger);
+  if (s === "restricted") return sh.badge("rgba(239, 68, 68, 0.15)", colors.danger);
   return sh.badge(colors.warningBg, colors.warning);
 };
 
@@ -186,6 +187,21 @@ export default function AdminUsers() {
       }
     }
 
+    if (updates.status === "restricted" && selected && selected.shopId) {
+      try {
+        await updateDoc(doc(db, "shops", selected.shopId), { status: "restricted" });
+      } catch (err) {
+        console.error("Failed to restrict shop:", err);
+      }
+    }
+    
+    // If a restricted user is approved, also unrestrict their shop
+    if (updates.status === "approved" && selected && selected.shopId) {
+      try {
+        await updateDoc(doc(db, "shops", selected.shopId), { status: "active" });
+      } catch (err) {}
+    }
+
     await updateDoc(doc(db, "users", id), updates);
     setUsers((prev) =>
       prev.map((u) => (u.id === id ? { ...u, ...updates } : u))
@@ -221,6 +237,7 @@ export default function AdminUsers() {
     pending: users.filter((u) => (u.status || "pending") === "pending").length,
     approved: users.filter((u) => u.status === "approved").length,
     rejected: users.filter((u) => u.status === "rejected").length,
+    restricted: users.filter((u) => u.status === "restricted").length,
   };
 
   return (
@@ -300,12 +317,19 @@ export default function AdminUsers() {
                 </div>
                 <span style={{ fontSize: "14px", fontWeight: "800", color: colors.textPrimary }}>{stats.approved}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                   <div style={{ width: "12px", height: "12px", borderRadius: "4px", background: colors.danger }}></div>
                   <span style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "600" }}>Rejected</span>
                 </div>
                 <span style={{ fontSize: "14px", fontWeight: "800", color: colors.textPrimary }}>{stats.rejected}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div style={{ width: "12px", height: "12px", borderRadius: "4px", background: "#7f1d1d" }}></div>
+                  <span style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "600" }}>Restricted</span>
+                </div>
+                <span style={{ fontSize: "14px", fontWeight: "800", color: colors.textPrimary }}>{stats.restricted}</span>
               </div>
             </div>
           </div>
@@ -546,10 +570,50 @@ export default function AdminUsers() {
             )}
 
             <div style={{ marginTop: "1.25rem", display: "flex", flexDirection: "column", gap: "10px" }}>
-              {selected.status === "approved" || selected.status === "rejected" ? (
-                <div style={{ fontSize: "13px", color: selected.status === "approved" ? colors.success : colors.danger, fontWeight: "600", padding: "10px", background: selected.status === "approved" ? colors.successBg : colors.dangerBg, borderRadius: "10px", border: `1px solid ${selected.status === "approved" ? "rgba(22,163,74,0.3)" : "rgba(220,38,38,0.3)"}` }}>
-                  {selected.status === "approved" ? "✅ This user has been approved." : "❌ This user has been rejected."}
-                </div>
+              {selected.status === "approved" || selected.status === "rejected" || selected.status === "restricted" ? (
+                <>
+                  <div style={{ fontSize: "13px", color: selected.status === "approved" ? colors.success : colors.danger, fontWeight: "600", padding: "10px", background: selected.status === "approved" ? colors.successBg : colors.dangerBg, borderRadius: "10px", border: `1px solid ${selected.status === "approved" ? "rgba(22,163,74,0.3)" : "rgba(220,38,38,0.3)"}` }}>
+                    {selected.status === "approved" ? "✅ This user has been approved." : selected.status === "restricted" ? "🚫 This user is restricted." : "❌ This user has been rejected."}
+                  </div>
+                  
+                  {selected.status !== "restricted" && selected.status === "approved" && (
+                    <button
+                      onClick={() => {
+                        if (window.confirm("Are you sure you want to restrict this user? They will lose access to their account.")) {
+                          updateStatus(selected.id, "restricted");
+                        }
+                      }}
+                      disabled={saving}
+                      style={{
+                        width: "100%", padding: "14px",
+                        background: colors.danger,
+                        color: "#fff", fontSize: "14px", fontWeight: "700",
+                        border: "none", borderRadius: "14px",
+                        boxShadow: "0 4px 12px rgba(220,38,38,0.25)",
+                        cursor: "pointer", fontFamily: "inherit",
+                      }}
+                    >
+                      {saving ? "Saving..." : "🚫 Restrict User"}
+                    </button>
+                  )}
+                  
+                  {selected.status === "restricted" && (
+                    <button
+                      onClick={() => updateStatus(selected.id, "approved")}
+                      disabled={saving}
+                      style={{
+                        width: "100%", padding: "14px",
+                        background: colors.success,
+                        color: "#fff", fontSize: "14px", fontWeight: "700",
+                        border: "none", borderRadius: "14px",
+                        boxShadow: "0 4px 12px rgba(22,163,74,0.25)",
+                        cursor: "pointer", fontFamily: "inherit",
+                      }}
+                    >
+                      {saving ? "Saving..." : "✓ Lift Restriction & Approve"}
+                    </button>
+                  )}
+                </>
               ) : (
                 <>
                   <button

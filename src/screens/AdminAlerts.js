@@ -16,8 +16,8 @@ const typeIcon = (type) => {
     case "booking_created":        return "📅";
     case "job_assigned":           return "📋";
     case "new_user":               return "👤";
-    case "visit_request":          return "📍";
     case "new_rating":             return "⭐";
+    case "shop_report":            return "🚩";
     default:                       return "🔔";
   }
 };
@@ -33,6 +33,7 @@ const typeBg = (type) => {
     case "new_user":               return colors.warningBg;
     case "visit_request":          return colors.warningBg;
     case "new_rating":             return colors.warningBg;
+    case "shop_report":            return colors.dangerBg;
     default:                       return colors.bg;
   }
 };
@@ -48,6 +49,7 @@ const typeColor = (type) => {
     case "new_user":               return colors.warning;
     case "visit_request":          return colors.warning;
     case "new_rating":             return colors.warning;
+    case "shop_report":            return colors.danger;
     default:                       return colors.textMuted;
   }
 };
@@ -116,15 +118,18 @@ export default function AdminAlerts() {
       }
 
       const q = isAdmin
-        ? query(collection(db, "adminAlerts"), where("type", "==", "new_user"), orderBy("createdAt", "desc"))
-        : query(collection(db, "adminAlerts"), where("shopId", "==", shopId || ""), orderBy("createdAt", "desc"));
+        ? query(collection(db, "adminAlerts"), where("type", "in", ["new_user", "shop_report"]))
+        : query(collection(db, "adminAlerts"), where("shopId", "==", shopId || ""));
       const snap = await getDocs(q);
-      setAlerts(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      const sorted = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setAlerts(sorted);
     } catch (e) {
       // Fallback without orderBy if index not ready
       try {
         const q2 = isAdmin
-          ? query(collection(db, "adminAlerts"), where("type", "==", "new_user"))
+          ? query(collection(db, "adminAlerts"), where("type", "in", ["new_user", "shop_report"]))
           : query(collection(db, "adminAlerts"), where("shopId", "==", shopId || ""));
         const snap2 = await getDocs(q2);
         const sorted = snap2.docs

@@ -131,9 +131,13 @@ export default function MechanicDashboard() {
         background: `linear-gradient(135deg, #0f2942 0%, #1a3a5c 50%, #1e4d8c 100%)`,
         padding: "1.5rem 1.25rem 4.5rem", position: "relative", overflow: "hidden",
       }}>
-        {/* Decorative wrenches */}
-        <div style={{ position: "absolute", right: "-20px", top: "-20px", opacity: 0.06, fontSize: "120px", transform: "rotate(30deg)", userSelect: "none" }}>🔧</div>
-        <div style={{ position: "absolute", right: "60px", bottom: "-30px", opacity: 0.05, fontSize: "80px", transform: "rotate(-15deg)", userSelect: "none" }}>⚙️</div>
+        {/* Decorative icons */}
+        <div style={{ position: "absolute", right: "-20px", top: "-20px", opacity: 0.08, transform: "rotate(30deg)", userSelect: "none", pointerEvents: "none" }}>
+          <svg width="140" height="140" viewBox="0 0 24 24" fill="#fff"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>
+        </div>
+        <div style={{ position: "absolute", right: "70px", bottom: "-30px", opacity: 0.05, transform: "rotate(-15deg)", userSelect: "none", pointerEvents: "none" }}>
+          <svg width="100" height="100" viewBox="0 0 24 24" fill="#fff"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+        </div>
 
         <div style={sh.rolePill}>
           <div style={sh.roleDot} />

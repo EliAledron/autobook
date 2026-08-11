@@ -59,6 +59,8 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
   const [coverPreview, setCoverPreview] = useState(shop?.coverURL || "");
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(shop?.logoURL || "");
+  const [dtiFile, setDtiFile] = useState(null);
+  const [dtiPreview, setDtiPreview] = useState(shop?.dtiURL || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -81,6 +83,9 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
       let finalLogoURL = shop?.logoURL || null;
       if (logoFile) finalLogoURL = await uploadToCloudinary(logoFile);
 
+      let finalDtiURL = shop?.dtiURL || null;
+      if (dtiFile) finalDtiURL = await uploadToCloudinary(dtiFile);
+
       const updates = {
         name: name.trim(),
         shortName: shortName.trim(),
@@ -90,7 +95,8 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
         accent,
         services,
         coverURL: finalCoverURL,
-        logoURL: finalLogoURL
+        logoURL: finalLogoURL,
+        dtiURL: finalDtiURL
       };
       
       if (shop?.id) {
@@ -183,6 +189,27 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
         </div>
 
         <div style={{ marginBottom: "1.25rem" }}>
+          <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>DTI Certificate</div>
+          <input type="file" id="dtiPhotoUpload" accept="image/*" style={{ display: "none" }} onChange={(e) => {
+            const file = e.target.files[0];
+            if (file) { setDtiFile(file); setDtiPreview(URL.createObjectURL(file)); }
+          }} />
+          <div 
+            onClick={() => document.getElementById("dtiPhotoUpload").click()}
+            style={{ width: "100%", height: dtiPreview ? "160px" : "80px", background: colors.bg, borderRadius: "14px", border: `1.5px dashed ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", position: "relative" }}
+          >
+            {dtiPreview ? (
+              <>
+                <img src={dtiPreview} alt="DTI preview" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                <button onClick={(e) => { e.stopPropagation(); setDtiFile(null); setDtiPreview(""); }} style={{ position: "absolute", top: "8px", right: "8px", background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: "50%", width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: "14px" }}>×</button>
+              </>
+            ) : (
+              <span style={{ fontSize: "12px", color: colors.textMuted }}>📄 Tap to upload DTI</span>
+            )}
+          </div>
+        </div>
+
+        <div style={{ marginBottom: "1.25rem" }}>
           <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Shop Name *</div>
           <input type="text" style={inputStyle} value={name} onChange={e => setName(e.target.value.replace(/[^a-zA-Z\s]/g, ''))} />
         </div>
@@ -260,10 +287,24 @@ export default function AutoShopProfile() {
   const [activeTab, setActiveTab] = useState("Posts");
   const [ownerData, setOwnerData] = useState(null);
   const [uid, setUid] = useState(null);
-
+  const [currentUser, setCurrentUser] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  
+  // Report Modal State
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reporting, setReporting] = useState(false);
+  
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
+    const unsub = onAuthStateChanged(auth, async (u) => {
       setUid(u?.uid || null);
+      if (u?.uid) {
+        const docSnap = await getDoc(doc(db, "users", u.uid));
+        if (docSnap.exists()) setCurrentUser({ id: u.uid, ...docSnap.data() });
+      }
     });
     return () => unsub();
   }, []);
@@ -308,6 +349,25 @@ export default function AutoShopProfile() {
           finalRating = ratedBookings.reduce((sum, b) => sum + Number(b.rating), 0) / ratedBookings.length;
           finalReviews = ratedBookings.length;
         }
+
+        // Fetch Direct Reviews
+        let directReviews = [];
+        if (sId) {
+          try {
+            const rSnap = await getDocs(query(collection(db, "shops", sId, "reviews"), orderBy("createdAt", "desc")));
+            directReviews = rSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+          } catch(e) {}
+        }
+        
+        if (directReviews.length > 0) {
+          // Combine or just use direct reviews for average
+          const totalRating = directReviews.reduce((sum, r) => sum + Number(r.rating), 0);
+          // If we want to combine both sources:
+          finalRating = (totalRating + (finalRating * finalReviews)) / (directReviews.length + finalReviews);
+          finalReviews = directReviews.length + finalReviews;
+        }
+
+        setReviews(directReviews);
 
         // Update shop state with enriched information
         setShop(prev => ({ ...prev, ...dbShop, rating: finalRating, reviews: finalReviews }));
@@ -370,6 +430,78 @@ export default function AutoShopProfile() {
     } catch (e) {
       console.error("Failed to like post:", e);
     }
+  };
+
+  const handleFlagShopClick = () => {
+    if (!uid) return alert("Please log in to flag a shop.");
+    setShowReportModal(true);
+  };
+
+  const submitReport = async () => {
+    if (!reportReason.trim()) return;
+    setReporting(true);
+    
+    try {
+      if (shop.id) {
+        await updateDoc(doc(db, "shops", shop.id), {
+          flags: arrayUnion(uid)
+        });
+        
+        await addDoc(collection(db, "adminAlerts"), {
+          type: "shop_report",
+          shopId: shop.id,
+          shopName: shop.name || "Unknown Shop",
+          reporterId: uid,
+          reporterName: currentUser?.displayName || "Customer",
+          reason: reportReason.trim(),
+          title: `Shop Reported: ${shop.name || "Unknown Shop"}`,
+          message: `Reason: ${reportReason.trim()}`,
+          read: false,
+          createdAt: serverTimestamp(),
+        });
+      }
+      setShowReportModal(false);
+      setReportReason("");
+      // Using a quick timeout to let the modal close before showing a success state (could also use a toast here)
+      setTimeout(() => alert("Shop reported successfully. Our team will review this shop."), 100);
+    } catch (e) {
+      alert("Failed to report shop: " + e.message);
+    }
+    setReporting(false);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!uid) return alert("Please log in to leave a review.");
+    if (!reviewText.trim()) return alert("Please write a review.");
+    if (!shop.id) return alert("Shop ID not found. Cannot submit review.");
+    setSubmittingReview(true);
+    try {
+      const newReview = {
+        userId: uid,
+        userName: currentUser?.displayName || "Customer",
+        rating: reviewRating,
+        text: reviewText.trim(),
+        createdAt: serverTimestamp(),
+      };
+      const rRef = await addDoc(collection(db, "shops", shop.id, "reviews"), newReview);
+      setReviews([{ id: rRef.id, ...newReview, createdAt: new Date() }, ...reviews]);
+      setReviewText("");
+      setReviewRating(5);
+      
+      // Update shop average rating
+      const newTotalReviews = (shop.reviews || 0) + 1;
+      const newAvgRating = (((shop.rating || 0) * (shop.reviews || 0)) + reviewRating) / newTotalReviews;
+      await updateDoc(doc(db, "shops", shop.id), {
+        rating: newAvgRating,
+        reviews: newTotalReviews
+      });
+      setShop(prev => ({ ...prev, rating: newAvgRating, reviews: newTotalReviews }));
+      
+      alert("Review submitted successfully!");
+    } catch (e) {
+      alert("Failed to submit review: " + e.message);
+    }
+    setSubmittingReview(false);
   };
 
   if (!shop) {
@@ -445,12 +577,20 @@ export default function AutoShopProfile() {
                   ✏️ Edit Profile
                 </button>
               ) : (
-                <button 
-                  onClick={() => navigate("/customer/book-service", { state: { shop, prefilledService } })}
-                  style={{ padding: "12px 24px", background: colors.accent, color: colors.navy, border: "none", borderRadius: "14px", fontWeight: "800", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "14px", fontFamily: "inherit", boxShadow: "0 4px 16px rgba(70,233,255,0.3)", transition: "all 0.2s" }}
-                >
-                  📅 Book Now
-                </button>
+                <>
+                  <button 
+                    onClick={handleFlagShopClick}
+                    style={{ padding: "12px 16px", background: "rgba(239, 68, 68, 0.15)", color: "#fca5a5", border: "1px solid rgba(239, 68, 68, 0.4)", borderRadius: "14px", fontWeight: "700", display: "flex", justifyContent: "center", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "14px", fontFamily: "inherit", backdropFilter: "blur(8px)", transition: "all 0.2s" }}
+                  >
+                    🚩 Flag Shop
+                  </button>
+                  <button 
+                    onClick={() => navigate("/customer/book-service", { state: { shop, prefilledService } })}
+                    style={{ padding: "12px 24px", background: colors.accent, color: colors.navy, border: "none", borderRadius: "14px", fontWeight: "800", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "14px", fontFamily: "inherit", boxShadow: "0 4px 16px rgba(70,233,255,0.3)", transition: "all 0.2s" }}
+                  >
+                    📅 Book Now
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -458,8 +598,8 @@ export default function AutoShopProfile() {
       </div>
 
       {/* Tabs */}
-      <div style={{ padding: "0 16px 16px", display: "flex", gap: "8px", justifyContent: "flex-start", maxWidth: "800px", margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
-        {["Posts", "About"].map(tab => (
+      <div style={{ padding: "0 16px 16px", display: "flex", gap: "8px", justifyContent: "flex-start", maxWidth: "800px", margin: "0 auto", width: "100%", boxSizing: "border-box", overflowX: "auto" }}>
+        {["Posts", "About", "Reviews"].map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} style={{
             padding: "10px 24px", borderRadius: "20px", fontSize: "14px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit",
             background: activeTab === tab ? colors.navy : colors.white,
@@ -573,6 +713,82 @@ export default function AutoShopProfile() {
                 </div>
               </>
             )}
+
+            {(shop.dtiURL || ownerData?.dtiUrl) && (
+              <>
+                <div style={{ borderTop: `1px solid ${colors.border}`, margin: "20px 0 16px 0" }} />
+                <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: "800", color: colors.textPrimary, display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ color: colors.info, fontSize: "18px" }}>✓</span> Verified DTI Certificate
+                </h3>
+                <div style={{ borderRadius: "12px", overflow: "hidden", border: `1px solid ${colors.border}`, display: "inline-block", padding: "4px", background: colors.bg }}>
+                  <img src={shop.dtiURL || ownerData?.dtiUrl} alt="DTI Certificate" style={{ width: "100%", maxWidth: "400px", borderRadius: "8px", display: "block" }} />
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {activeTab === "Reviews" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {/* Write a review (Customers only) */}
+            {!isOwner && (
+              <div style={{ background: colors.white, borderRadius: "20px", padding: "20px", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}` }}>
+                <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: "800", color: colors.textPrimary }}>Write a Review</h3>
+                <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <button 
+                      key={star}
+                      onClick={() => setReviewRating(star)}
+                      style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: star <= reviewRating ? "#f59e0b" : "#e5e7eb", transition: "color 0.2s" }}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+                <textarea 
+                  value={reviewText}
+                  onChange={e => setReviewText(e.target.value)}
+                  placeholder="Share your experience with this shop..."
+                  style={{ width: "100%", padding: "16px", borderRadius: "12px", border: `1px solid ${colors.border}`, fontSize: "14px", fontFamily: "inherit", minHeight: "100px", resize: "vertical", boxSizing: "border-box", marginBottom: "16px", outline: "none" }}
+                />
+                <button 
+                  onClick={handleSubmitReview}
+                  disabled={submittingReview}
+                  style={{ padding: "12px 24px", background: colors.navy, color: "#fff", border: "none", borderRadius: "12px", fontWeight: "700", cursor: "pointer", fontSize: "14px", opacity: submittingReview ? 0.7 : 1 }}
+                >
+                  {submittingReview ? "Submitting..." : "Submit Review"}
+                </button>
+              </div>
+            )}
+
+            {/* Reviews List */}
+            {reviews.length === 0 ? (
+              <div style={{ background: colors.white, borderRadius: "20px", padding: "32px 16px", textAlign: "center", color: colors.textMuted, border: `1px solid ${colors.border}` }}>No reviews yet.</div>
+            ) : (
+              reviews.map(r => (
+                <div key={r.id} style={{ background: colors.white, borderRadius: "20px", padding: "20px", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: colors.infoBg, color: colors.info, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "16px" }}>
+                        {getInitials(r.userName || "Customer")}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: "700", fontSize: "14px", color: colors.textPrimary }}>{r.userName || "Customer"}</div>
+                        <div style={{ fontSize: "12px", color: colors.textMuted }}>{timeAgo(r.createdAt)}</div>
+                      </div>
+                    </div>
+                    <div style={{ color: "#f59e0b", fontSize: "14px", fontWeight: "700", display: "flex", gap: "2px" }}>
+                      {[1, 2, 3, 4, 5].map(star => (
+                        <span key={star} style={{ color: star <= r.rating ? "#f59e0b" : "#e5e7eb" }}>★</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: "14px", color: colors.textSecondary, lineHeight: "1.6", whiteSpace: "pre-wrap" }}>
+                    {r.text}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         )}
       </div>
@@ -587,6 +803,48 @@ export default function AutoShopProfile() {
             setShowEditModal(false);
           }}
         />
+      )}
+
+      {/* REPORT MODAL */}
+      {showReportModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }} onClick={() => !reporting && setShowReportModal(false)}>
+          <div style={{ background: colors.white, borderRadius: "24px", width: "100%", maxWidth: "400px", padding: "24px", boxShadow: "0 10px 40px rgba(0,0,0,0.2)", position: "relative" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+              <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(239, 68, 68, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>
+                🚩
+              </div>
+              <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: colors.textPrimary }}>Report Shop</h2>
+            </div>
+            
+            <p style={{ margin: "0 0 16px 0", fontSize: "14px", color: colors.textSecondary, lineHeight: "1.5" }}>
+              If you believe this shop is fraudulent, inappropriate, or violates our terms of service, please let us know why.
+            </p>
+            
+            <textarea
+              value={reportReason}
+              onChange={e => setReportReason(e.target.value)}
+              placeholder="e.g. Inappropriate content, Scam, Fake shop..."
+              style={{ width: "100%", padding: "14px", borderRadius: "12px", border: `1px solid ${colors.border}`, fontSize: "14px", fontFamily: "inherit", minHeight: "100px", resize: "vertical", boxSizing: "border-box", marginBottom: "20px", outline: "none", background: colors.bg }}
+            />
+            
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button 
+                onClick={() => setShowReportModal(false)}
+                disabled={reporting}
+                style={{ flex: 1, padding: "12px", background: colors.bg, color: colors.textPrimary, border: `1px solid ${colors.border}`, borderRadius: "12px", fontWeight: "700", cursor: "pointer", fontSize: "14px" }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={submitReport}
+                disabled={reporting || !reportReason.trim()}
+                style={{ flex: 1, padding: "12px", background: colors.danger, color: "#fff", border: "none", borderRadius: "12px", fontWeight: "700", cursor: reporting || !reportReason.trim() ? "not-allowed" : "pointer", fontSize: "14px", opacity: reporting || !reportReason.trim() ? 0.6 : 1 }}
+              >
+                {reporting ? "Submitting..." : "Submit Report"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

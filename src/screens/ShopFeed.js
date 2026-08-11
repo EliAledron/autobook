@@ -118,9 +118,17 @@ export default function ShopFeed() {
               const nSnap = await getDocs(nQuery);
               ratedBookings = nSnap.docs.map(d => d.data()).filter(b => b.rating && !isNaN(Number(b.rating)) && Number(b.rating) > 0);
             }
-            if (ratedBookings.length > 0) {
-              const avg = ratedBookings.reduce((sum, b) => sum + Number(b.rating), 0) / ratedBookings.length;
-              return { ...shop, rating: avg, reviews: ratedBookings.length };
+            
+            let directReviews = [];
+            try {
+              const rSnap = await getDocs(collection(db, "shops", shop.id, "reviews"));
+              directReviews = rSnap.docs.map(d => d.data()).filter(r => r.rating && !isNaN(Number(r.rating)) && Number(r.rating) > 0);
+            } catch(e) {}
+            
+            const allReviews = [...ratedBookings, ...directReviews];
+            if (allReviews.length > 0) {
+              const avg = allReviews.reduce((sum, b) => sum + Number(b.rating), 0) / allReviews.length;
+              return { ...shop, rating: avg, reviews: allReviews.length };
             }
           } catch(e) {}
           return shop;
@@ -430,10 +438,14 @@ export default function ShopFeed() {
 
   // Filter posts based on the search input
   const filteredPosts = posts.filter((post) => {
+    const shopObj = shops.find(shop => shop.id === post.shopId || (shop.ownerId && shop.ownerId === post.ownerId) || (shop.name && shop.name === post.shopName) || (shop.shortName && shop.shortName === post.shopName));
+    
+    // Filter out posts from restricted shops
+    if (shopObj?.status === "restricted") return false;
+
     const s = search.toLowerCase();
     const matchSearch = (post.content || "").toLowerCase().includes(s) || (post.shopName || "").toLowerCase().includes(s);
     
-    const shopObj = shops.find(shop => shop.id === post.shopId || (shop.ownerId && shop.ownerId === post.ownerId) || (shop.name && shop.name === post.shopName) || (shop.shortName && shop.shortName === post.shopName));
     const shopRating = shopObj?.rating && !isNaN(Number(shopObj.rating)) && Number(shopObj.rating) > 0 ? Number(shopObj.rating) : 0;
     const matchRating = shopRating >= minRating;
     return matchSearch && matchRating;
