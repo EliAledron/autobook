@@ -25,7 +25,16 @@ export default function Dashboard() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!firebaseUser) { navigate("/"); return; }
+      if (!firebaseUser) {
+        // In dev mode allow bypassing auth to view admin dashboard
+        if (import.meta.env.DEV) {
+          setUser({ name: "Dev Admin", email: "dev@admin.local", role: "admin", uid: "dev", shopId: null });
+          setLoading(false);
+        } else {
+          navigate("/");
+        }
+        return;
+      }
 
       const snap = await getDoc(doc(db, "users", firebaseUser.uid));
 

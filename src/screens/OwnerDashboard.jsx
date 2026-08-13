@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   collection, getDocs, query, where, doc, updateDoc,
   addDoc, serverTimestamp, getDoc, orderBy, limit,
-  deleteDoc
+  deleteDoc, onSnapshot
 } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { sh, colors, getGreeting, getInitials } from "./dashboardShared";
@@ -264,6 +264,7 @@ export default function OwnerDashboard({ user }) {
   const [selMonth, setSelMonth] = useState(new Date().getMonth());
   const [selYear, setSelYear] = useState(new Date().getFullYear());
 
+  const [userSearch, setUserSearch] = useState("");
   const [mechanics, setMechanics] = useState([]);
   const [allBookings, setAllBookings] = useState([]);
   const [allCarParts, setAllCarParts] = useState([]);
@@ -280,10 +281,14 @@ export default function OwnerDashboard({ user }) {
   const [showPartsModal, setShowPartsModal] = useState(false);
   const [partsToast, setPartsToast] = useState(null);
   const [myCarParts, setMyCarParts] = useState([]);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [timeAgo, setTimeAgo] = useState("");
 
-  const showToast = (msg) => { setPartsToast(msg); setTimeout(() => setPartsToast(null), 3000); };
+  const showToast = (msg) => { setPartsToast(msg); };
+  const dismissToast = () => setPartsToast(null);
 
-  const fetchData = useCallback(async () => {
+  // ─── Resolve the shopId for this user (mirrors old fetchData logic) ──────────
+  const resolveShopId = useCallback(async () => {
     let shopId = user?.shopId;
     if (!isAdmin && user?.shopName) {
       const sName = user.shopName.toUpperCase();
@@ -304,119 +309,8 @@ export default function OwnerDashboard({ user }) {
         }
       } catch (e) {}
     }
-
-    if (shopId) {
-      try {
-        const shopSnap = await getDoc(doc(db, "shops", shopId));
-        if (shopSnap.exists()) {
-          const data = { id: shopSnap.id, ...shopSnap.data() };
-          
-          const bSnap = await getDocs(query(collection(db, "bookings"), where("shopId", "==", shopId)));
-          const ratedBookings = bSnap.docs.map(d => d.data()).filter(b => b.rating && b.rating > 0);
-          
-          if (ratedBookings.length > 0) {
-            const avg = ratedBookings.reduce((sum, b) => sum + b.rating, 0) / ratedBookings.length;
-            
-            // Sync the calculated rating back to the database for customers to see
-            if (data.rating !== avg || data.reviews !== ratedBookings.length) {
-              await updateDoc(doc(db, "shops", shopId), { rating: avg, reviews: ratedBookings.length });
-            }
-
-            data.rating = avg;
-            data.reviews = ratedBookings.length;
-          }
-          setShopData(data);
-        }
-      } catch (e) { console.error("Failed to load shop:", e); }
-    }
-
-    const snap = await getDocs(shopId ? query(collection(db, "users"), where("shopId", "==", shopId)) : collection(db, "users"));
-    const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    setUsers(list);
-    setPendingUsers(list.filter(u => (u.status || "pending") === "pending"));
-    setApprovedUsers(list.filter(u => u.status === "approved"));
-
-    try {
-      let originalShopId = user?.shopId;
-      const bQuery = shopId ? query(collection(db, "bookings"), where("shopId", "==", shopId)) : collection(db, "bookings");
-      const bSnap = await getDocs(bQuery);
-      let bList = bSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-      if (originalShopId && originalShopId !== shopId && !isAdmin) {
-        try {
-          const bSnapOld = await getDocs(query(collection(db, "bookings"), where("shopId", "==", originalShopId)));
-          bList = [...bList, ...bSnapOld.docs.map(d => ({ id: d.id, ...d.data() }))];
-        } catch(e) {}
-      }
-
-      if (shopId && user?.shopName && !isAdmin) {
-        try {
-          const nQuery = query(collection(db, "bookings"), where("shopName", "==", user.shopName));
-          const nSnap = await getDocs(nQuery);
-          bList = [...bList, ...nSnap.docs.map(d => ({ id: d.id, ...d.data() }))];
-        } catch(e) {}
-      }
-      bList = Array.from(new Map(bList.map(b => [b.id, b])).values());
-      bList = bList.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      setAllBookings(bList);
-      setPendingBookings(bList.filter(b => (b.status || "Pending") === "Pending").length);
-    } catch { setPendingBookings(0); }
-
-    try {
-      let aQuery;
-      if (isAdmin) {
-        aQuery = query(collection(db, "adminAlerts"), where("type", "==", "new_user"));
-      } else {
-        aQuery = query(collection(db, "adminAlerts"), where("shopId", "==", shopId || ""));
-      }
-      const aSnap = await getDocs(aQuery);
-      const allUnread = aSnap.docs.filter(d => !d.data().read);
-      
-      setUnreadReviewAlertsCount(allUnread.filter(d => d.data().type === "new_rating").length);
-      setUnreadAlerts(allUnread.filter(d => d.data().type !== "new_rating").length);
-    } catch { 
-      setUnreadAlerts(0); 
-      setUnreadReviewAlertsCount(0); 
-    }
-
-    try {
-      const todayStr = new Date().toISOString().slice(0, 10);
-      const lastSeen = localStorage.getItem("carPartsLastSeen");
-      const cpQuery = shopId ? query(collection(db, "carParts"), where("shopId", "==", shopId)) : collection(db, "carParts");
-      const cpSnap = await getDocs(cpQuery);
-      const allParts = cpSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      setAllCarParts(allParts);
-      setMyCarParts(allParts.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
-      const unseen = allParts.filter(d => {
-        if (!d.createdAt) return false;
-        try {
-          const date = d.createdAt?.seconds ? new Date(d.createdAt.seconds * 1000) : new Date(d.createdAt);
-          if (isNaN(date.getTime())) return false;
-          if (date.toISOString().slice(0, 10) !== todayStr) return false;
-          if (lastSeen && date.getTime() <= Number(lastSeen)) return false;
-          return true;
-        } catch { return false; }
-      });
-      setNewCarParts(unseen.length);
-    } catch { setNewCarParts(0); }
-
-    try {
-      let reqList = [];
-      if (isAdmin) {
-        const snap = await getDocs(collection(db, "mechanicRequests"));
-        reqList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      } else {
-        const snap1 = await getDocs(query(collection(db, "mechanicRequests"), where("shopId", "==", shopId || "invalid")));
-        reqList = snap1.docs.map(d => ({ id: d.id, ...d.data() }));
-        if (reqList.length === 0 && (user?.id || user?.uid)) {
-          const snap2 = await getDocs(query(collection(db, "mechanicRequests"), where("ownerId", "==", user.id || user.uid)));
-          reqList = [...reqList, ...snap2.docs.map(d => ({ id: d.id, ...d.data() }))];
-        }
-      }
-      const uniqueReqs = Array.from(new Map(reqList.map(r => [r.id, r])).values());
-      setMechanicRequests(uniqueReqs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
-    } catch { setMechanicRequests([]); }
-  }, [user?.shopId]);
+    return shopId;
+  }, [user?.shopId, user?.shopName, user?.uid, user?.id, isAdmin]);
 
   const fetchMechanics = useCallback(async () => {
     try {
@@ -455,12 +349,128 @@ export default function OwnerDashboard({ user }) {
   }, [user?.shopId, user?.role, user?.id, user?.uid]);
 
   useEffect(() => {
-    fetchData();
+    const unsubscribers = [];
+
+    const setup = async () => {
+      const shopId = await resolveShopId();
+
+      // ── Shop data (one-time, needs rating calc) ──
+      if (shopId) {
+        try {
+          const shopSnap = await getDoc(doc(db, "shops", shopId));
+          if (shopSnap.exists()) {
+            const data = { id: shopSnap.id, ...shopSnap.data() };
+            const bSnap = await getDocs(query(collection(db, "bookings"), where("shopId", "==", shopId)));
+            const ratedBookings = bSnap.docs.map(d => d.data()).filter(b => b.rating && b.rating > 0);
+            if (ratedBookings.length > 0) {
+              const avg = ratedBookings.reduce((sum, b) => sum + b.rating, 0) / ratedBookings.length;
+              if (data.rating !== avg || data.reviews !== ratedBookings.length) {
+                await updateDoc(doc(db, "shops", shopId), { rating: avg, reviews: ratedBookings.length });
+              }
+              data.rating = avg;
+              data.reviews = ratedBookings.length;
+            }
+            setShopData(data);
+          }
+        } catch (e) { console.error("Failed to load shop:", e); }
+      }
+
+      // ── Users listener ──
+      const usersQ = shopId
+        ? query(collection(db, "users"), where("shopId", "==", shopId))
+        : collection(db, "users");
+      unsubscribers.push(
+        onSnapshot(usersQ, (snap) => {
+          const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          setUsers(list);
+          setPendingUsers(list.filter(u => (u.status || "pending") === "pending"));
+          setApprovedUsers(list.filter(u => u.status === "approved"));
+        })
+      );
+
+      // ── Bookings listener ──
+      const bookingsQ = shopId
+        ? query(collection(db, "bookings"), where("shopId", "==", shopId))
+        : collection(db, "bookings");
+      unsubscribers.push(
+        onSnapshot(bookingsQ, (snap) => {
+          let bList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          bList = bList.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+          setAllBookings(bList);
+          setPendingBookings(bList.filter(b => (b.status || "Pending") === "Pending").length);
+        })
+      );
+
+      // ── Admin alerts listener ──
+      const alertsQ = isAdmin
+        ? query(collection(db, "adminAlerts"), where("type", "==", "new_user"))
+        : query(collection(db, "adminAlerts"), where("shopId", "==", shopId || ""));
+      unsubscribers.push(
+        onSnapshot(alertsQ, (snap) => {
+          const allUnread = snap.docs.filter(d => !d.data().read);
+          setUnreadReviewAlertsCount(allUnread.filter(d => d.data().type === "new_rating").length);
+          setUnreadAlerts(allUnread.filter(d => d.data().type !== "new_rating").length);
+        })
+      );
+
+      // ── Car parts listener ──
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const cpQ = shopId
+        ? query(collection(db, "carParts"), where("shopId", "==", shopId))
+        : collection(db, "carParts");
+      unsubscribers.push(
+        onSnapshot(cpQ, (snap) => {
+          const lastSeen = localStorage.getItem("carPartsLastSeen");
+          const allParts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          setAllCarParts(allParts);
+          setMyCarParts([...allParts].sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
+          const unseen = allParts.filter(d => {
+            if (!d.createdAt) return false;
+            try {
+              const date = d.createdAt?.seconds ? new Date(d.createdAt.seconds * 1000) : new Date(d.createdAt);
+              if (isNaN(date.getTime())) return false;
+              if (date.toISOString().slice(0, 10) !== todayStr) return false;
+              if (lastSeen && date.getTime() <= Number(lastSeen)) return false;
+              return true;
+            } catch { return false; }
+          });
+          setNewCarParts(unseen.length);
+        })
+      );
+
+      // ── Mechanic requests listener ──
+      const reqQ = isAdmin
+        ? collection(db, "mechanicRequests")
+        : query(collection(db, "mechanicRequests"), where("shopId", "==", shopId || "invalid"));
+      unsubscribers.push(
+        onSnapshot(reqQ, (snap) => {
+          const reqList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          const unique = Array.from(new Map(reqList.map(r => [r.id, r])).values());
+          setMechanicRequests(unique.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
+        })
+      );
+      setLastUpdated(new Date());
+    };
+
+    setup();
     fetchMechanics();
-    const handleFocus = () => { fetchData(); fetchMechanics(); };
-    window.addEventListener("focus", handleFocus);
-    return () => window.removeEventListener("focus", handleFocus);
-  }, [fetchData, fetchMechanics]);
+
+    return () => unsubscribers.forEach(unsub => unsub());
+  }, [resolveShopId, fetchMechanics]);
+
+  // ── "X mins ago" ticker — updates every 30s ──
+  useEffect(() => {
+    const fmt = () => {
+      if (!lastUpdated) return;
+      const secs = Math.floor((Date.now() - lastUpdated.getTime()) / 1000);
+      if (secs < 60) setTimeAgo("just now");
+      else if (secs < 3600) setTimeAgo(`${Math.floor(secs / 60)} min${Math.floor(secs / 60) > 1 ? "s" : ""} ago`);
+      else setTimeAgo(`${Math.floor(secs / 3600)}h ago`);
+    };
+    fmt();
+    const t = setInterval(fmt, 30000);
+    return () => clearInterval(t);
+  }, [lastUpdated]);
 
   const handleCarPartsClick = () => {
     localStorage.setItem("carPartsLastSeen", Date.now().toString());
@@ -559,6 +569,18 @@ export default function OwnerDashboard({ user }) {
   }).join(", ") : "";
   const fullGradient = totalCompletedThisMonth > 0 ? `conic-gradient(from 270deg, ${gradientStops}, transparent 50%)` : `conic-gradient(from 270deg, ${colors.border} 0% 50%, transparent 50%)`;
 
+  const weekLabels = ["Wk 1", "Wk 2", "Wk 3", "Wk 4"];
+  const weekCounts = [0, 0, 0, 0];
+  allBookings.forEach(b => {
+    const d = toDate(b.createdAt || b.date);
+    if (!d) return;
+    if (d.getFullYear() !== selYear || d.getMonth() !== selMonth) return;
+    const day = d.getDate();
+    const wk = day <= 7 ? 0 : day <= 14 ? 1 : day <= 21 ? 2 : 3;
+    weekCounts[wk]++;
+  });
+  const maxWeekCount = Math.max(...weekCounts, 1);
+
   const roleStyle = (r) => {
     if (r === "Owner" || r === "Admin") return sh.badge(colors.dangerBg, colors.danger);
     return sh.badge(colors.infoBg, colors.info);
@@ -568,9 +590,15 @@ export default function OwnerDashboard({ user }) {
     <div style={sh.page}>
       <style>{keyframes}</style>
 
+      {/* SWIPEABLE TOAST */}
       {partsToast && (
-        <div style={{ position: "fixed", top: "16px", left: "50%", transform: "translateX(-50%)", background: colors.navy, color: "#fff", padding: "10px 20px", borderRadius: "12px", fontSize: "13px", fontWeight: "600", zIndex: 999, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", whiteSpace: "nowrap" }}>
-          {partsToast}
+        <div
+          style={{ position: "fixed", top: "16px", left: "50%", transform: "translateX(-50%)", background: colors.navy, color: "#fff", padding: "10px 16px 10px 20px", borderRadius: "14px", fontSize: "13px", fontWeight: "600", zIndex: 999, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", gap: "12px", animation: "ab-fade-in 0.2s ease-out", maxWidth: "90vw" }}
+          onTouchStart={(e) => { e._startX = e.touches[0].clientX; }}
+          onTouchEnd={(e) => { if (Math.abs(e.changedTouches[0].clientX - e._startX) > 60) dismissToast(); }}
+        >
+          <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{partsToast}</span>
+          <button onClick={dismissToast} style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", width: "22px", height: "22px", borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", flexShrink: 0, padding: 0 }}>✕</button>
         </div>
       )}
 
@@ -602,16 +630,96 @@ export default function OwnerDashboard({ user }) {
         </div>
         <div style={{ fontSize: "24px", fontWeight: "800", color: "#fff", marginBottom: "0.25rem" }}>{getGreeting()}, {firstName}!</div>
         <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.8)" }}>
-          Manage your shop, mechanic, bookings & more.
+          Manage your shop, mechanic, bookings &amp; more.
+        </div>
+        {/* Live indicator */}
+        <div style={{
+          position: "absolute", top: "16px", right: "16px",
+          display: "flex", alignItems: "center", gap: "6px",
+          background: "rgba(0,0,0,0.3)", backdropFilter: "blur(4px)",
+          padding: "5px 10px", borderRadius: "20px",
+        }}>
+          <PulseDot color="#ef4444" size={8} />
+          <span style={{ fontSize: "11px", fontWeight: "700", color: "#fff", letterSpacing: "0.5px" }}>Live</span>
         </div>
       </div>
 
       <div style={{ ...sh.content, paddingTop: "2rem", position: "relative", zIndex: 2 }} className="stagger-slide-up">
 
-        {/* ALERT BANNERS */}
+        <div style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "4px", marginBottom: "1.25rem", scrollbarWidth: "none" }}>
+          {isAdmin ? (
+            <>
+              <div style={{ background: colors.white, borderRadius: "16px", padding: "12px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", minWidth: "76px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}`, flexShrink: 0 }}>
+                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "20px", height: "20px" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.navy} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.87"/></svg></span>
+                <span style={{ fontSize: "20px", fontWeight: "800", color: colors.navy }}>{users.length}</span>
+                <span style={{ fontSize: "10px", fontWeight: "600", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.3px" }}>Total Users</span>
+              </div>
+              <div style={{ background: colors.white, borderRadius: "16px", padding: "12px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", minWidth: "76px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}`, flexShrink: 0 }}>
+                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "20px", height: "20px" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.warning} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>
+                <span style={{ fontSize: "20px", fontWeight: "800", color: colors.warning }}>{pendingUsers.length}</span>
+                <span style={{ fontSize: "10px", fontWeight: "600", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.3px" }}>Pending</span>
+              </div>
+              <div style={{ background: colors.white, borderRadius: "16px", padding: "12px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", minWidth: "76px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}`, flexShrink: 0 }}>
+                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "20px", height: "20px" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.success} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></span>
+                <span style={{ fontSize: "20px", fontWeight: "800", color: colors.success }}>{approvedUsers.length}</span>
+                <span style={{ fontSize: "10px", fontWeight: "600", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.3px" }}>Active</span>
+              </div>
+              <div style={{ background: colors.white, borderRadius: "16px", padding: "12px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", minWidth: "76px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}`, flexShrink: 0 }}>
+                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "20px", height: "20px" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.danger} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg></span>
+                <span style={{ fontSize: "20px", fontWeight: "800", color: colors.danger }}>{unreadAlerts}</span>
+                <span style={{ fontSize: "10px", fontWeight: "600", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.3px" }}>Alerts</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ background: colors.white, borderRadius: "16px", padding: "12px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", minWidth: "76px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}`, flexShrink: 0 }}>
+                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "20px", height: "20px" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.navy} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg></span>
+                <span style={{ fontSize: "20px", fontWeight: "800", color: colors.navy }}>{allBookings.length}</span>
+                <span style={{ fontSize: "10px", fontWeight: "600", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.3px" }}>All Bookings</span>
+              </div>
+              <div style={{ background: colors.white, borderRadius: "16px", padding: "12px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", minWidth: "76px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}`, flexShrink: 0 }}>
+                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "20px", height: "20px" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.warning} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>
+                <span style={{ fontSize: "20px", fontWeight: "800", color: colors.warning }}>{pendingBookings}</span>
+                <span style={{ fontSize: "10px", fontWeight: "600", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.3px" }}>Pending</span>
+              </div>
+              <div style={{ background: colors.white, borderRadius: "16px", padding: "12px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", minWidth: "76px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}`, flexShrink: 0 }}>
+                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "20px", height: "20px" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.success} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></span>
+                <span style={{ fontSize: "20px", fontWeight: "800", color: colors.success }}>{totalCompletedThisMonth}</span>
+                <span style={{ fontSize: "10px", fontWeight: "600", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.3px" }}>This Month</span>
+              </div>
+              <div style={{ background: colors.white, borderRadius: "16px", padding: "12px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", minWidth: "76px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}`, flexShrink: 0 }}>
+                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "20px", height: "20px" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.info} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg></span>
+                <span style={{ fontSize: "20px", fontWeight: "800", color: colors.info }}>{mechanics.length}</span>
+                <span style={{ fontSize: "10px", fontWeight: "600", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.3px" }}>Mechanics</span>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* ALERT BANNERS — priority ordered: pending approvals → system alerts → pending bookings → car parts */}
+        {isAdmin && pendingUsers.length > 0 && (
+          <div className="owner-card" onClick={() => navigate("/admin/users")} style={{ background: colors.white, borderRadius: "16px", padding: "16px", marginBottom: "12px", display: "flex", alignItems: "center", gap: "14px", cursor: "pointer", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}` }}>
+            <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: colors.dangerBg, display: "flex", alignItems: "center", justifyContent: "center" }}><PulseDot color={colors.danger} size={12} /></div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: "15px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>{pendingUsers.length} pending approval{pendingUsers.length > 1 ? "s" : ""}</div>
+              <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>Tap to review and approve</div>
+            </div>
+            <div style={{ color: colors.textMuted, fontSize: "20px" }}>›</div>
+          </div>
+        )}
+        {unreadAlerts > 0 && (
+          <div className="owner-card" onClick={() => navigate("/admin/alerts")} style={{ background: colors.white, borderRadius: "16px", padding: "16px", marginBottom: "12px", display: "flex", alignItems: "center", gap: "14px", cursor: "pointer", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}` }}>
+            <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center" }}><PulseDot color={colors.warning} size={12} /></div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: "15px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>{unreadAlerts} new system alert{unreadAlerts > 1 ? "s" : ""}</div>
+              <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>Activity updates & more</div>
+            </div>
+            <div style={{ color: colors.textMuted, fontSize: "20px" }}>›</div>
+          </div>
+        )}
         {!isAdmin && pendingRequests.length > 0 && (
           <div className="owner-card" onClick={() => navigate("/mechanic/requests")} style={{ background: colors.white, borderRadius: "16px", padding: "16px", marginBottom: "12px", display: "flex", alignItems: "center", gap: "14px", cursor: "pointer", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}` }}>
-            <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center" }}><PulseDot color={colors.warning} size={12} /></div>
+            <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center" }}><PulseDot color={colors.info} size={12} /></div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: "15px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>{pendingRequests.length} unassigned request{pendingRequests.length > 1 ? "s" : ""}</div>
               <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>Tap to assign a mechanic</div>
@@ -625,16 +733,6 @@ export default function OwnerDashboard({ user }) {
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: "15px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>{pendingBookings} pending booking{pendingBookings > 1 ? "s" : ""}</div>
               <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>Tap to review and assign</div>
-            </div>
-            <div style={{ color: colors.textMuted, fontSize: "20px" }}>›</div>
-          </div>
-        )}
-        {unreadAlerts > 0 && (
-          <div className="owner-card" onClick={() => navigate("/admin/alerts")} style={{ background: colors.white, borderRadius: "16px", padding: "16px", marginBottom: "12px", display: "flex", alignItems: "center", gap: "14px", cursor: "pointer", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}` }}>
-            <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: colors.dangerBg, display: "flex", alignItems: "center", justifyContent: "center" }}><PulseDot color={colors.danger} size={12} /></div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: "15px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>{unreadAlerts} new system alert{unreadAlerts > 1 ? "s" : ""}</div>
-              <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>Activity updates & more</div>
             </div>
             <div style={{ color: colors.textMuted, fontSize: "20px" }}>›</div>
           </div>
@@ -703,11 +801,35 @@ export default function OwnerDashboard({ user }) {
                   )}
                 </div>
               </div>
+              
+              <div style={{ ...sh.card, marginBottom: 0 }}>
+                <div style={{ fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>Weekly Bookings</div>
+                {Math.max(...weekCounts) === 0 ? (
+                  <div style={{ fontSize: "12px", color: colors.textMuted, textAlign: "center", padding: "20px 0" }}>No bookings this month yet.</div>
+                ) : (
+                  <div style={{ display: "flex", alignItems: "flex-end", gap: "8px", height: "80px" }}>
+                    {weekCounts.map((count, i) => (
+                      <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", height: "100%" }}>
+                        <div style={{ flex: 1, display: "flex", alignItems: "flex-end", width: "100%", justifyContent: "center" }}>
+                          <div style={{ width: "100%", height: `${(count / maxWeekCount) * 100}%`, minHeight: "4px", background: `linear-gradient(to top, ${colors.navy}, ${colors.blue})`, borderRadius: "4px 4px 0 0", transition: "height 0.4s ease" }}></div>
+                        </div>
+                        <div style={{ fontSize: "11px", fontWeight: "800", color: colors.textPrimary }}>{count}</div>
+                        <div style={{ fontSize: "10px", color: colors.textMuted, fontWeight: "600" }}>{weekLabels[i]}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </>
         )}
 
-        <SectionTitle title="Shop Management" />
+        <SectionTitle
+          title="Shop Management"
+          action={timeAgo ? (
+            <span style={{ fontSize: "11px", color: colors.textMuted, fontWeight: "500" }}>Updated {timeAgo}</span>
+          ) : null}
+        />
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", marginBottom: "1.5rem" }}>
           {[
             isAdmin ? { id: "users", label: "Users", sub: pendingUsers.length > 0 ? `${pendingUsers.length} pending` : "Approve & manage", path: "/admin/users", badge: pendingUsers.length } : null,
@@ -814,20 +936,48 @@ export default function OwnerDashboard({ user }) {
           })()
         )}
 
-        {isAdmin && pendingUsers.length > 0 && (
+        {isAdmin && (
           <>
             <SectionTitle title="Pending Approvals" badge={pendingUsers.length} />
             <div style={{ background: colors.white, borderRadius: "24px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 24px rgba(0,0,0,0.04)", overflow: "hidden", marginBottom: "1.5rem" }}>
-              {pendingUsers.map((u, i) => (
-                <div key={u.id} className="owner-list-item" style={{ ...sh.rowItem, padding: "16px", borderBottom: i === pendingUsers.length - 1 ? "none" : `1px solid #f1f5f9` }}>
-                  <div style={{ width: "42px", height: "42px", borderRadius: "14px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: "800", color: colors.warning, flexShrink: 0, marginRight: "12px" }}>{getInitials(u.displayName || u.email || "U")}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: "800", fontSize: "15px", color: colors.textPrimary, marginBottom: "2px" }}>{u.displayName || u.email?.split("@")[0] || "No name"}</div>
-                    <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>{u.email}</div>
+              {pendingUsers.length === 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "28px 24px", gap: "12px" }}>
+                  <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: colors.successBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={colors.success} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
                   </div>
-                  <span style={{ ...roleStyle(u.role), padding: "4px 10px", borderRadius: "8px", fontSize: "12px" }}>{u.role || "User"}</span>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontWeight: "800", fontSize: "15px", color: colors.textPrimary, marginBottom: "4px" }}>All caught up!</div>
+                    <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>No pending approvals right now.</div>
+                  </div>
+                  <button
+                    onClick={() => navigate("/admin/users")}
+                    style={{ marginTop: "4px", padding: "8px 20px", borderRadius: "20px", border: `1.5px solid ${colors.border}`, background: "transparent", fontSize: "13px", fontWeight: "700", color: colors.textSecondary, cursor: "pointer", fontFamily: "inherit" }}
+                  >
+                    View all users
+                  </button>
                 </div>
-              ))}
+              ) : (
+                pendingUsers.map((u, i) => (
+                  <div
+                    key={u.id}
+                    className="owner-list-item"
+                    onClick={() => navigate("/admin/users", { state: { openUserId: u.id } })}
+                    style={{ ...sh.rowItem, padding: "16px", borderBottom: i === pendingUsers.length - 1 ? "none" : `1px solid #f1f5f9`, cursor: "pointer" }}
+                  >
+                    <div style={{ width: "42px", height: "42px", borderRadius: "14px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: "800", color: colors.warning, flexShrink: 0, marginRight: "12px" }}>{getInitials(u.displayName || u.email || "U")}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: "800", fontSize: "15px", color: colors.textPrimary, marginBottom: "2px" }}>{u.displayName || u.email?.split("@")[0] || "No name"}</div>
+                      <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>{u.email}</div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ ...roleStyle(u.role), padding: "4px 10px", borderRadius: "8px", fontSize: "12px" }}>{u.role || "User"}</span>
+                      <span style={{ color: colors.textMuted, fontSize: "20px", lineHeight: 1 }}>›</span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </>
         )}
@@ -835,19 +985,59 @@ export default function OwnerDashboard({ user }) {
         {isAdmin && (
           <>
             <SectionTitle title="Active Users" />
+            {approvedUsers.length > 0 && (
+              <div style={{ position: "relative", marginBottom: "1rem" }}>
+                <span style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", display: "flex", alignItems: "center", color: colors.textMuted }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search active users..."
+                  value={userSearch}
+                  onChange={e => setUserSearch(e.target.value)}
+                  style={{ width: "100%", background: colors.white, borderRadius: "16px", fontSize: "14px", padding: "10px 14px 10px 38px", border: `1px solid ${colors.border}`, outline: "none", boxSizing: "border-box", color: colors.textPrimary, fontFamily: "inherit" }}
+                />
+              </div>
+            )}
             <div style={{ background: colors.white, borderRadius: "24px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 24px rgba(0,0,0,0.04)", overflow: "hidden", marginBottom: "1.5rem" }}>
               {approvedUsers.length === 0 ? (
-                <div style={{ padding: "24px", fontSize: "14px", color: colors.textMuted, textAlign: "center" }}>No active users yet.</div>
-              ) : approvedUsers.map((u, i) => (
-                <div key={u.id} className="owner-list-item" style={{ ...sh.rowItem, padding: "16px", borderBottom: i === approvedUsers.length - 1 ? "none" : `1px solid #f1f5f9` }}>
-                  <div style={{ width: "42px", height: "42px", borderRadius: "14px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: "800", color: colors.info, flexShrink: 0, marginRight: "12px" }}>{getInitials(u.displayName || u.email || "U")}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: "800", fontSize: "15px", color: colors.textPrimary, marginBottom: "2px" }}>{u.displayName || u.email?.split("@")[0] || "No name"}</div>
-                    <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>{u.email}</div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "28px 24px", gap: "12px" }}>
+                  <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={colors.info} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/>
+                      <path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.87"/>
+                    </svg>
                   </div>
-                  <span style={{ ...roleStyle(u.role), padding: "4px 10px", borderRadius: "8px", fontSize: "12px" }}>{u.role || "User"}</span>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontWeight: "800", fontSize: "15px", color: colors.textPrimary, marginBottom: "4px" }}>No active users yet</div>
+                    <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>Approved users will appear here.</div>
+                  </div>
                 </div>
-              ))}
+              ) : (() => {
+                  const filteredUsers = approvedUsers.filter(u => 
+                    (u.displayName || "").toLowerCase().includes(userSearch.toLowerCase()) || 
+                    (u.email || "").toLowerCase().includes(userSearch.toLowerCase())
+                  );
+                  if (filteredUsers.length === 0) {
+                    return (
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "28px 24px", gap: "12px" }}>
+                        <div style={{ textAlign: "center" }}>
+                          <div style={{ fontWeight: "800", fontSize: "15px", color: colors.textPrimary, marginBottom: "4px" }}>No users match your search.</div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return filteredUsers.map((u, i) => (
+                    <div key={u.id} className="owner-list-item" style={{ ...sh.rowItem, padding: "16px", borderBottom: i === filteredUsers.length - 1 ? "none" : `1px solid #f1f5f9` }}>
+                      <div style={{ width: "42px", height: "42px", borderRadius: "14px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: "800", color: colors.info, flexShrink: 0, marginRight: "12px" }}>{getInitials(u.displayName || u.email || "U")}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: "800", fontSize: "15px", color: colors.textPrimary, marginBottom: "2px" }}>{u.displayName || u.email?.split("@")[0] || "No name"}</div>
+                        <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>{u.email}</div>
+                      </div>
+                      <span style={{ ...roleStyle(u.role), padding: "4px 10px", borderRadius: "8px", fontSize: "12px" }}>{u.role || "User"}</span>
+                    </div>
+                  ));
+              })()}
             </div>
           </>
         )}

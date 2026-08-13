@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { db, auth } from "../firebase";
 import { collection, getDocs, updateDoc, doc, getDoc, query, where, deleteDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
@@ -68,6 +68,7 @@ const keyframes = `
 
 export default function AdminUsers() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -103,6 +104,16 @@ export default function AdminUsers() {
     list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
     setUsers(list);
     setLoading(false);
+
+    // Auto-open a specific user when navigating from dashboard
+    const openUserId = location.state?.openUserId;
+    if (openUserId) {
+      const found = list.find((u) => u.id === openUserId);
+      if (found) {
+        setFilter("pending");
+        setSelected(found);
+      }
+    }
   };
 
   useEffect(() => {

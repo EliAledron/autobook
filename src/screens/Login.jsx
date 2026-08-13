@@ -73,9 +73,17 @@ export default function Login() {
     try {
       const result = await signInWithPopup(auth, new GoogleAuthProvider());
       await checkStatusAndNavigate(result.user.uid, navigate, setError);
-    } catch {
-      setError("Google sign-in failed. Please try again.");
-    } finally {
+    } catch (err) {
+      if (err.code === "auth/popup-closed-by-user") {
+        // user dismissed — do nothing
+      } else if (
+        err.code === "auth/web-storage-unsupported" ||
+        (err.message && err.message.toLowerCase().includes("sessionstorage"))
+      ) {
+        setError("Google sign-in needs browser storage to work. Please open this page in your browser's normal (non-private) mode, or enable cookies in your browser settings, then try again.");
+      } else {
+        setError("Google sign-in failed. Please try again.");
+      }
       setLoading(false);
     }
   };
@@ -124,6 +132,20 @@ export default function Login() {
           <button onClick={handleGoogleLogin} style={s.googleBtn} disabled={loading}>
             <GoogleIcon />Continue with Google
           </button>
+
+          {import.meta.env.DEV && (
+            <>
+              <div style={s.divider}>
+                <div style={s.dividerLine} /><span style={{...s.dividerLabel, color: "#f59e0b"}}>dev only</span><div style={s.dividerLine} />
+              </div>
+              <button
+                onClick={() => navigate("/dashboard")}
+                style={s.devBtn}
+              >
+                🔧 Go to Admin Dashboard
+              </button>
+            </>
+          )}
         </div>
 
         <div style={s.switchRow}>
@@ -212,4 +234,5 @@ const s = {
   switchRow: { display: "flex", alignItems: "center", gap: "8px", marginTop: "24px", padding: "16px 20px", background: "#ffffff", borderRadius: "14px", width: "100%", maxWidth: "400px", boxSizing: "border-box", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" },
   switchText: { fontSize: "14px", color: "#6b7280" },
   switchBtn: { fontSize: "14px", fontWeight: "700", color: "#2a5298", background: "none", border: "none", cursor: "pointer", padding: 0 },
+  devBtn: { width: "100%", padding: "12px 14px", background: "#fffbeb", border: "1.5px dashed #f59e0b", borderRadius: "12px", fontSize: "14px", fontWeight: "600", color: "#92400e", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", fontFamily: "inherit" },
 };

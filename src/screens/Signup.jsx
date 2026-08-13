@@ -185,29 +185,26 @@ export default function Signup() {
       const result = await signInWithPopup(auth, new GoogleAuthProvider());
       const user = result.user;
       const snap = await getDoc(doc(db, "users", user.uid));
-      
-      if (snap.exists()) {
-        navigate("/pending");
-        return;
-      }
-
+      if (snap.exists()) { navigate("/pending"); return; }
       setCreatedUser(user);
-      
       const parts = (user.displayName || "").split(" ");
       setFirstName(parts[0] || "");
       setLastName(parts.length > 1 ? parts.slice(1).join(" ") : "");
       setMiddleName("");
-      
       setEmail(user.email || "");
-
-      if (role === "Owner" || role === "Mechanic") {
-        setStep(2);
-      } else {
-        setStep(3);
-      }
+      if (role === "Owner" || role === "Mechanic") setStep(2);
+      else setStep(3);
     } catch (err) {
-      setError("Google sign-up failed. Please try again.");
-    } finally {
+      if (err.code === "auth/popup-closed-by-user") {
+        // user dismissed — do nothing
+      } else if (
+        err.code === "auth/web-storage-unsupported" ||
+        (err.message && err.message.toLowerCase().includes("sessionstorage"))
+      ) {
+        setError("Google sign-in needs browser storage to work. Please open this page in your browser's normal (non-private) mode, or enable cookies in your browser settings, then try again.");
+      } else {
+        setError("Google sign-up failed. Please try again.");
+      }
       setLoading(false);
     }
   };

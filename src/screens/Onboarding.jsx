@@ -294,43 +294,6 @@ function SignupForm({ goBack, navigate }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleNext = async (e) => {
-    e.preventDefault();
-    setError("");
-    if (!firstName.trim() || !lastName.trim()) return setError("Please enter your first and last name.");
-    if (password !== confirmPassword) return setError("Passwords do not match.");
-    if (password.length < 6) return setError("Password must be at least 6 characters.");
-    if (!role) return setError("Please select a role.");
-
-    if (role === "Owner") {
-      setStep(2);
-    } else if (role === "Mechanic") {
-      setStep(4);
-    } else {
-      setStep(3);
-    }
-  };
-
-  const executeSignup = async (permitUrl = "", shopNameStr = "") => {
-    setLoading(true);
-    try {
-      let dName = [firstName.trim(), middleName.trim(), lastName.trim()].filter(Boolean).join(" ");
-      let user = createdUser;
-      if (!user) {
-        const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
-        user = newUser;
-        await updateProfile(user, { displayName: dName });
-      }
-      await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() }, permitUrl, shopNameStr, "", { dtiUrl: "" });
-      navigate("/pending");
-    } catch (err) {
-      setError(err.code === "auth/email-already-in-use" ? "This email is already registered." : err.message);
-      setLoading(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleGoogleSignup = async () => {
     if (!role) return setError("Please select a role before continuing with Google.");
     setError("");
@@ -339,29 +302,27 @@ function SignupForm({ goBack, navigate }) {
       const result = await signInWithPopup(auth, new GoogleAuthProvider());
       const user = result.user;
       const snap = await getDoc(doc(db, "users", user.uid));
-      if (snap.exists()) {
-        navigate("/pending");
-        return;
-      }
+      if (snap.exists()) { navigate("/pending"); return; }
       setCreatedUser(user);
-      
       const parts = (user.displayName || "").split(" ");
       setFirstName(parts[0] || "");
       setLastName(parts.length > 1 ? parts.slice(1).join(" ") : "");
       setMiddleName("");
-      
       setEmail(user.email || "");
-
-      if (role === "Owner") {
-        setStep(2);
-      } else if (role === "Mechanic") {
-        setStep(4);
+      if (role === "Owner") setStep(2);
+      else if (role === "Mechanic") setStep(4);
+      else setStep(3);
+    } catch (err) {
+      if (err.code === "auth/popup-closed-by-user") {
+        // user dismissed — do nothing
+      } else if (
+        err.code === "auth/web-storage-unsupported" ||
+        (err.message && err.message.toLowerCase().includes("sessionstorage"))
+      ) {
+        setError("Google sign-in needs browser storage to work. Please open this page in your browser's normal (non-private) mode, or enable cookies in your browser settings, then try again.");
       } else {
-        setStep(3);
+        setError("Google sign-up failed. Please try again.");
       }
-    } catch {
-      setError("Google sign-up failed. Please try again.");
-    } finally {
       setLoading(false);
     }
   };
@@ -756,9 +717,17 @@ function LoginForm({ goBack, navigate }) {
     try {
       const result = await signInWithPopup(auth, new GoogleAuthProvider());
       await checkStatusAndNavigate(result.user.uid, navigate, setError);
-    } catch {
-      setError("Google sign-in failed. Please try again.");
-    } finally {
+    } catch (err) {
+      if (err.code === "auth/popup-closed-by-user") {
+        // user dismissed — do nothing
+      } else if (
+        err.code === "auth/web-storage-unsupported" ||
+        (err.message && err.message.toLowerCase().includes("sessionstorage"))
+      ) {
+        setError("Google sign-in needs browser storage to work. Please open this page in your browser's normal (non-private) mode, or enable cookies in your browser settings, then try again.");
+      } else {
+        setError("Google sign-in failed. Please try again.");
+      }
       setLoading(false);
     }
   };
