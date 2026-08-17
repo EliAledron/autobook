@@ -294,6 +294,19 @@ function SignupForm({ goBack, navigate }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const handleNext = () => {
+    setError("");
+    if (!firstName.trim() || !lastName.trim()) return setError("Please enter your first and last name.");
+    if (!email.trim() || !email.includes("@")) return setError("Please enter a valid email address.");
+    if (!password || password.length < 6) return setError("Password must be at least 6 characters.");
+    if (password !== confirmPassword) return setError("Passwords do not match.");
+    if (!role) return setError("Please select a role.");
+
+    if (role === "Owner") setStep(2);
+    else if (role === "Mechanic") setStep(4);
+    else setStep(3);
+  };
+
   const handleGoogleSignup = async () => {
     if (!role) return setError("Please select a role before continuing with Google.");
     setError("");
