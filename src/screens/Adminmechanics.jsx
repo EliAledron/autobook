@@ -403,7 +403,6 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
                   <button
                     onClick={async () => {
                       try {
-                        const { updateDoc, doc } = await import("firebase/firestore");
                         await updateDoc(doc(db, "shopMechanics", mechanic.id), { userId: null });
                         setLinkedUserId(null);
                         setLinkMsg({ type: "success", text: "Account unlinked." });
@@ -430,7 +429,6 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
                       onClick={async () => {
                         setLinkLoading(true); setLinkMsg(null);
                         try {
-                          const { getDocs, collection, query, where, updateDoc, doc } = await import("firebase/firestore");
                           const uSnap = await getDocs(query(collection(db, "users"), where("email", "==", linkEmail.trim())));
                           if (uSnap.empty) { setLinkMsg({ type: "error", text: "No user found with that email." }); setLinkLoading(false); return; }
                           const found = uSnap.docs[0];

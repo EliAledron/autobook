@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
-import { onAuthStateChanged, updateProfile } from "firebase/auth";
+import { onAuthStateChanged, updateProfile, signOut } from "firebase/auth";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { sh, colors, getInitials } from "./dashboardShared";
 import { useUser } from "../UserContext";
@@ -178,7 +178,6 @@ export default function Profile() {
   };
 
   const handleLogout = async () => {
-    const { signOut } = await import("firebase/auth");
     await signOut(auth);
     navigate("/");
   };

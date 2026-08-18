@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { db, auth } from "../firebase";
-import { collection, getDocs, updateDoc, doc, getDoc, query, where, deleteDoc, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, updateDoc, doc, getDoc, query, where, deleteDoc, addDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { sh, colors, getInitials, EmptyState } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
@@ -186,7 +186,6 @@ export default function AdminUsers() {
         else if (sName.includes("GRHE")) customId = "GRHE";
 
         if (customId) {
-          const { setDoc } = await import("firebase/firestore");
           await setDoc(doc(db, "shops", customId), shopData);
           updates.shopId = customId;
         } else {

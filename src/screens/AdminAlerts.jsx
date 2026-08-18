@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, getDocs, updateDoc, doc, orderBy, query, writeBatch, where } from "firebase/firestore";
+import { collection, getDocs, updateDoc, doc, orderBy, query, writeBatch, where, getDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { sh, colors, EmptyState } from "./dashboardShared";
@@ -80,7 +80,6 @@ export default function AdminAlerts() {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) { navigate("/login"); return; }
-      const { getDoc } = await import("firebase/firestore");
       const snap = await getDoc(doc(db, "users", firebaseUser.uid));
       let userObj = { id: firebaseUser.uid };
       if (snap.exists()) userObj = { ...userObj, ...snap.data() };
