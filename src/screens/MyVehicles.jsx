@@ -4,7 +4,7 @@ import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { sh, colors, EmptyState } from "./dashboardShared";
+import { sh, colors, EmptyState, ErrorModal } from "./dashboardShared";
 import BackButton from "../components/BackButton";
 import { Camera, Car, FileText } from "lucide-react";
 
@@ -170,9 +170,7 @@ export default function MyVehicles() {
         ) : showForm ? (
           <>
             <div style={{ ...sh.sectionLabel, fontSize: "13px", color: colors.textPrimary, letterSpacing: "0.5px" }}>{editingId ? "Edit vehicle" : "Add new vehicle"}</div>
-            {error && (
-              <div style={{ background: colors.dangerBg, border: `1px solid ${colors.danger}`, borderRadius: "14px", padding: "12px 16px", fontSize: "13px", color: colors.danger, marginBottom: "1rem" }}>{error}</div>
-            )}
+            <ErrorModal error={error} onClose={() => setError("")} />
 
             {/* VEHICLE PHOTO */}
             <div style={{ ...sh.card, padding: "24px", marginBottom: "1.5rem" }}>

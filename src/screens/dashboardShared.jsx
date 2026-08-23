@@ -237,6 +237,33 @@ export function SharedSearchBar({ value, onChange, placeholder = "Search...", st
   );
 }
 
+// ─── Error Modal ─────────────────────────────────────────────────────────────
+export function ErrorModal({ error, onClose }) {
+  if (!error) return null;
+  return (
+    <div style={{
+      position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      zIndex: 9999, backgroundColor: "rgba(0,0,0,0.35)", padding: "24px"
+    }} onClick={onClose}>
+      <div style={{
+        background: colors.white, borderRadius: "20px", padding: "28px 24px",
+        maxWidth: "320px", width: "100%",
+        boxShadow: "0 20px 60px rgba(0,0,0,0.2)", textAlign: "center"
+      }} onClick={e => e.stopPropagation()}>
+        <div style={{ width: "52px", height: "52px", borderRadius: "50%", background: colors.dangerBg, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={colors.danger} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <div style={{ fontSize: "16px", fontWeight: "700", color: colors.textPrimary, marginBottom: "8px" }}>Heads up!</div>
+        <div style={{ fontSize: "14px", color: colors.textSecondary, lineHeight: "1.5", marginBottom: "20px" }}>{error}</div>
+        <button onClick={onClose} style={{ background: colors.danger, color: "#fff", border: "none", borderRadius: "12px", padding: "12px 32px", fontSize: "14px", fontWeight: "700", cursor: "pointer", width: "100%" }}>OK</button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Shared Custom Dropdown ───────────────────────────────────────────────────
 export function CustomDropdown({ value, onChange, options, style, placeholder }) {
   const [isOpen, setIsOpen] = useState(false);

@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, addDoc, getDocs, getDoc, doc, query, where, serverTimestamp } from "firebase/firestore";
-import { sh, colors, CustomDropdown } from "./dashboardShared";
+import { sh, colors, CustomDropdown, ErrorModal } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
 import { Car, Wrench, Camera, Calendar } from 'lucide-react';
@@ -216,11 +216,7 @@ export default function BookService() {
       </div>
 
       <div style={sh.content} className="stagger-slide-up">
-        {error && (
-          <div style={{ background: colors.dangerBg, border: `1px solid ${colors.danger}`, borderRadius: "12px", padding: "10px 14px", fontSize: "13px", color: colors.danger, marginBottom: "1rem" }}>
-            {error}
-          </div>
-        )}
+        <ErrorModal error={error} onClose={() => setError("")} />
 
         {/* VEHICLE INFORMATION */}
         <div style={{ ...sh.card, padding: "24px", marginBottom: "1.5rem" }}>

@@ -138,6 +138,7 @@ export default function AdminBookings() {
   const [loading, setLoading] = useState(true);
   const [newMechanic, setNewMechanic] = useState("");
   const [newStatus, setNewStatus] = useState("");
+  const [newCancelReason, setNewCancelReason] = useState("");
   const [newPrice, setNewPrice] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -274,7 +275,7 @@ export default function AdminBookings() {
         }
       }
 
-      setBookings(bList);
+      setBookings(bList.filter(b => b.archived !== true));
 
       const shopMechanics = smList.map((m) => ({
         id: m.id,
@@ -380,6 +381,11 @@ export default function AdminBookings() {
   const handleSave = async () => {
     if (!selected) return;
 
+    if (newStatus === "Cancelled" && !newCancelReason.trim()) {
+      showToast(<><AlertTriangle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Please provide a reason for cancelling.</>);
+      return;
+    }
+
     if ((newStatus === "In Progress" || newStatus === "Completed") && !newMechanic) {
       showToast(<><X size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Cannot set to {newStatus} without an assigned mechanic.</>);
       return;
@@ -389,6 +395,7 @@ export default function AdminBookings() {
     try {
       const updates = {};
       if (newStatus) updates.status = newStatus;
+      if (newStatus === "Cancelled") updates.cancelReason = newCancelReason.trim();
       if (newMechanic !== undefined) updates.mechanicId = newMechanic || null;
       
       const parsedPrice = newPrice !== "" ? newPrice : undefined;
@@ -430,7 +437,7 @@ export default function AdminBookings() {
         await addDoc(collection(db, "notifications"), {
           userId: selected.customerId,
           title: "Booking Cancelled",
-          message: `Your booking for ${selected.serviceType || "a service"} has been cancelled by ${selected.shopName || "the shop"}.`,
+          message: `Your booking for ${selected.serviceType || "a service"} has been cancelled by ${selected.shopName || "the shop"}. Reason: ${newCancelReason.trim()}`,
           type: "status_update",
           bookingId: selected.id,
           read: false,
@@ -520,7 +527,7 @@ export default function AdminBookings() {
     if (!selected) return;
     setDeleting(true);
     try {
-      await deleteDoc(doc(db, "bookings", selected.id));
+      await updateDoc(doc(db, "bookings", selected.id), { archived: true });
       const mId = selected.mechanicId;
       setBookings((prev) => {
         const nextBookings = prev.filter((b) => b.id !== selected.id);
@@ -533,10 +540,10 @@ export default function AdminBookings() {
       });
       setShowDeleteConfirm(false);
       setSelected(null);
-      showToast(<><Trash2 size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Booking deleted successfully.</>);
+      showToast(<><Trash2 size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Booking archived successfully.</>);
     } catch (e) {
-      console.error("Failed to delete booking:", e);
-      showToast(<><X size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Failed to delete booking.</>);
+      console.error("Failed to archive booking:", e);
+      showToast(<><X size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Failed to archive booking.</>);
     }
     setDeleting(false);
   };
@@ -573,6 +580,7 @@ export default function AdminBookings() {
       setNewStatus(b.status || "Pending");
       setNewMechanic(b.mechanicId || "");
       setNewPrice(b.price !== undefined ? String(b.price) : "");
+      setNewCancelReason("");
     }}>
       {/* Header: Status & Price */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -1245,6 +1253,26 @@ export default function AdminBookings() {
                   })}
                 </div>
               )}
+              {newStatus === "Cancelled" && selected.status !== "Cancelled" && (
+                <div style={{ marginTop: "12px", animation: "ab-fade-in 0.2s ease" }}>
+                  <div style={{ fontSize: "12px", fontWeight: "700", color: colors.textSecondary, marginBottom: "8px" }}>
+                    Reason for cancellation <span style={{ color: colors.danger }}>*</span>
+                  </div>
+                  <textarea
+                    value={newCancelReason}
+                    onChange={e => setNewCancelReason(e.target.value)}
+                    placeholder="e.g. Shop is fully booked, mechanic is sick, customer requested..."
+                    rows={2}
+                    style={{
+                      width: "100%", padding: "10px 14px", borderRadius: "10px",
+                      border: `1.5px solid ${colors.border}`,
+                      fontSize: "13px", fontFamily: "inherit", outline: "none",
+                      background: "#f9fafb", color: colors.textPrimary,
+                      resize: "none", boxSizing: "border-box"
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             {/* PRICE FIELD */}
@@ -1290,7 +1318,7 @@ export default function AdminBookings() {
               cursor: "pointer", fontFamily: "inherit", marginBottom: "10px",
               opacity: (saving || deleting) ? 0.7 : 1,
             }}>
-              {deleting ? "Deleting..." : "Delete Booking"}
+              {deleting ? "Archiving..." : "Archive Booking"}
             </button>
             <button onClick={() => setSelected(null)} style={sh.outlineBtn}>Cancel</button>
           </div>
@@ -1301,15 +1329,15 @@ export default function AdminBookings() {
       {showDeleteConfirm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 120, display: "flex", alignItems: "center", justifyContent: "center", animation: "ab-fade-in 0.2s ease-out" }} onClick={() => setShowDeleteConfirm(false)}>
           <div style={{ background: colors.white, borderRadius: "24px", width: "90%", maxWidth: "340px", padding: "24px", textAlign: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
-            <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: colors.dangerBg, color: colors.danger, fontSize: "28px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>🗑️</div>
-            <h3 style={{ margin: "0 0 8px", fontSize: "18px", color: colors.textPrimary, fontWeight: "800" }}>Delete Booking?</h3>
+            <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: colors.dangerBg, color: colors.danger, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}><Trash2 size={28} /></div>
+            <h3 style={{ margin: "0 0 8px", fontSize: "18px", color: colors.textPrimary, fontWeight: "800" }}>Archive Booking?</h3>
             <p style={{ margin: "0 0 24px", fontSize: "13px", color: colors.textSecondary, lineHeight: "1.5" }}>
-              Are you sure you want to delete this booking for <strong>{getCustomerName(selected)}</strong>? This action cannot be undone.
+              Are you sure you want to archive this booking for <strong>{getCustomerName(selected)}</strong>? It will be hidden from the active list.
             </p>
             <div style={{ display: "flex", gap: "12px" }}>
               <button onClick={() => setShowDeleteConfirm(false)} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.bg, border: `1px solid ${colors.border}`, color: colors.textSecondary, fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "14px" }}>Cancel</button>
               <button onClick={confirmDelete} disabled={deleting} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.danger, border: "none", color: "#fff", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "14px", opacity: deleting ? 0.7 : 1 }}>
-                {deleting ? "Deleting..." : "Yes, Delete"}
+                {deleting ? "Archiving..." : "Yes, Archive"}
               </button>
             </div>
           </div>

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { collection, getDocs, updateDoc, doc, getDoc, query, where, addDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { sh, colors, EmptyState, getInitials, SharedSearchBar } from "./dashboardShared";
+import { sh, colors, EmptyState, getInitials, SharedSearchBar, ErrorModal } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
 import BackButton from "../components/BackButton";
@@ -176,7 +176,7 @@ function MechanicFormModal({ existing, onClose, onSaved, ownerId, shopId }) {
           </div>
           <button onClick={onClose} style={{ background: colors.bg, border: "none", width: "32px", height: "32px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", cursor: "pointer", color: colors.textSecondary }}>×</button>
         </div>
-        {error && <div style={{ background: colors.dangerBg, border: `1px solid ${colors.danger}`, borderRadius: "10px", padding: "8px 12px", fontSize: "12px", color: colors.danger, marginBottom: "1rem", fontWeight: "600" }}>{error}</div>}
+        <ErrorModal error={error} onClose={() => setError("")} />
         {[
           { label: "Full Name *", placeholder: "e.g. Juan dela Cruz", value: name, set: (val) => setName(val.replace(/[^a-zA-Z\s]/g, '')) },
           { label: "Phone Number", placeholder: "e.g. 09171234567", value: phone, set: (val) => setPhone(val.replace(/[^0-9+]/g, '')) },

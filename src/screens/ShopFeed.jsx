@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, getDocs, updateDoc, doc, orderBy, arrayUnion, arrayRemove, deleteDoc, getDoc, serverTimestamp, where, limit, startAfter, onSnapshot, increment, addDoc } from "firebase/firestore";
-import { sh, colors, getInitials, EmptyState, SharedSearchBar, SharedFilterSelect } from "./dashboardShared";
+import { sh, colors, getInitials, EmptyState, SharedSearchBar, SharedFilterSelect, ErrorModal } from "./dashboardShared";
 import { useUser } from "../UserContext";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
@@ -644,11 +644,7 @@ export default function ShopFeed() {
               <button onClick={closeEditModal} style={{ background: colors.bg, border: "none", width: "32px", height: "32px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", cursor: "pointer", color: colors.textSecondary }}>×</button>
             </div>
 
-            {editError && (
-              <div style={{ background: colors.dangerBg, border: `1px solid ${colors.danger}`, borderRadius: "12px", padding: "10px 14px", fontSize: "13px", color: colors.danger, marginBottom: "1rem", fontWeight: "600", display: "flex", alignItems: "center", gap: "6px" }}>
-                <XCircle size={16} /> {editError}
-              </div>
-            )}
+            <ErrorModal error={editError} onClose={() => setEditError("")} />
 
             <div style={{ marginBottom: "1.25rem" }}>
               <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Post Content</div>

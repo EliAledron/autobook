@@ -206,7 +206,7 @@ function CarPartsModal({ user, mechanics, onClose, onSaved, shopId }) {
           </div>
           <button onClick={onClose} style={{ background: colors.bg, border: "none", width: "36px", height: "36px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", cursor: "pointer", color: colors.textSecondary }}>×</button>
         </div>
-        {error && <div style={{ background: colors.dangerBg, border: `1px solid ${colors.danger}`, borderRadius: "12px", padding: "12px 16px", fontSize: "13px", color: colors.danger, marginBottom: "1.5rem", fontWeight: "600", display: "flex", alignItems: "center", gap: "8px" }}><span style={{ display: "flex" }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></span> {error}</div>}
+        <ErrorModal error={error} onClose={() => setError("")} />
         
         {mechanics.length > 0 && (
           <div style={{ marginBottom: "1.25rem" }}>
@@ -1066,11 +1066,7 @@ export default function OwnerDashboard({ user }) {
             </div>
 
             {/* Error banner */}
-            {postError && (
-              <div style={{ background: colors.dangerBg, border: `1px solid ${colors.danger}`, borderRadius: "12px", padding: "10px 14px", fontSize: "13px", color: colors.danger, marginBottom: "1rem", fontWeight: "600" }}>
-                ❌ {postError}
-              </div>
-            )}
+            <ErrorModal error={postError} onClose={() => setPostError("")} />
 
             <div style={{ marginBottom: "1.25rem" }}>
               <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Post Content</div>

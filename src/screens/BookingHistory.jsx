@@ -88,6 +88,7 @@ export default function BookingHistory() {
   const [cancelling, setCancelling] = useState(false);
   const [search, setSearch] = useState("");
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
 
   const loadBookings = useCallback(async (customerId) => {
     try {
@@ -97,7 +98,8 @@ export default function BookingHistory() {
         orderBy("createdAt", "desc")
       );
       const snap = await getDocs(q);
-      setBookings(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      const allBookings = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setBookings(allBookings.filter(b => b.archived !== true));
     } catch (e) { setBookings([]); }
   }, []);
 
@@ -113,16 +115,17 @@ export default function BookingHistory() {
 
   const handleCancel = async () => {
     if (!selected) return;
+    if (!cancelReason.trim()) return; // reason is required
     setShowCancelConfirm(false);
     setCancelling(true);
     try {
-      await updateDoc(doc(db, "bookings", selected.id), { status: "Cancelled" });
+      await updateDoc(doc(db, "bookings", selected.id), { status: "Cancelled", cancelReason: cancelReason.trim() });
 
       // Notify customer
       await addDoc(collection(db, "notifications"), {
         userId: uid,
         title: "Booking Cancelled",
-        message: `Your booking for ${selected.serviceType} at ${selected.shopName} has been cancelled.`,
+        message: `Your booking for ${selected.serviceType} at ${selected.shopName} has been cancelled. Reason: ${cancelReason.trim()}`,
         type: "booking_cancelled",
         read: false,
         createdAt: serverTimestamp(),
@@ -132,13 +135,14 @@ export default function BookingHistory() {
       await addDoc(collection(db, "adminAlerts"), {
         type: "job_cancelled",
         title: "Booking Cancelled",
-        message: `Customer ${selected.customerName || "A customer"} cancelled their booking for ${selected.serviceType} at ${selected.shopName}.`,
+        message: `Customer ${selected.customerName || "A customer"} cancelled their booking for ${selected.serviceType} at ${selected.shopName}. Reason: ${cancelReason.trim()}`,
         shopId: selected.shopId || null,
         read: false,
         createdAt: serverTimestamp(),
       });
 
-      setBookings((prev) => prev.map((b) => b.id === selected.id ? { ...b, status: "Cancelled" } : b));
+      setBookings((prev) => prev.map((b) => b.id === selected.id ? { ...b, status: "Cancelled", cancelReason: cancelReason.trim() } : b));
+      setCancelReason("");
       setSelected(null);
     } catch (e) { console.error(e); }
     setCancelling(false);
@@ -471,16 +475,41 @@ export default function BookingHistory() {
 
       {/* CANCEL CONFIRMATION MODAL */}
       {showCancelConfirm && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 120, display: "flex", alignItems: "center", justifyContent: "center", animation: "ab-fade-in 0.2s ease-out" }} onClick={() => setShowCancelConfirm(false)}>
-          <div style={{ background: colors.white, borderRadius: "24px", width: "90%", maxWidth: "340px", padding: "24px", textAlign: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 120, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "ab-fade-in 0.2s ease-out" }} onClick={() => { setShowCancelConfirm(false); setCancelReason(""); }}>
+          <div style={{ background: colors.white, borderRadius: "24px", width: "100%", maxWidth: "340px", padding: "28px 24px", textAlign: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
             <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: colors.dangerBg, color: colors.danger, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}><X size={28} /></div>
             <h3 style={{ margin: "0 0 8px", fontSize: "18px", color: colors.textPrimary, fontWeight: "800" }}>Cancel Booking?</h3>
-            <p style={{ margin: "0 0 24px", fontSize: "13px", color: colors.textSecondary, lineHeight: "1.5" }}>
-              Are you sure you want to cancel your booking for <strong>{selected?.serviceType}</strong> at <strong>{selected?.shopName}</strong>?
+            <p style={{ margin: "0 0 20px", fontSize: "13px", color: colors.textSecondary, lineHeight: "1.5" }}>
+              You're about to cancel your <strong>{selected?.serviceType}</strong> booking at <strong>{selected?.shopName}</strong>.
             </p>
+
+            <div style={{ textAlign: "left", marginBottom: "20px" }}>
+              <div style={{ fontSize: "12px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>
+                Reason for cancellation <span style={{ color: colors.danger }}>*</span>
+              </div>
+              <textarea
+                value={cancelReason}
+                onChange={e => setCancelReason(e.target.value)}
+                placeholder="e.g. Schedule conflict, found another shop, emergency..."
+                rows={3}
+                style={{
+                  width: "100%", padding: "12px 14px", borderRadius: "12px",
+                  border: `1.5px solid ${cancelReason.trim() ? colors.border : colors.border}`,
+                  fontSize: "13px", fontFamily: "inherit", outline: "none",
+                  background: "#f9fafb", color: colors.textPrimary,
+                  resize: "none", boxSizing: "border-box", lineHeight: "1.5"
+                }}
+              />
+              {!cancelReason.trim() && (
+                <div style={{ fontSize: "11px", color: colors.danger, marginTop: "4px", fontWeight: "600" }}>
+                  Please provide a reason before cancelling.
+                </div>
+              )}
+            </div>
+
             <div style={{ display: "flex", gap: "12px" }}>
-              <button onClick={() => setShowCancelConfirm(false)} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.bg, border: `1px solid ${colors.border}`, color: colors.textSecondary, fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "14px" }}>No, keep it</button>
-              <button onClick={handleCancel} disabled={cancelling} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.danger, border: "none", color: "#fff", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "14px", opacity: cancelling ? 0.7 : 1 }}>
+              <button onClick={() => { setShowCancelConfirm(false); setCancelReason(""); }} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.bg, border: `1px solid ${colors.border}`, color: colors.textSecondary, fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "14px" }}>No, keep it</button>
+              <button onClick={handleCancel} disabled={cancelling || !cancelReason.trim()} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.danger, border: "none", color: "#fff", fontWeight: "700", cursor: cancelReason.trim() ? "pointer" : "not-allowed", fontFamily: "inherit", fontSize: "14px", opacity: (cancelling || !cancelReason.trim()) ? 0.5 : 1 }}>
                 {cancelling ? "Cancelling..." : "Yes, cancel"}
               </button>
             </div>

@@ -75,9 +75,9 @@ export default function MechanicBookings() {
       ]);
       const map = new Map();
       [...snap1.docs, ...snap2.docs].forEach(d => map.set(d.id, { id: d.id, ...d.data() }));
-      const list = Array.from(map.values()).sort((a, b) =>
-        (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)
-      );
+      const list = Array.from(map.values())
+        .filter(b => b.archived !== true)
+        .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       setBookings(list);
     } catch (e) { setBookings([]); }
   };

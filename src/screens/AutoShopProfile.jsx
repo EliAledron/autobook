@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { sh, colors, getInitials } from "./dashboardShared";
+import { sh, colors, getInitials, ErrorModal } from "./dashboardShared";
 import { doc, updateDoc, addDoc, setDoc, collection, serverTimestamp, getDocs, query, where, orderBy, getDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -142,7 +142,7 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
           <button onClick={onClose} style={{ background: colors.bg, border: "none", width: "36px", height: "36px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", cursor: "pointer", color: colors.textSecondary }}>×</button>
         </div>
 
-        {error && <div style={{ background: colors.dangerBg, border: `1px solid ${colors.danger}`, borderRadius: "12px", padding: "12px 16px", fontSize: "13px", color: colors.danger, marginBottom: "1.5rem", fontWeight: "600", display: "flex", alignItems: "center", gap: "6px" }}><AlertTriangle size={16} /> {error}</div>}
+        <ErrorModal error={error} onClose={() => setError("")} />
 
         {/* IMAGE UPLOADS */}
         <div style={{ display: "flex", gap: "12px", marginBottom: "1.25rem" }}>

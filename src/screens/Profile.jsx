@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged, updateProfile, signOut } from "firebase/auth";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { sh, colors, getInitials } from "./dashboardShared";
+import { sh, colors, getInitials, ErrorModal } from "./dashboardShared";
 import { useUser } from "../UserContext";
 import BackButton from "../components/BackButton";
 
@@ -425,18 +425,7 @@ export default function Profile() {
 
       <div style={sh.content} className="stagger-slide-up">
 
-        {/* ERROR */}
-        {error && (
-          <div style={{
-            background: colors.dangerBg, border: `1px solid ${colors.danger}`,
-            borderRadius: "12px", padding: "10px 14px", fontSize: "13px",
-            color: colors.danger, marginBottom: "1rem",
-            display: "flex", alignItems: "flex-start", gap: "8px",
-          }}>
-            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: colors.danger, flexShrink: 0, display: "inline-block", marginTop: "5px" }} />
-            <span>{error}</span>
-          </div>
-        )}
+        <ErrorModal error={error} onClose={() => setError("")} />
 
         {/* PROFILE DETAILS */}
         <div style={sh.sectionLabel}>Profile details</div>
