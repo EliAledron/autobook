@@ -39,7 +39,7 @@ const FEATURES = [
   },
 ];
 
-const ROLES = ["Customer", "Owner", "Mechanic"];
+const ROLES = ["Customer", "Owner"]; // "Mechanic" hidden for now
 
 const MECHANIC_SPECIALTIES = [
   "General Mechanic", "Electrician", "Aircon Tech",
@@ -488,7 +488,7 @@ function SignupForm({ goBack, navigate }) {
               <input className="ab-input" type="password" placeholder="Re-enter your password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} style={s.input} />
 
               <label style={s.label}>Select Your Role</label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginBottom: "28px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "28px" }}>
                 {ROLES.map((r) => {
                   const isSelected = role === r;
                   return (

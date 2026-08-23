@@ -10,7 +10,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc, getDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
 
-const ROLES = ["Customer", "Owner", "Mechanic"];
+const ROLES = ["Customer", "Owner"]; // "Mechanic" hidden for now
 
 const MECHANIC_SPECIALTIES = [
   "General Mechanic", "Engine Specialist", "Electrical Specialist",
