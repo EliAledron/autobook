@@ -7,13 +7,14 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { sh, colors, EmptyState } from "./dashboardShared";
 import BackButton from "../components/BackButton";
 
-const emptyVehicle = () => ({ make: "", model: "", year: "", plate: "", color: "", photoURL: "", photoFile: null, localPreview: null });
+const emptyVehicle = () => ({ make: "", model: "", year: "", plate: "", color: "", photoURL: "", photoFile: null, localPreview: null, permitURL: "", permitFile: null, permitPreview: null });
 
 const COLORS_LIST = ["White", "Black", "Silver", "Gray", "Red", "Blue", "Green", "Yellow", "Orange", "Brown", "Other"];
 
 export default function MyVehicles() {
   const navigate = useNavigate();
   const fileRef = useRef(null);
+  const permitRef = useRef(null);
   const [uid, setUid] = useState(null);
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,9 +49,16 @@ export default function MyVehicles() {
     setForm((f) => ({ ...f, photoFile: file, localPreview: URL.createObjectURL(file) }));
   };
 
+  const handlePermitChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setForm((f) => ({ ...f, permitFile: file, permitPreview: URL.createObjectURL(file) }));
+  };
+
   const handlePreSubmit = () => {
     if (!form.make.trim() || !form.model.trim()) { setError("Make and model are required."); return; }
     if (!form.plate.trim()) { setError("Plate number is required."); return; }
+    if (!form.permitURL && !form.permitFile) { setError("Car permit (Proof of ownership) is required."); return; }
     setError("");
     setShowConfirm(true);
   };
@@ -61,11 +69,19 @@ export default function MyVehicles() {
 
     try {
       let finalPhotoURL = form.photoURL;
+      let finalPermitURL = form.permitURL;
+      const storage = getStorage();
+
       if (form.photoFile) {
-        const storage = getStorage();
-        const storageRef = ref(storage, `vehiclePhotos/${uid}/${form.plate}_${Date.now()}`);
-        await uploadBytes(storageRef, form.photoFile);
-        finalPhotoURL = await getDownloadURL(storageRef);
+        const photoRef = ref(storage, `vehiclePhotos/${uid}/${form.plate}_${Date.now()}`);
+        await uploadBytes(photoRef, form.photoFile);
+        finalPhotoURL = await getDownloadURL(photoRef);
+      }
+
+      if (form.permitFile) {
+        const permitRefStorage = ref(storage, `vehiclePermits/${uid}/${form.plate}_${Date.now()}`);
+        await uploadBytes(permitRefStorage, form.permitFile);
+        finalPermitURL = await getDownloadURL(permitRefStorage);
       }
 
       const data = {
@@ -76,6 +92,7 @@ export default function MyVehicles() {
         plate: form.plate.trim().toUpperCase(),
         color: form.color,
         photoURL: finalPhotoURL,
+        permitURL: finalPermitURL,
         updatedAt: serverTimestamp(),
       };
 
@@ -97,10 +114,11 @@ export default function MyVehicles() {
   };
 
   const handleEdit = (v) => {
-    setForm({ ...v, photoFile: null, localPreview: null });
+    setForm({ ...v, photoFile: null, localPreview: null, permitFile: null, permitPreview: null });
     setEditingId(v.id);
     setShowForm(true);
     setError("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDelete = async (id) => {
@@ -191,6 +209,42 @@ export default function MyVehicles() {
               </div>
             </div>
 
+            {/* CAR PERMIT */}
+            <div style={{ ...sh.card, padding: "24px", marginBottom: "1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: colors.successBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>📄</div>
+                  <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary }}>Car Permit (Proof of Ownership) *</div>
+                </div>
+                {(form.permitPreview || form.permitURL) && (
+                  <button
+                    onClick={() => setForm(f => ({ ...f, permitFile: null, permitPreview: null, permitURL: "" }))}
+                    style={{ background: colors.dangerBg, color: colors.danger, border: "none", padding: "6px 12px", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit" }}
+                  >
+                    Remove Permit
+                  </button>
+                )}
+              </div>
+              <input ref={permitRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handlePermitChange} />
+              <div
+                onClick={() => permitRef.current?.click()}
+                style={{
+                  width: "100%", height: form.permitPreview || form.permitURL ? "180px" : "100px",
+                  background: colors.bg, borderRadius: "14px",
+                  border: form.permitPreview || form.permitURL ? "none" : `1.5px dashed ${colors.border}`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer", overflow: "hidden",
+                  fontSize: "13px", color: colors.textMuted,
+                  position: "relative"
+                }}
+              >
+                {form.permitPreview || form.permitURL
+                  ? <img src={form.permitPreview || form.permitURL} alt="permit" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  : "📄 Tap to add car permit"
+                }
+              </div>
+            </div>
+
             {/* VEHICLE DETAILS */}
             <div style={{ ...sh.card, padding: "24px", marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
@@ -271,6 +325,11 @@ export default function MyVehicles() {
                 <div key={v.id} style={{ background: colors.white, borderRadius: "20px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 20px rgba(0,0,0,0.05)", padding: "16px", marginBottom: "1.25rem" }}>
                   {v.photoURL && (
                     <img src={v.photoURL} alt="vehicle" style={{ display: "block", width: "100%", height: "160px", objectFit: "cover", borderRadius: "14px", marginBottom: "12px" }} />
+                  )}
+                  {v.permitURL && (
+                    <div style={{ fontSize: "12px", color: colors.success, background: colors.successBg, padding: "6px 12px", borderRadius: "8px", marginBottom: "12px", display: "inline-flex", alignItems: "center", gap: "6px", fontWeight: "700" }}>
+                      <span>📄</span> Proof of Ownership Attached
+                    </div>
                   )}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                     <div>
