@@ -244,10 +244,15 @@ export function SharedFilterSelect({ value, onChange, options, style }) {
       value={value}
       onChange={(e) => onChange(e.target.value)}
       style={{
-        padding: "14px 16px", borderRadius: "24px", border: `1px solid transparent`,
+        padding: "14px 36px 14px 16px", borderRadius: "24px", border: `1px solid transparent`,
         fontSize: "13px", backgroundColor: "#f1f5f9", color: colors.textPrimary,
         fontFamily: "inherit", outline: "none", cursor: "pointer",
         boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)", transition: "all 0.2s ease",
+        appearance: "none",
+        backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "right 14px center",
+        backgroundSize: "16px",
         ...style
       }}
       onFocus={(e) => { e.target.style.border = `1px solid ${colors.blue}`; e.target.style.backgroundColor = colors.white; e.target.style.boxShadow = "0 4px 12px rgba(42,82,152,0.1)"; }}

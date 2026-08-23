@@ -784,14 +784,14 @@ export default function AdminBookings() {
                       <select 
                         value={month} 
                         onChange={(e) => setCurrentDate(new Date(year, Number(e.target.value), 1))}
-                        style={{ padding: '6px 12px', borderRadius: '10px', border: `1px solid ${colors.border}`, fontSize: '14px', fontWeight: '800', color: colors.navy, background: colors.white, fontFamily: 'inherit', outline: 'none', cursor: 'pointer' }}
+                        style={{ padding: '6px 28px 6px 12px', borderRadius: '10px', border: `1px solid ${colors.border}`, fontSize: '14px', fontWeight: '800', color: colors.navy, background: colors.white, fontFamily: 'inherit', outline: 'none', cursor: 'pointer', appearance: "none", backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 8px center", backgroundSize: "14px" }}
                       >
                         {monthNames.map((m, i) => <option key={m} value={i}>{m}</option>)}
                       </select>
                       <select 
                         value={year} 
                         onChange={(e) => setCurrentDate(new Date(Number(e.target.value), month, 1))}
-                        style={{ padding: '6px 12px', borderRadius: '10px', border: `1px solid ${colors.border}`, fontSize: '14px', fontWeight: '800', color: colors.navy, background: colors.white, fontFamily: 'inherit', outline: 'none', cursor: 'pointer' }}
+                        style={{ padding: '6px 28px 6px 12px', borderRadius: '10px', border: `1px solid ${colors.border}`, fontSize: '14px', fontWeight: '800', color: colors.navy, background: colors.white, fontFamily: 'inherit', outline: 'none', cursor: 'pointer', appearance: "none", backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 8px center", backgroundSize: "14px" }}
                       >
                         {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
                       </select>
