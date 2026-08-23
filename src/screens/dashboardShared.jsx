@@ -254,23 +254,37 @@ export function CustomDropdown({ value, onChange, options, style, placeholder })
 
   const selectedOpt = options.find(o => String(o.value) === String(value));
   
+  const {
+    flex, flexShrink, flexGrow, flexBasis,
+    width, minWidth, maxWidth,
+    margin, marginTop, marginBottom, marginLeft, marginRight,
+    ...innerStyle
+  } = style || {};
+
+  const wrapperStyle = {
+    position: "relative", fontFamily: "inherit",
+    flex, flexShrink, flexGrow, flexBasis,
+    width, minWidth, maxWidth,
+    margin, marginTop, marginBottom, marginLeft, marginRight,
+  };
+
   return (
-    <div ref={ref} style={{ position: "relative", fontFamily: "inherit", ...style }}>
+    <div ref={ref} style={wrapperStyle}>
       <div 
         onClick={() => setIsOpen(!isOpen)}
         style={{
-          padding: style?.padding || "12px 36px 12px 14px",
-          borderRadius: style?.borderRadius || "12px",
-          border: isOpen ? `1.5px solid ${colors.blue}` : (style?.border || `1.5px solid ${colors.border}`),
-          fontSize: style?.fontSize || "13px",
-          fontWeight: style?.fontWeight || "600",
-          backgroundColor: style?.backgroundColor || style?.background || colors.white,
+          padding: innerStyle.padding || "12px 36px 12px 14px",
+          borderRadius: innerStyle.borderRadius || "12px",
+          border: isOpen ? `1.5px solid ${colors.blue}` : (innerStyle.border || `1.5px solid ${colors.border}`),
+          fontSize: innerStyle.fontSize || "13px",
+          fontWeight: innerStyle.fontWeight || "600",
+          backgroundColor: innerStyle.backgroundColor || innerStyle.background || colors.white,
           color: selectedOpt ? colors.textPrimary : colors.textMuted,
           cursor: "pointer",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          boxShadow: isOpen ? "0 4px 12px rgba(42,82,152,0.1)" : (style?.boxShadow || "none"),
+          boxShadow: isOpen ? "0 4px 12px rgba(42,82,152,0.1)" : (innerStyle.boxShadow || "none"),
           transition: "all 0.2s ease",
           height: "100%",
           boxSizing: "border-box"
@@ -311,7 +325,7 @@ export function CustomDropdown({ value, onChange, options, style, placeholder })
               style={{
                 padding: "10px 14px",
                 borderRadius: "8px",
-                fontSize: style?.fontSize || "13px",
+                fontSize: innerStyle.fontSize || "13px",
                 fontWeight: String(opt.value) === String(value) ? "700" : "500",
                 color: String(opt.value) === String(value) ? colors.blue : colors.textPrimary,
                 backgroundColor: String(opt.value) === String(value) ? colors.infoBg : "transparent",
