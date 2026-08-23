@@ -1,5 +1,5 @@
 // Shared styles, helpers, and components for AutoBook dashboards
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 export function getGreeting() {
   const h = new Date().getHours();
@@ -237,30 +237,112 @@ export function SharedSearchBar({ value, onChange, placeholder = "Search...", st
   );
 }
 
+// ─── Shared Custom Dropdown ───────────────────────────────────────────────────
+export function CustomDropdown({ value, onChange, options, style, placeholder }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (ref.current && !ref.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedOpt = options.find(o => String(o.value) === String(value));
+  
+  return (
+    <div ref={ref} style={{ position: "relative", fontFamily: "inherit", ...style }}>
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          padding: style?.padding || "12px 36px 12px 14px",
+          borderRadius: style?.borderRadius || "12px",
+          border: isOpen ? `1.5px solid ${colors.blue}` : (style?.border || `1.5px solid ${colors.border}`),
+          fontSize: style?.fontSize || "13px",
+          fontWeight: style?.fontWeight || "600",
+          backgroundColor: style?.backgroundColor || style?.background || colors.white,
+          color: selectedOpt ? colors.textPrimary : colors.textMuted,
+          cursor: "pointer",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          boxShadow: isOpen ? "0 4px 12px rgba(42,82,152,0.1)" : (style?.boxShadow || "none"),
+          transition: "all 0.2s ease",
+          height: "100%",
+          boxSizing: "border-box"
+        }}
+      >
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {selectedOpt ? selectedOpt.label : (placeholder || "Select...")}
+        </span>
+        <svg style={{ position: "absolute", right: "14px", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </div>
+
+      {isOpen && (
+        <div style={{
+          position: "absolute",
+          top: "100%",
+          left: 0,
+          right: 0,
+          marginTop: "6px",
+          backgroundColor: colors.white,
+          borderRadius: "12px",
+          border: `1px solid ${colors.border}`,
+          boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+          zIndex: 100,
+          maxHeight: "220px",
+          overflowY: "auto",
+          padding: "6px",
+          boxSizing: "border-box"
+        }}>
+          {options.map((opt, i) => (
+            <div 
+              key={i}
+              onClick={() => {
+                onChange(opt.value);
+                setIsOpen(false);
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.bg}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+              style={{
+                padding: "10px 14px",
+                borderRadius: "8px",
+                fontSize: style?.fontSize || "13px",
+                fontWeight: String(opt.value) === String(value) ? "700" : "500",
+                color: String(opt.value) === String(value) ? colors.blue : colors.textPrimary,
+                backgroundColor: String(opt.value) === String(value) ? colors.infoBg : "transparent",
+                cursor: "pointer",
+                transition: "background 0.1s ease"
+              }}
+            >
+              {opt.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Shared Filter Select ───────────────────────────────────────────────────
 export function SharedFilterSelect({ value, onChange, options, style }) {
   return (
-    <select
+    <CustomDropdown 
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={onChange}
+      options={options}
       style={{
-        padding: "14px 36px 14px 16px", borderRadius: "24px", border: `1px solid transparent`,
-        fontSize: "13px", backgroundColor: "#f1f5f9", color: colors.textPrimary,
-        fontFamily: "inherit", outline: "none", cursor: "pointer",
-        boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)", transition: "all 0.2s ease",
-        appearance: "none",
-        backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "right 14px center",
-        backgroundSize: "16px",
+        padding: "14px 36px 14px 16px",
+        borderRadius: "24px",
+        border: "1px solid transparent",
+        backgroundColor: "#f1f5f9",
+        boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)",
         ...style
       }}
-      onFocus={(e) => { e.target.style.border = `1px solid ${colors.blue}`; e.target.style.backgroundColor = colors.white; e.target.style.boxShadow = "0 4px 12px rgba(42,82,152,0.1)"; }}
-      onBlur={(e) => { e.target.style.border = `1px solid transparent`; e.target.style.backgroundColor = "#f1f5f9"; e.target.style.boxShadow = "inset 0 2px 4px rgba(0,0,0,0.02)"; }}
-    >
-      {options.map((opt, i) => (
-        <option key={i} value={opt.value}>{opt.label}</option>
-      ))}
-    </select>
+    />
   );
 }

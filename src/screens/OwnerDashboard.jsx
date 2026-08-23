@@ -6,7 +6,7 @@ import {
   deleteDoc, onSnapshot
 } from "firebase/firestore";
 import { db, auth } from "../firebase";
-import { sh, colors, getGreeting, getInitials } from "./dashboardShared";
+import { sh, colors, getGreeting, getInitials, CustomDropdown } from "./dashboardShared";
 import TopbarAvatar from "./TopbarAvatar";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
@@ -212,13 +212,19 @@ function CarPartsModal({ user, mechanics, onClose, onSaved, shopId }) {
           <div style={{ marginBottom: "1.25rem" }}>
             <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Assign to Mechanic (optional)</div>
             <div style={{ position: "relative" }}>
-              <span style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", display: "flex", color: colors.textMuted }}>
+              <span style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", display: "flex", color: colors.textMuted, zIndex: 10 }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
               </span>
-              <select value={assignedMechanicId} onChange={e => setAssignedMechanicId(e.target.value)} style={{ ...inputStyle, paddingLeft: "42px", paddingRight: "36px", appearance: "none", backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 14px center", backgroundSize: "16px", cursor: "pointer" }}>
-                <option value="">— No specific mechanic —</option>
-                {mechanics.map(m => <option key={m.id} value={m.id}>{m.name || m.displayName}</option>)}
-              </select>
+              <CustomDropdown
+                value={assignedMechanicId}
+                onChange={setAssignedMechanicId}
+                options={[
+                  { value: "", label: "— No specific mechanic —" },
+                  ...mechanics.map(m => ({ value: m.id, label: m.name || m.displayName }))
+                ]}
+                style={{ padding: "14px 36px 14px 42px", borderRadius: "14px", border: `1.5px solid ${colors.border}`, fontSize: "14px", fontWeight: "600", backgroundColor: colors.white }}
+                placeholder="— No specific mechanic —"
+              />
             </div>
           </div>
         )}
@@ -755,16 +761,18 @@ export default function OwnerDashboard({ user }) {
           <>
             <SectionTitle title="Monthly Overview" />
             <div style={{ display: "flex", gap: "10px", marginBottom: "1rem", alignItems: "center" }}>
-              <select value={selMonth} onChange={(e) => setSelMonth(Number(e.target.value))} style={{ padding: "12px 32px 12px 14px", borderRadius: "12px", border: `1.5px solid ${colors.border}`, fontSize: "13px", fontWeight: "600", background: colors.white, color: colors.textPrimary, fontFamily: "inherit", outline: "none", flex: 1, appearance: "none", backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 14px center", backgroundSize: "16px", cursor: "pointer" }}>
-                {MONTHS.map((m, i) => (
-                  <option key={m} value={i}>{m}</option>
-                ))}
-              </select>
-              <select value={selYear} onChange={(e) => setSelYear(Number(e.target.value))} style={{ padding: "12px 32px 12px 14px", borderRadius: "12px", border: `1.5px solid ${colors.border}`, fontSize: "13px", fontWeight: "600", background: colors.white, color: colors.textPrimary, fontFamily: "inherit", outline: "none", flex: 1, appearance: "none", backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 14px center", backgroundSize: "16px", cursor: "pointer" }}>
-                {[new Date().getFullYear() - 1, new Date().getFullYear()].map((y) => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
+              <CustomDropdown 
+                value={selMonth} 
+                onChange={(val) => setSelMonth(Number(val))} 
+                options={MONTHS.map((m, i) => ({ value: i, label: m }))}
+                style={{ flex: 1, padding: "12px 36px 12px 14px", borderRadius: "12px", border: `1.5px solid ${colors.border}`, fontSize: "13px", fontWeight: "600", backgroundColor: colors.white }} 
+              />
+              <CustomDropdown 
+                value={selYear} 
+                onChange={(val) => setSelYear(Number(val))} 
+                options={[new Date().getFullYear() - 1, new Date().getFullYear()].map(y => ({ value: y, label: y }))}
+                style={{ flex: 1, padding: "12px 36px 12px 14px", borderRadius: "12px", border: `1.5px solid ${colors.border}`, fontSize: "13px", fontWeight: "600", backgroundColor: colors.white }} 
+              />
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px", marginBottom: "1.5rem" }}>
               <div style={{ ...sh.card, display: "flex", alignItems: "center", gap: "20px", marginBottom: 0 }}>
