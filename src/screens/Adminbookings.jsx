@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { collection, getDocs, updateDoc, doc, getDoc, addDoc, serverTimestamp, query, where, deleteDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { sh, colors, EmptyState, getInitials, SharedSearchBar } from "./dashboardShared";
+import { sh, colors, EmptyState, getInitials, SharedSearchBar, CustomDropdown } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
 import BackButton from "../components/BackButton";
@@ -781,20 +781,18 @@ export default function AdminBookings() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '10px' }}>
                     <button onClick={prevMonth} style={{ background: colors.bg, border: `1px solid ${colors.border}`, padding: '8px 16px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', fontWeight: '700', color: colors.textSecondary, flexShrink: 0 }}>←</button>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
-                      <select 
-                        value={month} 
-                        onChange={(e) => setCurrentDate(new Date(year, Number(e.target.value), 1))}
-                        style={{ padding: '6px 28px 6px 12px', borderRadius: '10px', border: `1px solid ${colors.border}`, fontSize: '14px', fontWeight: '800', color: colors.navy, background: colors.white, fontFamily: 'inherit', outline: 'none', cursor: 'pointer', appearance: "none", backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 8px center", backgroundSize: "14px" }}
-                      >
-                        {monthNames.map((m, i) => <option key={m} value={i}>{m}</option>)}
-                      </select>
-                      <select 
-                        value={year} 
-                        onChange={(e) => setCurrentDate(new Date(Number(e.target.value), month, 1))}
-                        style={{ padding: '6px 28px 6px 12px', borderRadius: '10px', border: `1px solid ${colors.border}`, fontSize: '14px', fontWeight: '800', color: colors.navy, background: colors.white, fontFamily: 'inherit', outline: 'none', cursor: 'pointer', appearance: "none", backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 8px center", backgroundSize: "14px" }}
-                      >
-                        {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
-                      </select>
+                      <CustomDropdown
+                        value={month}
+                        onChange={(val) => setCurrentDate(new Date(year, Number(val), 1))}
+                        options={monthNames.map((m, i) => ({ value: i, label: m }))}
+                        style={{ padding: '6px 28px 6px 12px', borderRadius: '10px', border: `1px solid ${colors.border}`, fontSize: '14px', fontWeight: '800', color: colors.navy, backgroundColor: colors.white }}
+                      />
+                      <CustomDropdown
+                        value={year}
+                        onChange={(val) => setCurrentDate(new Date(Number(val), month, 1))}
+                        options={yearOptions.map(y => ({ value: y, label: y }))}
+                        style={{ padding: '6px 28px 6px 12px', borderRadius: '10px', border: `1px solid ${colors.border}`, fontSize: '14px', fontWeight: '800', color: colors.navy, backgroundColor: colors.white }}
+                      />
                       <button onClick={() => setCurrentDate(new Date())} style={{ background: colors.infoBg, color: colors.info, border: "none", padding: '6px 12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: '700' }}>Today</button>
                     </div>
                     <button onClick={nextMonth} style={{ background: colors.bg, border: `1px solid ${colors.border}`, padding: '8px 16px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', fontWeight: '700', color: colors.textSecondary, flexShrink: 0 }}>→</button>

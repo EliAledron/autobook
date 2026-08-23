@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { collection, getDocs, doc, getDoc, query, where } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { sh, colors, getInitials, EmptyState } from "./dashboardShared";
+import { sh, colors, getInitials, EmptyState, CustomDropdown } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
 import BackButton from "../components/BackButton";
@@ -209,17 +209,11 @@ export default function AdminReports() {
   const fullGradient = monthlyBookings.length > 0 ? `conic-gradient(from 270deg, ${gradientStops}, transparent 50%)` : `conic-gradient(from 270deg, ${colors.border} 0% 50%, transparent 50%)`;
 
   const inputStyle = {
-    padding: "14px 36px 14px 16px", borderRadius: "14px",
+    padding: "14px 16px", borderRadius: "14px",
     border: `1.5px solid ${colors.border}`, fontSize: "14px", fontWeight: "600",
     background: colors.white, color: colors.textPrimary,
     fontFamily: "inherit", outline: "none",
     boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
-    appearance: "none",
-    backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: "right 14px center",
-    backgroundSize: "16px",
-    cursor: "pointer"
   };
 
   const keyframes = `
@@ -290,16 +284,18 @@ export default function AdminReports() {
             <div style={sh.sectionLabel}><BarChart3 size={18} style={{display:'inline', verticalAlign:'middle', marginRight:'6px'}}/> Monthly Analytics</div>
 
             <div style={{ display: "flex", gap: "10px", marginBottom: "1.5rem", alignItems: "center" }}>
-              <select value={selMonth} onChange={(e) => setSelMonth(Number(e.target.value))} style={{...inputStyle, flex: 1}}>
-                {MONTHS.map((m, i) => (
-                  <option key={m} value={i}>{m}</option>
-                ))}
-              </select>
-              <select value={selYear} onChange={(e) => setSelYear(Number(e.target.value))} style={{...inputStyle, flex: 1}}>
-                {[now.getFullYear() - 1, now.getFullYear()].map((y) => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
+              <CustomDropdown
+                value={selMonth}
+                onChange={(val) => setSelMonth(Number(val))}
+                options={MONTHS.map((m, i) => ({ value: i, label: m }))}
+                style={{ flex: 1, ...inputStyle }}
+              />
+              <CustomDropdown
+                value={selYear}
+                onChange={(val) => setSelYear(Number(val))}
+                options={[now.getFullYear() - 1, now.getFullYear()].map(y => ({ value: y, label: y }))}
+                style={{ flex: 1, ...inputStyle }}
+              />
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px", marginBottom: "1.5rem" }}>

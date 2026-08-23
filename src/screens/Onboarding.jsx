@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Bell, Settings, Stethoscope, User, Check, Car, Store, Wrench, Paperclip, FileText, CreditCard, Camera, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
+import { CustomDropdown } from "./dashboardShared";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -682,12 +683,16 @@ function SignupForm({ goBack, navigate }) {
               <input className="ab-input" type="text" placeholder="Where do you work?" value={mechanicShopName} onChange={e => setMechanicShopName(e.target.value)} style={s.input} />
 
               <label style={s.label}>Primary Specialization</label>
-              <select className="ab-input" value={mechanicSpecialization} onChange={e => setMechanicSpecialization(e.target.value)} style={{...s.input, backgroundColor: '#fff', cursor: 'pointer', appearance: 'none', paddingRight: '36px', backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 14px center", backgroundSize: "16px" }}>
-                <option value="" disabled>Select specialization...</option>
-                {MECHANIC_SPECIALTIES.map(spec => (
-                  <option key={spec} value={spec}>{spec}</option>
-                ))}
-              </select>
+              <CustomDropdown
+                value={mechanicSpecialization}
+                onChange={setMechanicSpecialization}
+                options={[
+                  { value: "", label: "Select specialization..." },
+                  ...MECHANIC_SPECIALTIES.map(spec => ({ value: spec, label: spec }))
+                ]}
+                placeholder="Select specialization..."
+                style={{ ...s.input, backgroundColor: '#fff', padding: "14px 36px 14px 16px", borderRadius: "14px" }}
+              />
 
               <button onClick={handleMechanicSubmit} className="ab-btn" style={{ ...s.primaryBtn, opacity: loading ? 0.75 : 1 }} disabled={loading}>
                 {loading ? "Submitting…" : "Complete Sign Up"}
