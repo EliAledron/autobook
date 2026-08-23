@@ -166,7 +166,13 @@ function MechanicFormModal({ existing, onClose, onSaved, ownerId, shopId }) {
     <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 110, display: "flex", alignItems: "flex-end", animation: "ab-fade-in 0.2s ease-out" }} onClick={onClose}>
       <div style={{ background: colors.white, borderRadius: "28px 28px 0 0", width: "100%", padding: "2rem 1.5rem", maxHeight: "92vh", overflowY: "auto", animation: "ab-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards", boxShadow: "0 -4px 24px rgba(0,0,0,0.15)" }} onClick={e => e.stopPropagation()}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-          <div style={{ fontWeight: "800", fontSize: "18px", color: colors.navy }}>{existing ? "✏️ Edit Mechanic" : "👷 Add Mechanic"}</div>
+          <div style={{ fontWeight: "800", fontSize: "18px", color: colors.navy, display: "flex", alignItems: "center", gap: "8px" }}>
+            {existing ? (
+              <><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Edit Mechanic</>
+            ) : (
+              <><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg> Add Mechanic</>
+            )}
+          </div>
           <button onClick={onClose} style={{ background: colors.bg, border: "none", width: "32px", height: "32px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", cursor: "pointer", color: colors.textSecondary }}>×</button>
         </div>
         {error && <div style={{ background: colors.dangerBg, border: `1px solid ${colors.danger}`, borderRadius: "10px", padding: "8px 12px", fontSize: "12px", color: colors.danger, marginBottom: "1rem", fontWeight: "600" }}>{error}</div>}
@@ -236,7 +242,7 @@ function MechanicFormModal({ existing, onClose, onSaved, ownerId, shopId }) {
               <input style={{ ...inputStyle, marginBottom: "8px", background: colors.white }} placeholder="Certificate name (e.g. TESDA NC II)" value={cert.name} onChange={(e) => updateCert(idx, "name", e.target.value)} />
               <input style={{ ...inputStyle, marginBottom: "8px", background: colors.white }} placeholder="Issuing body (e.g. TESDA)" value={cert.issuingBody} onChange={(e) => updateCert(idx, "issuingBody", e.target.value)} />
               <div onClick={() => document.getElementById(`certPhoto_${idx}`)?.click()} style={{ width: "100%", height: cert.localPreview || cert.photoURL ? "auto" : "70px", background: colors.white, borderRadius: "10px", border: `1.5px dashed ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", color: colors.textMuted, cursor: "pointer", overflow: "hidden", marginBottom: "8px", boxSizing: "border-box" }}>
-                {cert.localPreview || cert.photoURL ? <img src={cert.localPreview || cert.photoURL} alt="cert" style={{ width: "100%", objectFit: "cover", borderRadius: "8px" }} /> : "📎 Tap to upload certificate photo"}
+                {cert.localPreview || cert.photoURL ? <img src={cert.localPreview || cert.photoURL} alt="cert" style={{ width: "100%", objectFit: "cover", borderRadius: "8px" }} /> : <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Tap to upload certificate photo</span>}
               </div>
               <input id={`certPhoto_${idx}`} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleCertPhotoChange(e, idx)} />
               <button onClick={() => removeCert(idx)} style={{ background: "none", border: "none", color: colors.danger, fontSize: "12px", fontWeight: "600", cursor: "pointer", padding: 0 }}>Remove</button>
@@ -297,7 +303,7 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
                 <span style={verifyStyle(mechanic.verified)}>{mechanic.verified ? "✓ Verified" : "Unverified"}</span>
               </div>
               <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>{mechanic.specializations ? mechanic.specializations.join(", ") : (mechanic.specialization || "General Mechanic")}</div>
-              {mechanic.phone && <div style={{ fontSize: "12px", color: colors.textMuted, marginTop: "2px" }}>📞 {mechanic.phone}</div>}
+              {mechanic.phone && <div style={{ fontSize: "12px", color: colors.textMuted, marginTop: "4px", display: "flex", alignItems: "center", gap: "6px" }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={colors.danger} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> {mechanic.phone}</div>}
             </div>
           </div>
           <button onClick={onClose} style={{ background: colors.bg, border: "none", width: "32px", height: "32px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", cursor: "pointer", color: colors.textSecondary }}>×</button>
@@ -357,9 +363,9 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
           <>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "1rem" }}>
               {[
-                ["Active Jobs", activeJobs.length, "🔧", colors.infoBg, colors.info],
-                ["Completed", completedJobs.length, "✅", colors.successBg, colors.success],
-                ["Parts Cost", formatCurrency(totalPartsCost), "🔩", colors.dangerBg, colors.danger],
+                ["Active Jobs", activeJobs.length, <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>, colors.infoBg, colors.info],
+                ["Completed", completedJobs.length, <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>, colors.successBg, colors.success],
+                ["Parts Cost", formatCurrency(totalPartsCost), <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>, colors.dangerBg, colors.danger],
               ].map(([label, val, icon, bg, color]) => (
                 <div key={label} style={{ background: bg, borderRadius: "20px", padding: "20px", textAlign: "center", border: `1px solid ${color}30` }}>
                   <div style={{ fontSize: "20px", marginBottom: "8px" }}>{icon}</div>
@@ -385,9 +391,9 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
               }}
             >
               {savingVerify ? "Saving..." : mechanic.verified ? (
-                <><span style={{ fontSize: "16px" }}>✕</span> Remove Verification</>
+                <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Remove Verification</>
               ) : (
-                <><span style={{ fontSize: "16px" }}>✓</span> Verify Mechanic</>
+                <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Verify Mechanic</>
               )}
             </button>
 
@@ -461,7 +467,13 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
               : mJobs.slice(0, 10).map((b, i) => (
                 <div key={b.id} className="owner-list-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px", borderBottom: i < mJobs.length - 1 ? `1px solid #f1f5f9` : "none", borderRadius: "12px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <div style={{ ...sh.rowIcon(colors.infoBg), fontSize: "14px" }}>{b.status === "Completed" ? "✅" : "🔧"}</div>
+                    <div style={{ ...sh.rowIcon(colors.infoBg), color: colors.info }}>
+                      {b.status === "Completed" ? (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      ) : (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                      )}
+                    </div>
                     <div>
                       <div style={{ fontSize: "14px", fontWeight: "700", color: colors.textPrimary, marginBottom: "2px" }}>{b.serviceType || "Service"}</div>
                       <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "500" }}>{b.customerName || "Customer"} · {b.date || "—"}</div>
@@ -479,7 +491,9 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
               : mParts.slice(0, 10).map((p, i) => (
                 <div key={p.id} className="owner-list-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px", borderBottom: i < mParts.length - 1 ? `1px solid #f1f5f9` : "none", borderRadius: "12px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <div style={{ ...sh.rowIcon(colors.warningBg), fontSize: "16px" }}>🔩</div>
+                    <div style={{ ...sh.rowIcon(colors.warningBg), color: colors.warning }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </div>
                     <div>
                       <div style={{ fontSize: "14px", fontWeight: "700", color: colors.textPrimary, marginBottom: "2px" }}>{p.partName}</div>
                       <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "500" }}>Qty: {p.quantity} · {typeof p.price === 'string' && (p.price.includes('-') || p.price.includes('+')) ? `₱${p.price}` : formatCurrency(p.price)} each</div>
@@ -528,7 +542,7 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
               display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"
             }}
           >
-            <span style={{ fontSize: "16px" }}>✏️</span> Edit
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Edit
           </button>
           <button
             onClick={() => onDelete(mechanic)}
@@ -542,7 +556,7 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
               display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"
             }}
           >
-            <span style={{ fontSize: "16px" }}>🗑️</span> Remove
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> Remove
           </button>
         </div>
         <button onClick={onClose} style={{ ...sh.outlineBtn, padding: "14px", borderRadius: "16px", fontSize: "14px", border: "none", background: colors.bg, color: colors.textSecondary, fontWeight: "700" }}>Close</button>
