@@ -238,9 +238,9 @@ export default function Profile() {
           .profile-danger-btn {
             transition: all 0.2s ease;
           }
-          .profile-danger-btn:hover {
-            background: ${colors.danger} !important;
-            color: #fff !important;
+          .profile-danger-btn:active {
+            opacity: 0.6;
+            transform: scale(0.98);
           }
           .profile-card {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
