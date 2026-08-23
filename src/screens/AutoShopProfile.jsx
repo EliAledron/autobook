@@ -367,7 +367,22 @@ export default function AutoShopProfile() {
           finalReviews = directReviews.length + finalReviews;
         }
 
-        setReviews(directReviews);
+        // Map rated bookings to review objects so they appear in the UI
+        const bookingReviews = ratedBookings.map(b => ({
+          id: b.id || Math.random().toString(36).substring(7),
+          userName: b.customerName || "Customer",
+          rating: Number(b.rating),
+          text: b.review || "",
+          createdAt: b.ratedAt || b.createdAt,
+        }));
+
+        const allReviews = [...directReviews, ...bookingReviews].sort((a, b) => {
+          const tA = a.createdAt?.seconds || 0;
+          const tB = b.createdAt?.seconds || 0;
+          return tB - tA;
+        });
+
+        setReviews(allReviews);
 
         // Update shop state with enriched information
         setShop(prev => ({ ...prev, ...dbShop, rating: finalRating, reviews: finalReviews }));
@@ -783,9 +798,11 @@ export default function AutoShopProfile() {
                       ))}
                     </div>
                   </div>
-                  <div style={{ fontSize: "14px", color: colors.textSecondary, lineHeight: "1.6", whiteSpace: "pre-wrap" }}>
-                    {r.text}
-                  </div>
+                  {r.text && (
+                    <div style={{ fontSize: "14px", color: colors.textSecondary, lineHeight: "1.6", whiteSpace: "pre-wrap" }}>
+                      {r.text}
+                    </div>
+                  )}
                 </div>
               ))
             )}
