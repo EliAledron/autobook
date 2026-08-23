@@ -258,11 +258,13 @@ export function CustomDropdown({ value, onChange, options, style, placeholder })
     flex, flexShrink, flexGrow, flexBasis,
     width, minWidth, maxWidth,
     margin, marginTop, marginBottom, marginLeft, marginRight,
+    display,
     ...innerStyle
   } = style || {};
 
   const wrapperStyle = {
     position: "relative", fontFamily: "inherit",
+    display: display || (flex ? "flex" : "inline-block"),
     flex, flexShrink, flexGrow, flexBasis,
     width, minWidth, maxWidth,
     margin, marginTop, marginBottom, marginLeft, marginRight,

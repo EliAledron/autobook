@@ -346,24 +346,24 @@ export default function BookService() {
                 const yearOptions = [];
                 for(let y = currentYearNum; y <= currentYearNum + 2; y++) yearOptions.push(y);
                 return (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '10px' }}>
-                    <button onClick={prevMonth} style={{ background: colors.bg, border: `1px solid ${colors.border}`, padding: '8px 16px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', fontWeight: '700', color: colors.textSecondary, flexShrink: 0 }}>←</button>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', gap: '8px' }}>
+                    <button onClick={prevMonth} style={{ background: colors.bg, border: `1px solid ${colors.border}`, padding: '8px 14px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', fontWeight: '700', color: colors.textSecondary, flexShrink: 0 }}>←</button>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
                       <CustomDropdown
                         value={month}
                         onChange={(val) => setCurrentDate(new Date(year, Number(val), 1))}
                         options={monthNames.map((m, i) => ({ value: i, label: m }))}
-                        style={{ padding: '6px 28px 6px 12px', borderRadius: '10px', border: `1px solid ${colors.border}`, fontSize: '14px', fontWeight: '800', color: colors.navy, backgroundColor: colors.white }}
+                        style={{ padding: '6px 28px 6px 12px', borderRadius: '10px', border: `1px solid ${colors.border}`, fontSize: '14px', fontWeight: '800', color: colors.navy, backgroundColor: colors.white, display: 'inline-flex' }}
                       />
                       <CustomDropdown
                         value={year}
                         onChange={(val) => setCurrentDate(new Date(Number(val), month, 1))}
                         options={yearOptions.map(y => ({ value: y, label: y }))}
-                        style={{ padding: '6px 28px 6px 12px', borderRadius: '10px', border: `1px solid ${colors.border}`, fontSize: '14px', fontWeight: '800', color: colors.navy, backgroundColor: colors.white }}
+                        style={{ padding: '6px 28px 6px 12px', borderRadius: '10px', border: `1px solid ${colors.border}`, fontSize: '14px', fontWeight: '800', color: colors.navy, backgroundColor: colors.white, display: 'inline-flex' }}
                       />
-                      <button onClick={() => setCurrentDate(new Date())} style={{ background: colors.infoBg, color: colors.info, border: "none", padding: '6px 12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: '700' }}>Today</button>
+                      <button onClick={() => setCurrentDate(new Date())} style={{ background: colors.infoBg, color: colors.info, border: "none", padding: '6px 12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: '700', flexShrink: 0 }}>Today</button>
                     </div>
-                    <button onClick={nextMonth} style={{ background: colors.bg, border: `1px solid ${colors.border}`, padding: '8px 16px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', fontWeight: '700', color: colors.textSecondary, flexShrink: 0 }}>→</button>
+                    <button onClick={nextMonth} style={{ background: colors.bg, border: `1px solid ${colors.border}`, padding: '8px 14px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', fontWeight: '700', color: colors.textSecondary, flexShrink: 0 }}>→</button>
                   </div>
                 );
               })()}
