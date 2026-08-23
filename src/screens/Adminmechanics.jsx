@@ -392,7 +392,7 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
             </button>
 
             {/* Link User Account */}
-            <div style={{ background: linkedUserId ? colors.successBg : colors.bg, border: `1.5px solid ${linkedUserId ? colors.success + "50" : colors.border}`, borderRadius: "16px", padding: "16px", marginBottom: "1rem" }}>
+            {/* <div style={{ background: linkedUserId ? colors.successBg : colors.bg, border: `1.5px solid ${linkedUserId ? colors.success + "50" : colors.border}`, borderRadius: "16px", padding: "16px", marginBottom: "1rem" }}>
               <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px", display: "flex", alignItems: "center", gap: "6px" }}>
                 🔗 Linked App Account
                 {linkedUserId && <span style={{ ...sh.badge(colors.successBg, colors.success), marginLeft: "6px" }}>Linked ✓</span>}
@@ -451,7 +451,7 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
                   )}
                 </>
               )}
-            </div>
+            </div> */}
           </>
         )}
 
