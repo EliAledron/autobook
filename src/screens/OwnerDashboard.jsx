@@ -8,6 +8,9 @@ import {
 import { db, auth } from "../firebase";
 import { sh, colors, getGreeting, getInitials } from "./dashboardShared";
 import TopbarAvatar from "./TopbarAvatar";
+import SkeletonLoader from "./SkeletonLoader";
+import BackButton from "../components/BackButton";
+import { Check, Megaphone } from "lucide-react";
 
 // ─── Quick Action SVG Icons ────────────────────────────────────────────────────
 const IcoUsers    = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.87"/></svg>;
@@ -176,7 +179,7 @@ function CarPartsModal({ user, mechanics, onClose, onSaved, shopId }) {
       };
       await addDoc(collection(db, "carParts"), partData);
       await addDoc(collection(db, "adminAlerts"), {
-        type: "car_part_ordered", title: "🔩 Car Part Ordered",
+        type: "car_part_ordered", title: "Car Part Ordered",
         message: `${user?.name || user?.role || "Owner"} ordered ${Number(quantity)}x ${partName.trim()}.`,
         mechanicName: assignedMechanic?.name || user?.name || user?.role || "Owner",
         partName: partName.trim(), quantity: Number(quantity),
@@ -480,7 +483,7 @@ export default function OwnerDashboard({ user }) {
 
   const handlePartSaved = (partData) => {
     setMyCarParts(prev => [{ id: Date.now().toString(), ...partData }, ...prev]);
-    showToast(`✅ ${partData.partName} recorded!`);
+    showToast(<><Check size={16} style={{marginRight: '4px', verticalAlign: 'middle'}}/> {partData.partName} recorded!</>);
   };
 
   const handlePostImageChange = (e) => {
@@ -524,7 +527,7 @@ export default function OwnerDashboard({ user }) {
       });
 
       resetPostModal();
-      showToast("📢 Post published to feed!");
+      showToast(<><Megaphone size={16} style={{marginRight: '4px', verticalAlign: 'middle'}}/> Post published to feed!</>);
     } catch (e) {
       setPostError(e.message || "Failed to publish post.");
     }
@@ -1051,7 +1054,7 @@ export default function OwnerDashboard({ user }) {
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 110, display: "flex", alignItems: "flex-end", animation: "ab-fade-in 0.2s ease-out" }} onClick={resetPostModal}>
           <div style={{ background: colors.white, borderRadius: "28px 28px 0 0", width: "100%", padding: "2rem 1.5rem", maxHeight: "90vh", overflowY: "auto", animation: "ab-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards", boxShadow: "0 -4px 24px rgba(0,0,0,0.15)" }} onClick={e => e.stopPropagation()}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-              <div style={{ fontWeight: "800", fontSize: "18px", color: colors.navy }}>📢 Create Shop Post</div>
+              <div style={{ fontWeight: "800", fontSize: "18px", color: colors.navy, display: "flex", alignItems: "center", gap: "6px" }}><Megaphone size={20} /> Create Shop Post</div>
               <button onClick={resetPostModal} style={{ background: colors.bg, border: "none", width: "32px", height: "32px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", cursor: "pointer", color: colors.textSecondary }}>×</button>
             </div>
 

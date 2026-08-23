@@ -7,6 +7,7 @@ import { sh, colors, getInitials, EmptyState } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
 import BackButton from "../components/BackButton";
+import { Star, Wrench } from "lucide-react";
 
 function timeAgo(timestamp) {
   if (!timestamp) return "Just now";
@@ -167,7 +168,9 @@ export default function AdminReviews() {
               <div>
                 <div style={{ display: "flex", gap: "4px", marginBottom: "4px" }}>
                   {[1, 2, 3, 4, 5].map(star => (
-                    <span key={star} style={{ fontSize: "20px", color: avgRating >= star - 0.5 ? "#f59e0b" : "#e2e8f0" }}>★</span>
+                    <span key={star} style={{ fontSize: "20px", color: avgRating >= star - 0.5 ? "#f59e0b" : "#e2e8f0", display: "flex", alignItems: "center" }}>
+                      <Star fill="currentColor" size={20} />
+                    </span>
                   ))}
                 </div>
                 <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "600" }}>
@@ -180,7 +183,7 @@ export default function AdminReviews() {
 
             {reviews.length === 0 ? (
               <EmptyState
-                icon="⭐"
+                icon={<Star fill="currentColor" size={48} />}
                 title="No reviews yet"
                 subtitle="When customers complete a service and leave a rating, it will appear here."
               />
@@ -200,14 +203,16 @@ export default function AdminReviews() {
                       </div>
                       <div style={{ display: "flex", gap: "2px" }}>
                         {[1, 2, 3, 4, 5].map(star => (
-                          <span key={star} style={{ color: r.rating >= star ? "#f59e0b" : "#e2e8f0", fontSize: "16px" }}>★</span>
+                          <span key={star} style={{ color: r.rating >= star ? "#f59e0b" : "#e2e8f0", fontSize: "16px", display: "flex", alignItems: "center" }}>
+                            <Star fill="currentColor" size={16} />
+                          </span>
                         ))}
                       </div>
                     </div>
                     
                     {r.serviceType && (
-                      <div style={{ fontSize: "12px", color: colors.info, fontWeight: "700", background: colors.infoBg, display: "inline-block", padding: "4px 10px", borderRadius: "8px", marginBottom: "12px" }}>
-                        🔧 {r.serviceType}
+                      <div style={{ fontSize: "12px", color: colors.info, fontWeight: "700", background: colors.infoBg, display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 10px", borderRadius: "8px", marginBottom: "12px" }}>
+                        <Wrench size={14} /> {r.serviceType}
                       </div>
                     )}
                     

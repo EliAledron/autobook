@@ -6,6 +6,7 @@ import { collection, addDoc, serverTimestamp, query, where, getDocs } from "fire
 import { sh, colors, SharedSearchBar, SharedFilterSelect } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
+import { Store, MapPin, CheckCircle2, Star } from "lucide-react";
 
 export default function FindMechanic() {
   const navigate = useNavigate();
@@ -91,7 +92,7 @@ export default function FindMechanic() {
       // Notify the shop owner
       await addDoc(collection(db, "adminAlerts"), {
         shopId: selected.id,
-        title: "New Mechanic Request 📍",
+        title: "New Mechanic Request",
         message: `${customerName} is requesting a mechanic visit at: ${requestAddress.trim()}`,
         type: "visit_request",
         read: false,
@@ -101,7 +102,7 @@ export default function FindMechanic() {
       // Notify the customer
       await addDoc(collection(db, "notifications"), {
         userId: uid,
-        title: "Request Sent! ✅",
+        title: "Request Sent!",
         message: `Your visit request has been sent to ${selected.name}. They will assign a mechanic shortly.`,
         type: "request_sent",
         read: false,
@@ -193,13 +194,13 @@ export default function FindMechanic() {
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "1.25rem" }}>
-                <div style={{ width: "56px", height: "56px", borderRadius: "16px", background: shop.bg || colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "26px", flexShrink: 0 }}>
-                  {shop.icon || "🏪"}
+                <div style={{ width: "56px", height: "56px", borderRadius: "16px", background: shop.bg || colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.info, flexShrink: 0 }}>
+                  {shop.icon || <Store size={26} />}
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>{shop.name}</div>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-                    <span style={{ color: "#f59e0b", fontSize: "14px" }}>★</span>
+                    <span style={{ color: "#f59e0b", display: "inline-flex", alignItems: "center" }}><Star fill="currentColor" size={14} /></span>
                     <span style={{ fontSize: "13px", fontWeight: "700", color: colors.textPrimary }}>{shop.rating && !isNaN(Number(shop.rating)) && Number(shop.rating) > 0 ? Number(shop.rating).toFixed(1) : "New"}</span>
                     {shop.reviews > 0 && <span style={{ fontSize: "12px", color: colors.textMuted }}>({shop.reviews} review{shop.reviews !== 1 ? 's' : ''})</span>}
                   </div>
@@ -218,7 +219,7 @@ export default function FindMechanic() {
         {selected && !requestSent && (
           <div style={{ background: colors.white, borderRadius: "20px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 20px rgba(0,0,0,0.05)", padding: "20px", marginTop: "0.5rem", marginBottom: "1.5rem" }}>
             <div style={{ fontSize: "16px", fontWeight: "800", marginBottom: "1.25rem", color: colors.navy }}>
-              📍 Request from {selected.shortName}
+              <span style={{display: 'inline-flex', alignItems: 'center', gap: '4px'}}><MapPin size={16} /> Request from {selected.shortName}</span>
             </div>
 
             <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Your address / location *</div>
@@ -252,7 +253,7 @@ export default function FindMechanic() {
         {/* SUCCESS STATE */}
         {requestSent && (
           <div style={{ background: colors.white, borderRadius: "20px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 20px rgba(0,0,0,0.05)", padding: "2.5rem 1.5rem", textAlign: "center", marginBottom: "1.5rem" }}>
-            <div style={{ fontSize: "42px", marginBottom: "10px" }}>✅</div>
+            <div style={{ marginBottom: "10px", color: colors.success, display: "flex", justifyContent: "center" }}><CheckCircle2 size={42} /></div>
             <div style={{ fontWeight: "800", fontSize: "18px", marginBottom: "6px", color: colors.textPrimary }}>Request Sent!</div>
             <div style={{ fontSize: "14px", color: colors.textSecondary, marginBottom: "1.5rem" }}>
               {selected.name} will assign a mechanic and confirm shortly.
@@ -268,7 +269,7 @@ export default function FindMechanic() {
       {showConfirm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 120, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowConfirm(false)}>
           <div style={{ background: colors.white, borderRadius: "24px", width: "90%", maxWidth: "340px", padding: "24px", textAlign: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
-            <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: colors.warningBg, color: colors.warning, fontSize: "28px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>📍</div>
+            <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: colors.warningBg, color: colors.warning, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}><MapPin size={28} /></div>
             <h3 style={{ margin: "0 0 8px", fontSize: "18px", color: colors.textPrimary, fontWeight: "800" }}>Confirm Request</h3>
             <p style={{ margin: "0 0 24px", fontSize: "13px", color: colors.textSecondary, lineHeight: "1.5" }}>
               Are you sure you want to request a mechanic from <strong>{selected?.name}</strong> to <strong>{requestAddress}</strong>?

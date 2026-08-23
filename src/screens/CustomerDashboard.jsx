@@ -6,6 +6,7 @@ import { doc, getDoc, collection, query, where, getDocs, orderBy, addDoc, server
 import { sh, colors, getGreeting, EmptyState } from "./dashboardShared";
 import TopbarAvatar from "./TopbarAvatar";
 import CarLoader from "./CarLoader";
+import { Droplet, Settings, ShieldAlert, Snowflake, AlertTriangle, Calendar, Wrench } from "lucide-react";
 
 // ─── Quick Action SVG Icons ────────────────────────────────────────────────────
 const IcoBook    = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>;
@@ -98,10 +99,10 @@ const SectionTitle = ({ title, badge, action }) => (
 );
 
 const MAINTENANCE_RULES = [
-  { key: "oil", label: "Oil Change", icon: "🛢️", intervalDays: 180, defaultDaysSince: 175 },
-  { key: "tire", label: "Tire Rotation", icon: "⚙️", intervalDays: 365, defaultDaysSince: 150 },
-  { key: "brake", label: "Brake Inspection", icon: "🛑", intervalDays: 365, defaultDaysSince: 290 },
-  { key: "aircon", label: "Aircon Cleaning", icon: "❄️", intervalDays: 365, defaultDaysSince: 40 },
+  { key: "oil", label: "Oil Change", icon: <Droplet size={22} />, intervalDays: 180, defaultDaysSince: 175 },
+  { key: "tire", label: "Tire Rotation", icon: <Settings size={22} />, intervalDays: 365, defaultDaysSince: 150 },
+  { key: "brake", label: "Brake Inspection", icon: <ShieldAlert size={22} />, intervalDays: 365, defaultDaysSince: 290 },
+  { key: "aircon", label: "Aircon Cleaning", icon: <Snowflake size={22} />, intervalDays: 365, defaultDaysSince: 40 },
 ];
 
 const getLastServiceDate = (bookings, keyword) => {
@@ -160,7 +161,7 @@ export default function CustomerDashboard() {
               const daysSinceLastAlert = lastNotified ? Math.floor((now - lastNotified) / (1000 * 3600 * 24)) : Infinity;
 
               if (daysSinceLastAlert > 30) {
-                const alertTitle = `${rule.label} Due Soon! 🚗`;
+                const alertTitle = `${rule.label} Due Soon!`;
                 const alertBody = `Your ${rule.label} progress is at ${progress}%. It's recommended to book a service soon.`;
 
                 // 1. Add to App Alerts
@@ -376,7 +377,7 @@ export default function CustomerDashboard() {
             color = colors.warning;
             bgColor = colors.warningBg;
           } else {
-            statusText = "⚠️ Service recommended";
+            statusText = <span style={{display: 'inline-flex', alignItems: 'center', gap: '4px'}}><AlertTriangle size={12} /> Service recommended</span>;
             color = colors.danger;
             bgColor = colors.dangerBg; 
           }
@@ -400,7 +401,7 @@ export default function CustomerDashboard() {
                   <div>
                     <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary, marginBottom: "4px", letterSpacing: "-0.2px" }}>{rule.label}</div>
                     <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "600", display: "flex", alignItems: "center", gap: "6px" }}>
-                      <span>🗓️ {hasRecord ? actualLastDate.toLocaleDateString() : "No record"}</span>
+                      <span style={{display: 'inline-flex', alignItems: 'center', gap: '4px'}}><Calendar size={14} /> {hasRecord ? actualLastDate.toLocaleDateString() : "No record"}</span>
                       <span style={{ color: colors.border }}>|</span>
                       <span style={{ color }}>{estimatedText}</span>
                     </div>
@@ -422,7 +423,7 @@ export default function CustomerDashboard() {
               </div>
 
               {progress >= 90 && (
-                <button onClick={() => navigate("/customer/shop-select", { state: { prefilledService: rule.label } })} style={{ position: "relative", zIndex: 1, width: "100%", padding: "14px", borderRadius: "14px", border: "none", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", fontSize: "14px", fontWeight: "800", cursor: "pointer", marginTop: "4px", transition: "all 0.2s", boxShadow: "0 4px 12px rgba(42,82,152,0.2)" }} onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"} onMouseLeave={e => e.currentTarget.style.transform = "none"}>⚠️ Schedule {rule.label} Now</button>
+                <button onClick={() => navigate("/customer/shop-select", { state: { prefilledService: rule.label } })} style={{ position: "relative", zIndex: 1, width: "100%", padding: "14px", borderRadius: "14px", border: "none", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", fontSize: "14px", fontWeight: "800", cursor: "pointer", marginTop: "4px", transition: "all 0.2s", boxShadow: "0 4px 12px rgba(42,82,152,0.2)", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }} onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"} onMouseLeave={e => e.currentTarget.style.transform = "none"}><AlertTriangle size={14} /> Schedule {rule.label} Now</button>
               )}
             </div>
           );
@@ -437,7 +438,7 @@ export default function CustomerDashboard() {
         <div style={{ background: colors.white, borderRadius: "24px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 24px rgba(0,0,0,0.04)", overflow: "hidden", marginBottom: "1.5rem" }}>
           {bookings.length === 0 ? (
             <EmptyState
-              icon="📅"
+              icon={<Calendar size={48} color={colors.info} />}
               title="No bookings yet"
               subtitle="Book your first service and it'll show up right here."
               action={
@@ -449,8 +450,8 @@ export default function CustomerDashboard() {
           ) : (
             bookings.slice(0, 5).map((b, i) => (
               <div key={b.id} className="customer-list-item" style={{ ...sh.rowItem, padding: "16px", borderBottom: i === Math.min(bookings.length, 5) - 1 ? "none" : `1px solid #f1f5f9` }}>
-                <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", fontWeight: "700", color: colors.info, flexShrink: 0 }}>
-                  🔧
+                <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.info, flexShrink: 0 }}>
+                  <Wrench size={24} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: "15px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>{b.serviceType || "Service"}</div>

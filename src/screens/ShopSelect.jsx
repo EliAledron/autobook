@@ -5,6 +5,7 @@ import { db } from "../firebase";
 import { sh, colors, EmptyState, SharedSearchBar, SharedFilterSelect } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
+import { Store, Star } from "lucide-react";
 
 export default function ShopSelect() {
   const navigate = useNavigate();
@@ -114,7 +115,7 @@ export default function ShopSelect() {
           <SkeletonLoader count={3} type="card" />
         ) : filteredShops.length === 0 ? (
           <EmptyState
-            icon="🏪"
+            icon={<Store size={48} />}
             title="No shops found"
             subtitle={search || minRating > 0 ? "No shops match your search criteria." : "No shops available right now."}
           />
@@ -141,14 +142,14 @@ export default function ShopSelect() {
                   background: shop.bg || colors.infoBg, display: "flex", alignItems: "center",
                   justifyContent: "center", fontSize: "26px", flexShrink: 0,
                 }}>
-                  {shop.icon || "🏪"}
+                  {shop.icon || <Store size={26} />}
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>
                     {shop.name}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-                    <span style={{ color: "#f59e0b", fontSize: "14px" }}>★</span>
+                    <span style={{ color: "#f59e0b", fontSize: "14px" }}><Star fill="currentColor" size={14} /></span>
                     <span style={{ fontSize: "13px", fontWeight: "700", color: colors.textPrimary }}>{shop.rating && !isNaN(Number(shop.rating)) && Number(shop.rating) > 0 ? Number(shop.rating).toFixed(1) : "New"}</span>
                     {shop.reviews > 0 && <span style={{ fontSize: "12px", color: colors.textMuted }}>({shop.reviews} review{shop.reviews !== 1 ? 's' : ''})</span>}
                   </div>

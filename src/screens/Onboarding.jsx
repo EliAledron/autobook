@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Bell, Settings, Stethoscope, User, Check, Car, Store, Wrench, Paperclip, FileText, CreditCard, Camera, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import {
@@ -23,17 +24,17 @@ const GoogleIcon = () => (
 /* ─── Feature data ────────────────────────────────────────────── */
 const FEATURES = [
   {
-    icon: "🔔",
+    icon: <Bell size={24} />,
     title: "Real-Time Notification System",
     desc: "Instant updates and alerts for bookings and service progress.",
   },
   {
-    icon: "⚙️",
+    icon: <Settings size={24} />,
     title: "Rule-Based Maintenance Information",
     desc: "Automated tracking and smart reminders for routine car care.",
   },
   {
-    icon: "🩺",
+    icon: <Stethoscope size={24} />,
     title: "Diagnostic Support",
     desc: "Identify vehicle issues and get expert service recommendations.",
   },
@@ -123,7 +124,7 @@ const saveUser = async (user, resolvedRole, namesObj, permitUrl = "", shopNameSt
 
     await addDoc(collection(db, "adminAlerts"), {
       type: "new_user",
-      title: "New User Registration 👤",
+      title: <><User size={16} /> New User Registration</>,
       message: `${dName} just registered as a ${finalRole} and is waiting for approval.`,
       read: false,
       createdAt: serverTimestamp(),
@@ -458,7 +459,7 @@ function SignupForm({ goBack, navigate }) {
         {error && (
           <div style={s.errorOverlay}>
             <div style={s.errorModal}>
-              <div style={s.errorModalIcon}>⚠️</div>
+              <div style={s.errorModalIcon}><AlertTriangle size={32} /></div>
               <h3 style={s.errorModalTitle}>Oops!</h3>
               <p style={s.errorModalText}>{error}</p>
               <button style={s.errorModalBtn} onClick={() => setError("")}>Okay</button>
@@ -507,10 +508,10 @@ function SignupForm({ goBack, navigate }) {
                       boxShadow: isSelected ? "0 8px 16px rgba(42,82,152,0.12)" : "0 2px 4px rgba(0,0,0,0.02)",
                     }}
                   >
-                    <div style={{ fontSize: "28px" }}>{r === "Customer" ? "🚗" : r === "Owner" ? "🏪" : "🔧"}</div>
+                    <div style={{ fontSize: "28px" }}>{r === "Customer" ? <Car size={28} /> : r === "Owner" ? <Store size={28} /> : <Wrench size={28} />}</div>
                     <div style={{ textAlign: "center" }}>
                       <div style={{ fontSize: "14px", fontWeight: "800", color: isSelected ? "#1a3a5c" : "#374151" }}>
-                        {r} {isSelected && "✅"}
+                        {r} {isSelected && <Check size={14} />}
                       </div>
                       <div style={{ fontSize: "11px", fontWeight: "600", color: "#6b7280", marginTop: "4px" }}>
                       {r === "Customer" ? "Book services" : r === "Owner" ? "Manage the shop" : "Service vehicles"}
@@ -545,7 +546,7 @@ function SignupForm({ goBack, navigate }) {
                 if (file) { setPermitFile(file); setPermitPreview(URL.createObjectURL(file)); }
               }} />
               <div onClick={() => document.getElementById("permitUpload").click()} style={{ width: "100%", height: permitPreview ? "160px" : "100px", background: "#f9fafb", borderRadius: "14px", border: "1.5px dashed #d1d5db", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", marginBottom: "20px", fontSize: "13px", color: "#9ca3af" }}>
-                {permitPreview ? <img src={permitPreview} alt="permit" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} /> : "📎 Tap to upload permit photo"}
+                {permitPreview ? <img src={permitPreview} alt="permit" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} /> : <><Paperclip size={16} /> Tap to upload permit photo</>}
               </div>
 
               <label style={s.label}>DTI Certificate *</label>
@@ -554,7 +555,7 @@ function SignupForm({ goBack, navigate }) {
                 if (file) { setDtiFile(file); setDtiPreview(URL.createObjectURL(file)); }
               }} />
               <div onClick={() => document.getElementById("dtiUpload").click()} style={{ width: "100%", height: dtiPreview ? "160px" : "100px", background: "#f9fafb", borderRadius: "14px", border: "1.5px dashed #d1d5db", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", marginBottom: "20px", fontSize: "13px", color: "#9ca3af" }}>
-                {dtiPreview ? <img src={dtiPreview} alt="DTI" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} /> : "📄 Tap to upload DTI Certificate"}
+                {dtiPreview ? <img src={dtiPreview} alt="DTI" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} /> : <><FileText size={16} /> Tap to upload DTI Certificate</>}
               </div>
 
               <button onClick={handleOwnerSubmit} className="ab-btn" style={{ ...s.primaryBtn, opacity: loading ? 0.75 : 1 }} disabled={loading}>
@@ -596,7 +597,7 @@ function SignupForm({ goBack, navigate }) {
               >
                 {licensePreview
                   ? <img src={licensePreview} alt="license" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} />
-                  : "💳 Tap to upload driver's license"
+                  : <><CreditCard size={16} /> Tap to upload driver's license</>
                 }
               </div>
 
@@ -627,7 +628,7 @@ function SignupForm({ goBack, navigate }) {
               >
                 {vehiclePhotoPreview
                   ? <img src={vehiclePhotoPreview} alt="vehicle" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} />
-                  : "📷 Tap to upload photo"
+                  : <><Camera size={16} /> Tap to upload photo</>
                 }
               </div>
 
@@ -765,7 +766,7 @@ function LoginForm({ goBack, navigate }) {
         {error && (
           <div style={s.errorOverlay}>
             <div style={s.errorModal}>
-              <div style={s.errorModalIcon}>⚠️</div>
+              <div style={s.errorModalIcon}><AlertTriangle size={32} /></div>
               <h3 style={s.errorModalTitle}>Oops!</h3>
               <p style={s.errorModalText}>{error}</p>
               <button style={s.errorModalBtn} onClick={() => setError("")}>Okay</button>

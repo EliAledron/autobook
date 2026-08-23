@@ -6,6 +6,8 @@ import { collection, addDoc, getDocs, getDoc, doc, query, where, serverTimestamp
 import { sh, colors } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
+import { Car, Wrench, Camera, Calendar } from 'lucide-react';
+
 
 const CLOUDINARY_CLOUD = "dpwojan8w";
 const CLOUDINARY_PRESET = "autobook_uploads";
@@ -147,7 +149,7 @@ export default function BookService() {
 
       await addDoc(collection(db, "adminAlerts"), {
         type: "booking_created",
-        title: "New Booking! 📅",
+        title: "New Booking!",
         message: `${customerName} booked ${finalService} at ${shop.name} for ${date} at ${time}.`,
         shopId: shop.id,
         read: false,
@@ -156,7 +158,7 @@ export default function BookService() {
 
       await addDoc(collection(db, "notifications"), {
         userId: uid,
-        title: "Booking Confirmed! ✅",
+        title: "Booking Confirmed!",
         message: `Your booking for ${finalService} at ${shop.name} on ${date} at ${time} has been received.`,
         type: "booking_confirmed",
         read: false,
@@ -223,7 +225,7 @@ export default function BookService() {
         {/* VEHICLE INFORMATION */}
         <div style={{ ...sh.card, padding: "24px", marginBottom: "1.5rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
-            <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>🚗</div>
+            <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.info }}><Car size={16} /></div>
             <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary }}>Vehicle Information</div>
           </div>
           
@@ -265,7 +267,7 @@ export default function BookService() {
         {/* SERVICE DETAILS */}
         <div style={{ ...sh.card, padding: "24px", marginBottom: "1.5rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
-            <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>🔧</div>
+            <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.warning }}><Wrench size={16} /></div>
             <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary }}>Service Details</div>
           </div>
           
@@ -311,7 +313,7 @@ export default function BookService() {
                 </div>
               ) : (
                 <button onClick={() => document.getElementById("issuePhotoUpload").click()} style={{ width: "100%", padding: "20px 14px", borderRadius: "14px", border: `1.5px dashed ${colors.border}`, background: "#f9fafb", color: colors.textSecondary, fontSize: "14px", fontWeight: "600", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", transition: "all 0.2s ease" }}>
-                  <span style={{ fontSize: "24px" }}>📷</span> Tap to upload photo
+                  <Camera size={24} /> Tap to upload photo
                 </button>
               )}
             </div>
@@ -331,7 +333,7 @@ export default function BookService() {
         {/* SCHEDULE */}
         <div style={{ ...sh.card, padding: "24px", marginBottom: "1.5rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
-            <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: colors.successBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>📅</div>
+            <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: colors.successBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.success }}><Calendar size={16} /></div>
             <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary }}>Schedule</div>
           </div>
           
@@ -508,7 +510,7 @@ export default function BookService() {
       {showConfirm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 120, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowConfirm(false)}>
           <div style={{ background: colors.white, borderRadius: "24px", width: "90%", maxWidth: "340px", padding: "24px", textAlign: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
-            <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: colors.infoBg, color: colors.info, fontSize: "28px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>📅</div>
+            <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: colors.infoBg, color: colors.info, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}><Calendar size={28} /></div>
             <h3 style={{ margin: "0 0 8px", fontSize: "18px", color: colors.textPrimary, fontWeight: "800" }}>Confirm Booking</h3>
             <p style={{ margin: "0 0 24px", fontSize: "13px", color: colors.textSecondary, lineHeight: "1.5" }}>
               Are you sure you want to book <strong>{customService}</strong> at <strong>{shop?.shortName || shop?.name}</strong> on {date} at {time}?

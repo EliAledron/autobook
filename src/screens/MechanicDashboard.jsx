@@ -6,6 +6,7 @@ import { doc, getDoc, collection, query, where, getDocs, orderBy } from "firebas
 import { sh, colors, getGreeting, EmptyState } from "./dashboardShared";
 import TopbarAvatar from "./TopbarAvatar";
 import CarLoader from "./CarLoader";
+import { Wrench, MapPin } from "lucide-react";
 
 // ─── SVG Icons ────────────────────────────────────────────────────────────────
 const IcoClip    = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>;
@@ -141,7 +142,7 @@ export default function MechanicDashboard() {
 
         <div style={sh.rolePill}>
           <div style={sh.roleDot} />
-          <span style={sh.roleText}>🔧 Mechanic</span>
+          <span style={sh.roleText}><Wrench size={10} style={{verticalAlign: 'middle', marginRight: '2px'}} /> Mechanic</span>
         </div>
         <div style={{ fontSize: "24px", fontWeight: "800", color: "#fff", marginBottom: "0.25rem", letterSpacing: "-0.3px" }}>
           {getGreeting()}, {firstName}!
@@ -209,11 +210,11 @@ export default function MechanicDashboard() {
         </div>
         <div style={{ background: colors.white, borderRadius: "20px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 20px rgba(0,0,0,0.04)", overflow: "hidden", marginBottom: "1.5rem" }}>
           {activeBookings.length === 0 ? (
-            <EmptyState icon="🔧" title="No active jobs" subtitle="You'll see your assigned bookings here once an owner assigns you." />
+            <EmptyState icon={<Wrench size={48} color={colors.info} />} title="No active jobs" subtitle="You'll see your assigned bookings here once an owner assigns you." />
           ) : (
             activeBookings.slice(0, 5).map((b, i) => (
               <div key={b.id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "16px", borderBottom: i === Math.min(activeBookings.length, 5) - 1 ? "none" : `1px solid #f1f5f9` }}>
-                <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>🔧</div>
+                <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.info, flexShrink: 0 }}><Wrench size={20} /></div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: "14px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>{b.serviceType || "Service"}</div>
                   <div style={{ fontSize: "12px", color: colors.textSecondary }}>{b.customerName || "Customer"} · {b.shopName || ""}</div>
@@ -236,11 +237,11 @@ export default function MechanicDashboard() {
         </div>
         <div style={{ background: colors.white, borderRadius: "20px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 20px rgba(0,0,0,0.04)", overflow: "hidden", marginBottom: "1.5rem" }}>
           {requests.length === 0 ? (
-            <EmptyState icon="📍" title="No visit requests" subtitle="Dispatched visit requests from owners will appear here." />
+            <EmptyState icon={<MapPin size={48} color={colors.warning} />} title="No visit requests" subtitle="Dispatched visit requests from owners will appear here." />
           ) : (
             requests.slice(0, 3).map((r, i) => (
               <div key={r.id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "16px", borderBottom: i === Math.min(requests.length, 3) - 1 ? "none" : `1px solid #f1f5f9` }}>
-                <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>📍</div>
+                <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.warning, flexShrink: 0 }}><MapPin size={20} /></div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: "14px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>{r.customerName || "Customer"}</div>
                   <div style={{ fontSize: "12px", color: colors.textSecondary }}>{r.address || "No address"}</div>

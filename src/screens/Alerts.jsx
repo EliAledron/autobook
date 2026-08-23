@@ -7,15 +7,17 @@ import { sh, colors, EmptyState } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
 
+import { CheckCircle2, XCircle, MapPin, Wrench, Megaphone, Bell, PartyPopper } from "lucide-react";
+
 const typeIcon = (type) => {
   switch (type) {
-    case "booking_confirmed": return "🎉";
-    case "booking_cancelled": return "❌";
-    case "visit_request":     return "📍";
-    case "request_sent":      return "✅";
-    case "status_update":     return "🔧";
-    case "request_update":    return "📢";
-    default:                  return "🔔";
+    case "booking_confirmed": return <PartyPopper size={20} />;
+    case "booking_cancelled": return <XCircle size={20} />;
+    case "visit_request":     return <MapPin size={20} />;
+    case "request_sent":      return <CheckCircle2 size={20} />;
+    case "status_update":     return <Wrench size={20} />;
+    case "request_update":    return <Megaphone size={20} />;
+    default:                  return <Bell size={20} />;
   }
 };
 
@@ -140,7 +142,7 @@ export default function Alerts() {
           <SkeletonLoader count={3} type="card" />
         ) : notifications.length === 0 ? (
           <EmptyState
-            icon="🔔"
+            icon={<Bell size={48} />}
             title="You're all caught up!"
             subtitle="Notifications about your bookings and maintenance will appear here."
           />

@@ -7,6 +7,7 @@ import { sh, colors, getInitials, EmptyState, SharedSearchBar, SharedFilterSelec
 import { useUser } from "../UserContext";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
+import { Newspaper, Star, XCircle, Trash2 } from "lucide-react";
 
 const CLOUDINARY_CLOUD = "dpwojan8w";
 const CLOUDINARY_PRESET = "autobook_uploads";
@@ -505,7 +506,7 @@ export default function ShopFeed() {
         ) : filteredPosts.length === 0 ? (
           <div className="smooth-reveal">
             <EmptyState
-              icon="📰"
+              icon={<Newspaper size={40} />}
               title={search || minRating > 0 ? "No matching posts found" : "No posts yet"}
               subtitle={search || minRating > 0 ? "Try adjusting your search or rating filter." : "Check back later for shop announcements and promos!"}
             />
@@ -538,7 +539,7 @@ export default function ShopFeed() {
                       <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px" }}>
                         <span style={{ fontSize: "11px", color: colors.textMuted, fontWeight: "600" }}>{timeAgo(post.createdAt)}</span>
                         <span style={{ fontSize: "10px", color: colors.border }}>•</span>
-                        <span style={{ color: "#f59e0b", fontSize: "11px" }}>★</span>
+                        <span style={{ color: "#f59e0b", fontSize: "11px" }}><Star fill="currentColor" size={11} /></span>
                         <span style={{ fontSize: "11px", color: colors.textSecondary, fontWeight: "700" }}>
                           {targetShop.rating && !isNaN(Number(targetShop.rating)) && Number(targetShop.rating) > 0 ? Number(targetShop.rating).toFixed(1) : "New"}
                         </span>
@@ -644,8 +645,8 @@ export default function ShopFeed() {
             </div>
 
             {editError && (
-              <div style={{ background: colors.dangerBg, border: `1px solid ${colors.danger}`, borderRadius: "12px", padding: "10px 14px", fontSize: "13px", color: colors.danger, marginBottom: "1rem", fontWeight: "600" }}>
-                ❌ {editError}
+              <div style={{ background: colors.dangerBg, border: `1px solid ${colors.danger}`, borderRadius: "12px", padding: "10px 14px", fontSize: "13px", color: colors.danger, marginBottom: "1rem", fontWeight: "600", display: "flex", alignItems: "center", gap: "6px" }}>
+                <XCircle size={16} /> {editError}
               </div>
             )}
 
@@ -871,7 +872,7 @@ export default function ShopFeed() {
       {confirmModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 120, display: "flex", alignItems: "center", justifyContent: "center", animation: "ab-fade-in 0.2s ease-out" }} onClick={() => setConfirmModal(null)}>
           <div style={{ background: colors.white, borderRadius: "24px", width: "90%", maxWidth: "340px", padding: "24px", textAlign: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
-            <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: colors.dangerBg || "#fee2e2", color: colors.danger, fontSize: "28px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>🗑️</div>
+            <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: colors.dangerBg || "#fee2e2", color: colors.danger, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}><Trash2 size={28} /></div>
             <h3 style={{ margin: "0 0 8px", fontSize: "18px", color: colors.textPrimary, fontWeight: "800" }}>Delete {confirmModal.label === "post" ? "Post" : "Comment"}?</h3>
             <p style={{ margin: "0 0 24px", fontSize: "13px", color: colors.textSecondary, lineHeight: "1.5" }}>
               Are you sure you want to delete this {confirmModal.label}? This action cannot be undone.

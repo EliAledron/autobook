@@ -7,6 +7,7 @@ import { sh, colors, EmptyState, getInitials, SharedSearchBar } from "./dashboar
 import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
 import BackButton from "../components/BackButton";
+import { Award, MapPin, Circle, Link, Check, X, Wrench } from "lucide-react";
 
 const verifyStyle = (verified) =>
   verified
@@ -319,7 +320,9 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <span style={{ fontSize: "20px" }}>{mechanic.available !== false ? "🟢" : "🔴"}</span>
+            <span style={{ fontSize: "20px", display: "flex", alignItems: "center" }}>
+              {mechanic.available !== false ? <Circle fill="currentColor" color={colors.success} size={20} /> : <Circle fill="currentColor" color={colors.danger} size={20} />}
+            </span>
             <div style={{ display: "flex", flexDirection: "column" }}>
               <span style={{ fontSize: "14px", fontWeight: "800", color: mechanic.available !== false ? colors.success : colors.danger }}>{mechanic.available !== false ? "Available" : "Unavailable (On a job)"}</span>
               <span style={{ fontSize: "11px", color: mechanic.available !== false ? "#15803d" : "#991b1b", opacity: 0.7, marginTop: "2px", fontWeight: "600" }}>Automatically updated based on active jobs</span>
@@ -348,7 +351,7 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
           </div>
         )}
         {typeof mechanic.certifications === "string" && mechanic.certifications && (
-          <div style={{ background: colors.infoBg, border: `1px solid ${colors.info}`, borderRadius: "10px", padding: "8px 12px", marginBottom: "1rem", fontSize: "12px", color: colors.info }}>🏅 <strong>Certifications:</strong> {mechanic.certifications}</div>
+          <div style={{ background: colors.infoBg, border: `1px solid ${colors.info}`, borderRadius: "10px", padding: "8px 12px", marginBottom: "1rem", fontSize: "12px", color: colors.info, display: "flex", alignItems: "center", gap: "6px" }}><Award size={16} /> <strong>Certifications:</strong> {mechanic.certifications}</div>
         )}
 
         <div style={{ display: "flex", gap: "8px", marginBottom: "1.5rem", overflowX: "auto", paddingBottom: "4px", scrollbarWidth: "none" }}>
@@ -396,68 +399,6 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
                 <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Verify Mechanic</>
               )}
             </button>
-
-            {/* Link User Account */}
-            {/* <div style={{ background: linkedUserId ? colors.successBg : colors.bg, border: `1.5px solid ${linkedUserId ? colors.success + "50" : colors.border}`, borderRadius: "16px", padding: "16px", marginBottom: "1rem" }}>
-              <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px", display: "flex", alignItems: "center", gap: "6px" }}>
-                🔗 Linked App Account
-                {linkedUserId && <span style={{ ...sh.badge(colors.successBg, colors.success), marginLeft: "6px" }}>Linked ✓</span>}
-              </div>
-              {linkedUserId ? (
-                <div style={{ fontSize: "13px", color: colors.success, fontWeight: "600" }}>
-                  ✅ This mechanic has a linked AutoBook account. They receive job notifications directly.
-                  <button
-                    onClick={async () => {
-                      try {
-                        await updateDoc(doc(db, "shopMechanics", mechanic.id), { userId: null });
-                        setLinkedUserId(null);
-                        setLinkMsg({ type: "success", text: "Account unlinked." });
-                      } catch (e) { setLinkMsg({ type: "error", text: "Failed to unlink." }); }
-                    }}
-                    style={{ display: "block", marginTop: "10px", background: "none", border: `1px solid ${colors.danger}`, color: colors.danger, borderRadius: "10px", padding: "8px 14px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit" }}
-                  >
-                    Unlink Account
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div style={{ fontSize: "12px", color: colors.textMuted, marginBottom: "10px" }}>Link this mechanic to their AutoBook account so they receive notifications when assigned a job.</div>
-                  <div style={{ display: "flex", gap: "8px" }}>
-                    <input
-                      type="email"
-                      placeholder="Mechanic's registered email"
-                      value={linkEmail}
-                      onChange={e => { setLinkEmail(e.target.value); setLinkMsg(null); }}
-                      style={{ flex: 1, padding: "10px 12px", borderRadius: "10px", border: `1.5px solid ${colors.border}`, fontSize: "13px", outline: "none", background: colors.white, fontFamily: "inherit" }}
-                    />
-                    <button
-                      disabled={linkLoading || !linkEmail.trim()}
-                      onClick={async () => {
-                        setLinkLoading(true); setLinkMsg(null);
-                        try {
-                          const uSnap = await getDocs(query(collection(db, "users"), where("email", "==", linkEmail.trim())));
-                          if (uSnap.empty) { setLinkMsg({ type: "error", text: "No user found with that email." }); setLinkLoading(false); return; }
-                          const found = uSnap.docs[0];
-                          await updateDoc(doc(db, "shopMechanics", mechanic.id), { userId: found.id });
-                          setLinkedUserId(found.id);
-                          setLinkEmail("");
-                          setLinkMsg({ type: "success", text: `Linked to ${found.data().displayName || linkEmail}!` });
-                        } catch (e) { setLinkMsg({ type: "error", text: "Link failed. Try again." }); }
-                        setLinkLoading(false);
-                      }}
-                      style={{ padding: "10px 16px", borderRadius: "10px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", fontSize: "13px", fontWeight: "700", border: "none", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}
-                    >
-                      {linkLoading ? "..." : "Link"}
-                    </button>
-                  </div>
-                  {linkMsg && (
-                    <div style={{ marginTop: "8px", fontSize: "12px", fontWeight: "600", color: linkMsg.type === "success" ? colors.success : colors.danger }}>
-                      {linkMsg.type === "success" ? "✅ " : "❌ "}{linkMsg.text}
-                    </div>
-                  )}
-                </>
-              )}
-            </div> */}
           </>
         )}
 
@@ -517,7 +458,7 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
               : mRequests.slice(0, 10).map((r, i) => (
                 <div key={r.id} className="owner-list-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px", borderBottom: i < mRequests.length - 1 ? `1px solid #f1f5f9` : "none", borderRadius: "12px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <div style={{ ...sh.rowIcon(colors.bg), fontSize: "16px" }}>📍</div>
+                    <div style={{ ...sh.rowIcon(colors.bg), fontSize: "16px", color: colors.textSecondary }}><MapPin size={16} /></div>
                     <div>
                       <div style={{ fontSize: "14px", fontWeight: "700", color: colors.textPrimary, marginBottom: "2px" }}>{r.customerName || "Customer"}</div>
                       <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "500" }}>{r.address || "No address"}</div>
@@ -859,7 +800,7 @@ export default function AdminMechanics() {
             <SkeletonLoader count={3} type="list" />
           ) : filteredMechanics.length === 0 ? (
             <EmptyState
-              icon="🔧"
+              icon={<Wrench size={48} />}
               title="No mechanics found"
               subtitle={search ? "No mechanics match your search." : "There are currently no mechanics registered."}
             />

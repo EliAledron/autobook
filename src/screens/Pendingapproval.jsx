@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Hourglass, Clock, CheckCircle, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -103,14 +104,14 @@ export default function PendingApproval() {
         <div style={s.content}>
           {status === "loading" && (
             <>
-              <div style={s.icon}>⏳</div>
+              <div style={s.icon}><Hourglass size={48} /></div>
               <h2 style={s.title}>Loading...</h2>
             </>
           )}
 
           {status === "pending" && (
             <>
-              <div style={{ ...s.icon, animation: "ab-float 2s ease-in-out infinite" }}>🕐</div>
+              <div style={{ ...s.icon, animation: "ab-float 2s ease-in-out infinite" }}><Clock size={48} /></div>
               <h2 style={s.title}>Waiting for approval</h2>
               <p style={s.subtitle}>
                 Hi {name}! Your account is under review. Please wait for admin approval.
@@ -124,7 +125,7 @@ export default function PendingApproval() {
 
           {status === "approved" && (
             <>
-              <div style={{ ...s.icon, animation: "ab-float 1.5s ease-in-out infinite" }}>✅</div>
+              <div style={{ ...s.icon, animation: "ab-float 1.5s ease-in-out infinite" }}><CheckCircle size={48} /></div>
               <h2 style={s.title}>Approved!</h2>
               <p style={s.subtitle}>Redirecting to dashboard...</p>
             </>
@@ -132,7 +133,7 @@ export default function PendingApproval() {
 
           {status === "rejected" && (
             <>
-              <div style={s.icon}>❌</div>
+              <div style={s.icon}><XCircle size={48} /></div>
               <h2 style={s.title}>Account rejected</h2>
               <p style={s.subtitle}>
                 Your application was not approved. Please contact the admin.

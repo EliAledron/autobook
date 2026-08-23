@@ -9,6 +9,7 @@ import {
 import { sh, colors, getInitials, EmptyState } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
+import { CheckCircle2, Flag, XCircle, Clock, MapPin, Wrench, AlertTriangle, Ban } from "lucide-react";
 
 const STATUS_TABS = ["All", "Pending", "Accepted", "Completed", "Declined", "Cancelled"];
 
@@ -22,10 +23,10 @@ const statusStyle = (s) => {
 
 const statusIcon = (s) => {
   const sl = (s || "").toLowerCase();
-  if (sl === "accepted")  return "✅";
-  if (sl === "completed") return "🏁";
-  if (sl === "declined" || sl === "cancelled")  return "❌";
-  return "🕐";
+  if (sl === "accepted")  return <CheckCircle2 size={16} />;
+  if (sl === "completed") return <Flag size={16} />;
+  if (sl === "declined" || sl === "cancelled")  return <XCircle size={16} />;
+  return <Clock size={16} />;
 };
 
 function timeAgo(ts) {
@@ -228,10 +229,10 @@ export default function MechanicRequests() {
         await addDoc(collection(db, "notifications"), {
           userId: customerId,
           title: newStatus === "Accepted"
-            ? "Request Accepted! 🎉"
+            ? "Request Accepted!"
             : newStatus === "Declined"
-            ? "Request Declined ❌"
-            : "Job Completed! ✅",
+            ? "Request Declined"
+            : "Job Completed!",
           message: customerMsg,
           type: "request_update",
           read: false,
@@ -254,12 +255,12 @@ export default function MechanicRequests() {
       if (selected?.id === requestId) setSelected((prev) => ({ ...prev, status: newStatus }));
 
       showToast(
-        newStatus === "Accepted" ? "✅ Request accepted!" :
-        newStatus === "Declined" ? "❌ Request declined." :
-        "🏁 Marked as completed!"
+        newStatus === "Accepted" ? "Request accepted!" :
+        newStatus === "Declined" ? "Request declined." :
+        "Marked as completed!"
       );
     } catch (e) {
-      showToast("❌ Failed to update. Try again.");
+      showToast("Failed to update. Try again.");
     }
     setSaving(false);
   };
@@ -427,7 +428,7 @@ export default function MechanicRequests() {
             <SkeletonLoader count={3} type="card" />
           ) : filtered.length === 0 ? (
             <EmptyState
-              icon="📍"
+              icon={<MapPin size={48} color={colors.warning} />}
               title={`No ${activeTab !== "All" ? activeTab.toLowerCase() + " " : ""}requests`}
               subtitle="There are currently no requests matching this filter."
             />
@@ -461,7 +462,7 @@ export default function MechanicRequests() {
                     )}
                   </div>
                   <div style={{ fontSize: "12px", color: colors.textSecondary, marginTop: "1px" }}>
-                    📍 {r.address || "No address"}
+                    <MapPin size={12} style={{display:'inline-block', verticalAlign:'middle'}}/> {r.address || "No address"}
                   </div>
                   {r.notes ? (
                     <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "1px" }}>
@@ -471,8 +472,8 @@ export default function MechanicRequests() {
                   <div style={{ fontSize: "10px", color: colors.textMuted, marginTop: "3px" }}>
                     {timeAgo(r.createdAt)}
                     {r.status === "Accepted" && (
-                      <span style={{ marginLeft: "8px", color: r.assignedMechanicId ? colors.info : colors.warning, fontWeight: "800", animation: !r.assignedMechanicId ? "pulse-warning 2s infinite" : "none", borderRadius: "8px", padding: !r.assignedMechanicId ? "2px 6px" : "0", background: !r.assignedMechanicId ? colors.warningBg : "transparent" }}>
-                        • {r.assignedMechanicName ? `👷 ${r.assignedMechanicName}` : "⚠️ Needs Mechanic"}
+                      <span style={{ marginLeft: "8px", color: r.assignedMechanicId ? colors.info : colors.warning, fontWeight: "800", animation: !r.assignedMechanicId ? "pulse-warning 2s infinite" : "none", borderRadius: "8px", padding: !r.assignedMechanicId ? "2px 6px" : "0", background: !r.assignedMechanicId ? colors.warningBg : "transparent", display: 'inline-flex', alignItems: 'center' }}>
+                        <span style={{marginRight: '2px'}}>•</span> {r.assignedMechanicName ? <><Wrench size={10} style={{marginRight: '2px'}}/> {r.assignedMechanicName}</> : <><AlertTriangle size={10} style={{marginRight: '2px'}}/> Needs Mechanic</>}
                       </span>
                     )}
                   </div>
@@ -496,7 +497,7 @@ export default function MechanicRequests() {
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-              <div style={{ fontWeight: "700", fontSize: "16px" }}>📍 Visit Request</div>
+              <div style={{ fontWeight: "700", fontSize: "16px", display: "flex", alignItems: "center", gap: "6px" }}><MapPin size={18} /> Visit Request</div>
               <button onClick={() => setSelected(null)} style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", color: colors.textMuted }}>×</button>
             </div>
 
@@ -533,9 +534,10 @@ export default function MechanicRequests() {
                       background: `linear-gradient(135deg, ${colors.success}, #15803d)`,
                       color: "#fff", fontSize: "14px", fontWeight: "600",
                       border: "none", borderRadius: "12px", cursor: "pointer", fontFamily: "inherit",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
                     }}
                   >
-                    {saving ? "Saving..." : "✅ Accept Request"}
+                    {saving ? "Saving..." : <><CheckCircle2 size={16} /> Accept Request</>}
                   </button>
                   <button
                     onClick={() => updateStatus(
@@ -549,9 +551,10 @@ export default function MechanicRequests() {
                       fontSize: "14px", fontWeight: "600",
                       border: `1px solid ${colors.danger}`, borderRadius: "12px",
                       cursor: "pointer", fontFamily: "inherit",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
                     }}
                   >
-                    {saving ? "Saving..." : "❌ Decline Request"}
+                    {saving ? "Saving..." : <><XCircle size={16} /> Decline Request</>}
                   </button>
                 </>
               )}
@@ -560,7 +563,7 @@ export default function MechanicRequests() {
                 <>
                   <div style={{ marginBottom: "1rem", padding: !selected.assignedMechanicId ? "16px" : "0", background: !selected.assignedMechanicId ? colors.warningBg : "transparent", borderRadius: "16px", border: !selected.assignedMechanicId ? `2px dashed ${colors.warning}` : "none" }}>
                     <div style={{ fontSize: "12px", color: !selected.assignedMechanicId ? colors.warning : colors.textMuted, fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
-                      {!selected.assignedMechanicId && <span style={{ fontSize: "18px", animation: "ab-bounce 1s infinite" }}>⚠️</span>} 
+                      {!selected.assignedMechanicId && <span style={{ fontSize: "18px", animation: "ab-bounce 1s infinite" }}><AlertTriangle size={18} /></span>} 
                       Assign Mechanic
                     </div>
                     {!selected.assignedMechanicId && (
@@ -569,8 +572,8 @@ export default function MechanicRequests() {
                       </div>
                     )}
                     {mechanics.length === 0 ? (
-                      <div style={{ fontSize: "12px", color: colors.danger, padding: "8px 10px", background: colors.dangerBg, borderRadius: "8px" }}>
-                        ⚠ No mechanics found. Add mechanics from the Owner Dashboard first.
+                      <div style={{ fontSize: "12px", color: colors.danger, padding: "8px 10px", background: colors.dangerBg, borderRadius: "8px", display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <AlertTriangle size={12}/> No mechanics found. Add mechanics from the Owner Dashboard first.
                       </div>
                     ) : (
                       <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "240px", overflowY: "auto", padding: "2px" }}>
@@ -578,7 +581,7 @@ export default function MechanicRequests() {
                           onClick={() => setNewMechanic("")}
                           style={{ padding: "12px 16px", borderRadius: "14px", border: newMechanic === "" ? `2px solid ${colors.blue}` : `1.5px solid ${colors.border}`, background: newMechanic === "" ? colors.infoBg : colors.white, cursor: "pointer", display: "flex", alignItems: "center", gap: "12px", transition: "all 0.2s ease" }}
                         >
-                          <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>🚫</div>
+                          <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.textSecondary }}><Ban size={16}/></div>
                           <div style={{ fontSize: "14px", fontWeight: "700", color: newMechanic === "" ? colors.blue : colors.textPrimary }}>Leave Unassigned</div>
                           {newMechanic === "" && <div style={{ marginLeft: "auto", color: colors.blue, fontSize: "18px", fontWeight: "800" }}>✓</div>}
                         </div>
@@ -640,7 +643,7 @@ export default function MechanicRequests() {
                             if (selected.customerId) {
                               await addDoc(collection(db, "notifications"), {
                                 userId: selected.customerId,
-                                title: "Mechanic Assigned 🔧",
+                                title: "Mechanic Assigned",
                                 message: `${mechanic?.displayName || mechanic?.name || "A mechanic"} has been assigned to your request at ${selected.address}.`,
                                 type: "request_update",
                                 read: false,
@@ -649,9 +652,9 @@ export default function MechanicRequests() {
                             }
 
                             setSelected(prev => ({ ...prev, assignedMechanicId: newMechanic, assignedMechanicName: mechanic?.displayName || mechanic?.name || "Mechanic" }));
-                            showToast("✅ Mechanic assigned successfully!");
+                            showToast("Mechanic assigned successfully!");
                           } catch(e) {
-                            showToast("❌ Failed to assign mechanic.");
+                            showToast("Failed to assign mechanic.");
                           }
                           setSaving(false);
                         }}
@@ -682,16 +685,16 @@ export default function MechanicRequests() {
                       border: "none", borderRadius: "12px", cursor: "pointer", fontFamily: "inherit",
                     }}
                   >
-                    {saving ? "Saving..." : "🏁 Mark as Completed"}
+                    {saving ? "Saving..." : <><Flag size={16} /> Mark as Completed</>}
                   </button>
                 </>
               )}
 
               {(selected.status === "Completed" || selected.status === "Declined" || selected.status === "Cancelled") && (
-                <div style={{ fontSize: "13px", color: selected.status === "Completed" ? colors.success : colors.danger, fontWeight: "600", padding: "10px", background: selected.status === "Completed" ? colors.successBg : colors.dangerBg, borderRadius: "10px", border: `1px solid ${selected.status === "Completed" ? "rgba(22,163,74,0.3)" : "rgba(220,38,38,0.3)"}` }}>
+                <div style={{ fontSize: "13px", color: selected.status === "Completed" ? colors.success : colors.danger, fontWeight: "600", padding: "10px", background: selected.status === "Completed" ? colors.successBg : colors.dangerBg, borderRadius: "10px", border: `1px solid ${selected.status === "Completed" ? "rgba(22,163,74,0.3)" : "rgba(220,38,38,0.3)"}`, display: 'flex', alignItems: 'center', gap: '6px' }}>
                   {selected.status === "Completed"
-                    ? "✅ This request is completed."
-                    : `❌ This request was ${(selected.status || "declined").toLowerCase()}.`}
+                    ? <><CheckCircle2 size={16} /> This request is completed.</>
+                    : <><XCircle size={16} /> This request was {(selected.status || "declined").toLowerCase()}.</>}
                 </div>
               )}
 

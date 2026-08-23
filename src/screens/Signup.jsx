@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import BackButton from "../components/BackButton";
+import { AlertTriangle, Car, Store, Wrench, Paperclip, FileText, CreditCard, Camera } from "lucide-react";
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
@@ -129,7 +130,7 @@ export default function Signup() {
     // Notify Admin about new user registration
     await addDoc(collection(db, "adminAlerts"), {
       type: "new_user",
-      title: "New User Registration 👤",
+      title: "New User Registration",
       message: `${dName} just registered as a ${finalRole} and is waiting for approval.`,
       read: false,
       createdAt: serverTimestamp(),
@@ -324,7 +325,7 @@ export default function Signup() {
         {error && (
           <div style={s.errorOverlay}>
             <div style={s.errorModal}>
-              <div style={s.errorModalIcon}>⚠️</div>
+              <div style={s.errorModalIcon}><AlertTriangle size={24} /></div>
               <h3 style={s.errorModalTitle}>Oops!</h3>
               <p style={s.errorModalText}>{error}</p>
               <button style={s.errorModalBtn} onClick={() => setError("")}>Okay</button>
@@ -397,7 +398,7 @@ export default function Signup() {
               <label style={s.label}>I am a…</label>
               <div style={{ display: "flex", gap: "8px", marginBottom: "20px", flexWrap: "wrap" }}>
                 {ROLES.map((r) => {
-                  const roleIcon = r === "Customer" ? "🚗" : r === "Owner" ? "🏪" : "🔧";
+                  const roleIcon = r === "Customer" ? <Car size={16} style={{marginBottom: "-2px"}} /> : r === "Owner" ? <Store size={16} style={{marginBottom: "-2px"}} /> : <Wrench size={16} style={{marginBottom: "-2px"}} />;
                   const roleSub  = r === "Customer" ? "Book services" : r === "Owner" ? "Manage the shop" : "Fix & repair";
                   return (
                     <button
@@ -441,7 +442,7 @@ export default function Signup() {
             </>
           ) : step === 2 && role === "Mechanic" ? (
             <>
-              <h3 style={{ marginTop: 0, color: "#111827", fontSize: "18px", fontWeight: "700" }}>🔧 Mechanic Details</h3>
+              <h3 style={{ marginTop: 0, color: "#111827", fontSize: "18px", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}><Wrench size={18} /> Mechanic Details</h3>
               <p style={{ fontSize: "13px", color: "#6b7280", marginBottom: "16px", marginTop: "-4px" }}>Tell us about your skills and the shop you work at.</p>
 
               <label style={s.label}>Shop Name You Work At *</label>
@@ -524,7 +525,7 @@ export default function Signup() {
               >
                 {permitPreview
                   ? <img src={permitPreview} alt="permit" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} />
-                  : "📎 Tap to upload permit photo"
+                  : <div style={{display: "flex", alignItems: "center", gap: "4px"}}><Paperclip size={14} /> Tap to upload permit photo</div>
                 }
               </div>
 
@@ -555,7 +556,7 @@ export default function Signup() {
               >
                 {dtiPreview
                   ? <img src={dtiPreview} alt="DTI" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} />
-                  : "📄 Tap to upload DTI Certificate"
+                  : <div style={{display: "flex", alignItems: "center", gap: "4px"}}><FileText size={14} /> Tap to upload DTI Certificate</div>
                 }
               </div>
 
@@ -607,7 +608,7 @@ export default function Signup() {
               >
                 {licensePreview
                   ? <img src={licensePreview} alt="license" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} />
-                  : "💳 Tap to upload driver's license"
+                  : <div style={{display: "flex", alignItems: "center", gap: "4px"}}><CreditCard size={14} /> Tap to upload driver's license</div>
                 }
               </div>
 
@@ -638,7 +639,7 @@ export default function Signup() {
               >
                 {vehiclePhotoPreview
                   ? <img src={vehiclePhotoPreview} alt="vehicle" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} />
-                  : "📷 Tap to upload photo"
+                  : <div style={{display: "flex", alignItems: "center", gap: "4px"}}><Camera size={14} /> Tap to upload photo</div>
                 }
               </div>
 

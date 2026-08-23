@@ -6,6 +6,7 @@ import { collection, query, where, getDocs, orderBy, updateDoc, doc, addDoc, ser
 import { sh, colors, EmptyState, getInitials, SharedSearchBar } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
+import { CheckCircle2, Wrench, XCircle, Clock, ClipboardList, Store, Calendar, Car, X, RefreshCw } from "lucide-react";
 
 const STATUS_TABS = ["All", "Pending", "In Progress", "Completed", "Cancelled"];
 
@@ -17,10 +18,10 @@ const statusStyle = (s) => {
 };
 
 const statusIcon = (s) => {
-  if ((s || "").toLowerCase() === "completed") return "✅";
-  if ((s || "").toLowerCase() === "in progress") return "🔧";
-  if ((s || "").toLowerCase() === "cancelled") return "❌";
-  return "🕐";
+  if ((s || "").toLowerCase() === "completed") return <CheckCircle2 size={20} />;
+  if ((s || "").toLowerCase() === "in progress") return <Wrench size={20} />;
+  if ((s || "").toLowerCase() === "cancelled") return <XCircle size={20} />;
+  return <Clock size={20} />;
 };
 
 function timeAgo(timestamp) {
@@ -130,7 +131,7 @@ export default function BookingHistory() {
       // Notify Admin
       await addDoc(collection(db, "adminAlerts"), {
         type: "job_cancelled",
-        title: "Booking Cancelled ❌",
+        title: "Booking Cancelled",
         message: `Customer ${selected.customerName || "A customer"} cancelled their booking for ${selected.serviceType} at ${selected.shopName}.`,
         shopId: selected.shopId || null,
         read: false,
@@ -152,7 +153,7 @@ export default function BookingHistory() {
       // Notify Admin
       await addDoc(collection(db, "adminAlerts"), {
         type: "booking_created",
-        title: "Booking Restored 🔄",
+        title: "Booking Restored",
         message: `Customer ${selected.customerName || "A customer"} restored their cancelled booking for ${selected.serviceType} at ${selected.shopName}.`,
         shopId: selected.shopId || null,
         read: false,
@@ -313,7 +314,7 @@ export default function BookingHistory() {
           <SkeletonLoader count={3} type="card" />
         ) : filtered.length === 0 ? (
           <EmptyState
-            icon="📋"
+            icon={<ClipboardList size={48} />}
             title={`No ${activeTab !== "All" ? activeTab.toLowerCase() + " " : ""}bookings found`}
             subtitle="Your service history will appear here once you book a service."
           />
@@ -336,7 +337,7 @@ export default function BookingHistory() {
                 onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.05)"; }}
                 onClick={() => setSelected(b)}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <span style={{ ...statusStyle(b.status), padding: "4px 10px", borderRadius: "8px", fontSize: "11px" }}>{b.status || "Pending"}</span>
+                    <span style={{ ...statusStyle(b.status), padding: "4px 10px", borderRadius: "8px", fontSize: "11px", display: "inline-block" }}>{b.status || "Pending"}</span>
                     {b.price !== undefined && (
                       <span style={{ fontSize: "15px", fontWeight: "800", color: colors.navy }}>₱{Number(b.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</span>
                     )}
@@ -347,14 +348,14 @@ export default function BookingHistory() {
                       {b.serviceType || "Service"}
                     </div>
                     <div style={{ fontSize: "13px", color: colors.textSecondary, display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                      <span style={{ fontSize: "14px" }}>🏪</span> {b.shopName || "AutoBook"}
+                      <Store size={14} /> {b.shopName || "AutoBook"}
                     </div>
                     <div style={{ fontSize: "13px", color: colors.textSecondary, display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                      <span style={{ fontSize: "14px" }}>📅</span> {b.date || "No date"} {b.time && `• ${b.time}`}
+                      <Calendar size={14} /> {b.date || "No date"} {b.time && `• ${b.time}`}
                     </div>
                     {b.vehicleLabel && (
                       <div style={{ fontSize: "13px", color: colors.textSecondary, display: "flex", alignItems: "center", gap: "8px" }}>
-                        <span style={{ fontSize: "14px" }}>🚗</span> {b.vehicleLabel}
+                        <Car size={14} /> {b.vehicleLabel}
                       </div>
                     )}
                   </div>
@@ -369,8 +370,8 @@ export default function BookingHistory() {
                       </div>
                     ) : (
                       <div style={{ fontSize: "12px", color: colors.warning, fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}>
-                        <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px" }}>
-                          🕐
+                        <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.warning }}>
+                          <Clock size={12} />
                         </div>
                         Waiting for mechanic
                       </div>
@@ -434,7 +435,7 @@ export default function BookingHistory() {
                     transition: "all 0.2s ease",
                   }}
                 >
-                  <span style={{ fontSize: "18px" }}>❌</span>
+                  <X size={18} />
                   {cancelling ? "Cancelling..." : "Cancel this booking"}
                 </button>
               </>
@@ -457,7 +458,7 @@ export default function BookingHistory() {
                     transition: "all 0.2s ease",
                   }}
                 >
-                  <span style={{ fontSize: "18px" }}>🔄</span>
+                  <RefreshCw size={18} />
                   {cancelling ? "Restoring..." : "Restore this booking"}
                 </button>
               </>
@@ -472,7 +473,7 @@ export default function BookingHistory() {
       {showCancelConfirm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 120, display: "flex", alignItems: "center", justifyContent: "center", animation: "ab-fade-in 0.2s ease-out" }} onClick={() => setShowCancelConfirm(false)}>
           <div style={{ background: colors.white, borderRadius: "24px", width: "90%", maxWidth: "340px", padding: "24px", textAlign: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
-            <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: colors.dangerBg, color: colors.danger, fontSize: "28px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>❌</div>
+            <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: colors.dangerBg, color: colors.danger, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}><X size={28} /></div>
             <h3 style={{ margin: "0 0 8px", fontSize: "18px", color: colors.textPrimary, fontWeight: "800" }}>Cancel Booking?</h3>
             <p style={{ margin: "0 0 24px", fontSize: "13px", color: colors.textSecondary, lineHeight: "1.5" }}>
               Are you sure you want to cancel your booking for <strong>{selected?.serviceType}</strong> at <strong>{selected?.shopName}</strong>?

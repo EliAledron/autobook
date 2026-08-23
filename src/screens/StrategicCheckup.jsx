@@ -2,12 +2,13 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { sh, colors } from "./dashboardShared";
 import BackButton from "../components/BackButton";
+import { Octagon, Snowflake, Lightbulb, Map, Disc, Droplet, Battery, Droplets, Settings, AlertTriangle, AlertCircle, ClipboardList, Brain } from "lucide-react";
 
 const SYMPTOMS = [
   { 
     id: "s1", 
     label: "Squeaking or grinding brakes", 
-    icon: "🛑", 
+    icon: <Octagon size={28} />, 
     causes: "Worn brake pads, rusted rotors, or debris caught in the brake assembly.", 
     action: "Have the brake system inspected and replace worn components immediately.", 
     service: "Brake Inspection", 
@@ -40,7 +41,7 @@ const SYMPTOMS = [
   { 
     id: "s2", 
     label: "AC is blowing warm air", 
-    icon: "❄️", 
+    icon: <Snowflake size={28} />, 
     causes: "Low refrigerant (Freon), failing compressor, or a leak in the hoses.", 
     action: "Check system pressure, inspect for leaks, and recharge Freon.", 
     service: "Aircon Diagnostics & Freon", 
@@ -73,7 +74,7 @@ const SYMPTOMS = [
   { 
     id: "s3", 
     label: "Engine check light is on", 
-    icon: "💡", 
+    icon: <Lightbulb size={28} />, 
     causes: "Faulty sensors (like O2 or MAF), a loose gas cap, or an engine misfire.", 
     action: "Scan the vehicle's OBD2 port for specific error codes.", 
     service: "Full Engine Diagnostics", 
@@ -106,7 +107,7 @@ const SYMPTOMS = [
   { 
     id: "s4", 
     label: "Car pulls to one side", 
-    icon: "🛣️", 
+    icon: <Map size={28} />, 
     causes: "Uneven tire pressure, poor wheel alignment, or worn suspension parts.", 
     action: "Check tire pressure and perform a full 4-wheel alignment.", 
     service: "Wheel Alignment", 
@@ -139,7 +140,7 @@ const SYMPTOMS = [
   { 
     id: "s5", 
     label: "Steering wheel vibrates", 
-    icon: "🛞", 
+    icon: <Disc size={28} />, 
     causes: "Unbalanced tires, a bent wheel, or warped brake rotors.", 
     action: "Balance all four tires and inspect steering/suspension components.", 
     service: "Tire Balancing / Rotation", 
@@ -172,7 +173,7 @@ const SYMPTOMS = [
   { 
     id: "s6", 
     label: "Strange ticking under hood", 
-    icon: "🛢️", 
+    icon: <Droplet size={28} />, 
     causes: "Low oil level, valve train noise, or an exhaust leak.", 
     action: "Check engine oil level immediately and top up or replace if needed.", 
     service: "Oil Change / Engine Check", 
@@ -195,7 +196,7 @@ const SYMPTOMS = [
   { 
     id: "s7", 
     label: "Battery dies frequently", 
-    icon: "🔋", 
+    icon: <Battery size={28} />, 
     causes: "An old battery, a failing alternator, or a parasitic power drain.", 
     action: "Test battery health and check the alternator's charging output.", 
     service: "Battery & Alternator Test", 
@@ -218,7 +219,7 @@ const SYMPTOMS = [
   { 
     id: "s8", 
     label: "Puddle of fluid under car", 
-    icon: "💧", 
+    icon: <Droplets size={28} />, 
     causes: "Coolant leak, engine oil leak, or transmission fluid leak.", 
     action: "Identify the fluid type by color/smell and trace the leak source.", 
     service: "Fluid Leak Inspection", 
@@ -468,10 +469,14 @@ export default function StrategicCheckup() {
               opacity: !allQuestionsAnswered ? 0.5 : 1,
               animation: allQuestionsAnswered && !isAnalyzing ? "sc-pulseGlow 2s infinite" : "none",
               transition: "all 0.3s ease",
-              marginTop: "1rem"
+              marginTop: "1rem",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: "8px"
             }}
           >
-            {isAnalyzing ? "Analyzing Symptoms ⚙️..." : "Execute Analysis"}
+            {isAnalyzing ? <>Analyzing Symptoms <Settings size={18} className="spin" />...</> : "Execute Analysis"}
           </button>
         )}
 
@@ -486,7 +491,7 @@ export default function StrategicCheckup() {
               
               <div style={{ display: "flex", alignItems: "flex-start", gap: "16px", marginBottom: "20px" }}>
                 <div style={{ width: "56px", height: "56px", borderRadius: "18px", background: results.hasCritical ? colors.dangerBg : colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", flexShrink: 0 }}>
-                  {results.hasCritical ? "🚨" : results.isUrgent ? "⚠️" : "📋"}
+                  {results.hasCritical ? <AlertTriangle size={32} color={colors.danger} /> : results.isUrgent ? <AlertCircle size={32} color={colors.warning} /> : <ClipboardList size={32} color={colors.info} />}
                 </div>
                 <div style={{ flex: 1, paddingTop: "4px" }}>
                   <div style={{ fontSize: "20px", fontWeight: "800", color: colors.textPrimary, marginBottom: "4px", letterSpacing: "-0.3px" }}>Diagnostic Report</div>
@@ -509,7 +514,7 @@ export default function StrategicCheckup() {
                     
                     {item.isSmart && (
                       <div style={{ position: "absolute", top: "16px", right: "16px", background: "rgba(37,99,235,0.1)", border: `1px solid rgba(37,99,235,0.2)`, padding: "4px 8px", borderRadius: "8px", fontSize: "10px", fontWeight: "800", color: colors.info, display: "flex", alignItems: "center", gap: "4px" }}>
-                        <span>🧠</span> Smart Rule Applied
+                        <span><Brain size={14} /></span> Smart Rule Applied
                       </div>
                     )}
                     

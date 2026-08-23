@@ -6,6 +6,7 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, s
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { sh, colors, EmptyState } from "./dashboardShared";
 import BackButton from "../components/BackButton";
+import { Camera, Car, FileText } from "lucide-react";
 
 const emptyVehicle = () => ({ make: "", model: "", year: "", plate: "", color: "", photoURL: "", photoFile: null, localPreview: null, permitURL: "", permitFile: null, permitPreview: null });
 
@@ -177,7 +178,7 @@ export default function MyVehicles() {
             <div style={{ ...sh.card, padding: "24px", marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>📷</div>
+                  <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.warning }}><Camera size={16} /></div>
                   <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary }}>Vehicle Photo</div>
                 </div>
                 {(form.localPreview || form.photoURL) && (
@@ -204,7 +205,7 @@ export default function MyVehicles() {
               >
                 {form.localPreview || form.photoURL
                   ? <img src={form.localPreview || form.photoURL} alt="vehicle" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                  : "🚗 Tap to add vehicle photo"
+                  : <span style={{display:'flex', alignItems:'center', gap:'6px'}}><Car size={16} /> Tap to add vehicle photo</span>
                 }
               </div>
             </div>
@@ -213,7 +214,7 @@ export default function MyVehicles() {
             <div style={{ ...sh.card, padding: "24px", marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: colors.successBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>📄</div>
+                  <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: colors.successBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.success }}><FileText size={16} /></div>
                   <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary }}>Car Permit (Proof of Ownership) *</div>
                 </div>
                 {(form.permitPreview || form.permitURL) && (
@@ -240,7 +241,7 @@ export default function MyVehicles() {
               >
                 {form.permitPreview || form.permitURL
                   ? <img src={form.permitPreview || form.permitURL} alt="permit" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                  : "📄 Tap to add car permit"
+                  : <span style={{display:'flex', alignItems:'center', gap:'6px'}}><FileText size={16} /> Tap to add car permit</span>
                 }
               </div>
             </div>
@@ -248,7 +249,7 @@ export default function MyVehicles() {
             {/* VEHICLE DETAILS */}
             <div style={{ ...sh.card, padding: "24px", marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
-                <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>🚗</div>
+                <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.info }}><Car size={16} /></div>
                 <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary }}>Vehicle Details</div>
               </div>
               
@@ -308,7 +309,7 @@ export default function MyVehicles() {
             <div style={{ ...sh.sectionLabel, fontSize: "13px", color: colors.textPrimary, letterSpacing: "0.5px" }}>Your vehicles ({vehicles.length})</div>
             {vehicles.length === 0 ? (
               <EmptyState
-                icon="🚗"
+                icon={<Car size={48} color={colors.navy} />}
                 title="No vehicles added yet"
                 subtitle="Register your car to easily book services and track maintenance."
                 action={
@@ -328,7 +329,7 @@ export default function MyVehicles() {
                   )}
                   {v.permitURL && (
                     <div style={{ fontSize: "12px", color: colors.success, background: colors.successBg, padding: "6px 12px", borderRadius: "8px", marginBottom: "12px", display: "inline-flex", alignItems: "center", gap: "6px", fontWeight: "700" }}>
-                      <span>📄</span> Proof of Ownership Attached
+                      <FileText size={14} /> Proof of Ownership Attached
                     </div>
                   )}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -367,7 +368,7 @@ export default function MyVehicles() {
       {showConfirm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 120, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowConfirm(false)}>
           <div style={{ background: colors.white, borderRadius: "24px", width: "90%", maxWidth: "340px", padding: "24px", textAlign: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
-            <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: colors.infoBg, color: colors.info, fontSize: "28px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>🚗</div>
+            <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: colors.infoBg, color: colors.info, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}><Car size={28} /></div>
             <h3 style={{ margin: "0 0 8px", fontSize: "18px", color: colors.textPrimary, fontWeight: "800" }}>Confirm Vehicle</h3>
             <p style={{ margin: "0 0 24px", fontSize: "13px", color: colors.textSecondary, lineHeight: "1.5" }}>
               Are you sure you want to {editingId ? "save changes to" : "add"} <strong>{form.make} {form.model}</strong> ({form.plate.trim().toUpperCase()})?

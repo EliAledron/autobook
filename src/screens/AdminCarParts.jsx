@@ -7,6 +7,7 @@ import { sh, colors, EmptyState, getInitials, SharedSearchBar } from "./dashboar
 import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
 import BackButton from "../components/BackButton";
+import { Wrench } from "lucide-react";
 
 function formatDate(createdAt) {
   if (!createdAt) return "—";
@@ -252,7 +253,7 @@ export default function AdminCarParts() {
           <SkeletonLoader count={3} type="card" />
         ) : filtered.length === 0 ? (
           <EmptyState
-            icon="🔩"
+            icon={<Wrench size={48} />}
             title="No parts found"
             subtitle={search ? "Try a different search term." : "No car parts have been ordered yet."}
           />
@@ -302,8 +303,8 @@ export default function AdminCarParts() {
                           borderBottom: i < groupParts.length - 1 ? `1px solid ${colors.border}` : "none",
                         }}
                       >
-                        <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", flexShrink: 0 }}>
-                          🔩
+                        <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", flexShrink: 0, color: colors.warning }}>
+                          <Wrench size={20} />
                         </div>
 
                         <div style={{ flex: 1, minWidth: 0 }}>

@@ -7,6 +7,7 @@ import { sh, colors, getInitials, EmptyState } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
 import BackButton from "../components/BackButton";
+import { Store, Users, Car, CheckCircle2, Ban, XCircle, Trash2, Check, X } from "lucide-react";
 
 const FILTER_TABS = ["pending", "approved", "rejected", "restricted"];
 
@@ -173,7 +174,7 @@ export default function AdminUsers() {
           ownerId: selected.id,
           rating: 0,
           reviews: 0,
-          icon: "🏪",
+          icon: "store",
           tagline: "Quality auto services",
           bg: colors.infoBg,
           accent: colors.info,
@@ -386,7 +387,7 @@ export default function AdminUsers() {
             <SkeletonLoader count={3} type="card" />
           ) : filteredUsers.length === 0 ? (
             <EmptyState
-              icon="👥"
+              icon={<Users size={48} />}
               title={`No ${filter} users`}
               subtitle={`There are currently no users registered as ${filter}.`}
             />
@@ -539,7 +540,7 @@ export default function AdminUsers() {
                                             {v.photoURL ? (
                                                 <img src={v.photoURL} alt="vehicle" style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
                                             ) : (
-                                                <div style={{ width: '60px', height: '60px', borderRadius: '8px', background: colors.border, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: colors.textMuted }}>🚗</div>
+                                                <div style={{ width: '60px', height: '60px', borderRadius: '8px', background: colors.border, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: colors.textMuted }}><Car size={24} /></div>
                                             )}
                                             <div>
                                                 <div style={{ fontWeight: '700', fontSize: '14px', color: colors.textPrimary }}>{v.year} {v.make} {v.model}</div>
@@ -582,8 +583,8 @@ export default function AdminUsers() {
             <div style={{ marginTop: "1.25rem", display: "flex", flexDirection: "column", gap: "10px" }}>
               {selected.status === "approved" || selected.status === "rejected" || selected.status === "restricted" ? (
                 <>
-                  <div style={{ fontSize: "13px", color: selected.status === "approved" ? colors.success : colors.danger, fontWeight: "600", padding: "10px", background: selected.status === "approved" ? colors.successBg : colors.dangerBg, borderRadius: "10px", border: `1px solid ${selected.status === "approved" ? "rgba(22,163,74,0.3)" : "rgba(220,38,38,0.3)"}` }}>
-                    {selected.status === "approved" ? "✅ This user has been approved." : selected.status === "restricted" ? "🚫 This user is restricted." : "❌ This user has been rejected."}
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: selected.status === "approved" ? colors.success : colors.danger, fontWeight: "600", padding: "10px", background: selected.status === "approved" ? colors.successBg : colors.dangerBg, borderRadius: "10px", border: `1px solid ${selected.status === "approved" ? "rgba(22,163,74,0.3)" : "rgba(220,38,38,0.3)"}` }}>
+                    {selected.status === "approved" ? <><CheckCircle2 size={16} /> This user has been approved.</> : selected.status === "restricted" ? <><Ban size={16} /> This user is restricted.</> : <><XCircle size={16} /> This user has been rejected.</>}
                   </div>
                   
                   {selected.status !== "restricted" && selected.status === "approved" && (
@@ -601,9 +602,10 @@ export default function AdminUsers() {
                         border: "none", borderRadius: "14px",
                         boxShadow: "0 4px 12px rgba(220,38,38,0.25)",
                         cursor: "pointer", fontFamily: "inherit",
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"
                       }}
                     >
-                      {saving ? "Saving..." : "🚫 Restrict User"}
+                      {saving ? "Saving..." : <><Ban size={16} /> Restrict User</>}
                     </button>
                   )}
                   
@@ -618,9 +620,10 @@ export default function AdminUsers() {
                         border: "none", borderRadius: "14px",
                         boxShadow: "0 4px 12px rgba(22,163,74,0.25)",
                         cursor: "pointer", fontFamily: "inherit",
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"
                       }}
                     >
-                      {saving ? "Saving..." : "✓ Lift Restriction & Approve"}
+                      {saving ? "Saving..." : <><Check size={16} /> Lift Restriction & Approve</>}
                     </button>
                   )}
                 </>
@@ -637,9 +640,10 @@ export default function AdminUsers() {
                       boxShadow: "0 4px 12px rgba(22,163,74,0.25)",
                       cursor: "pointer",
                       fontFamily: "inherit",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"
                     }}
                   >
-                    {saving ? "Saving..." : "✓ Approve User"}
+                    {saving ? "Saving..." : <><Check size={16} /> Approve User</>}
                   </button>
 
                   <button
@@ -652,9 +656,10 @@ export default function AdminUsers() {
                       border: "none", borderRadius: "14px",
                       boxShadow: "0 4px 12px rgba(220,38,38,0.25)",
                       cursor: "pointer", fontFamily: "inherit",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"
                     }}
                   >
-                    {saving ? "Saving..." : "✕ Reject User"}
+                    {saving ? "Saving..." : <><X size={16} /> Reject User</>}
                   </button>
                 </>
               )}
@@ -669,9 +674,10 @@ export default function AdminUsers() {
                   border: "none", borderRadius: "14px",
                   boxShadow: "0 4px 12px rgba(220,38,38,0.25)",
                   cursor: "pointer", fontFamily: "inherit",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"
                 }}
               >
-                {saving ? "Saving..." : "🗑 Remove User"}
+                {saving ? "Saving..." : <><Trash2 size={16} /> Remove User</>}
               </button>
 
               <button onClick={() => setSelected(null)} style={sh.outlineBtn}>
@@ -687,7 +693,7 @@ export default function AdminUsers() {
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 120, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setUserToDelete(null)}>
           <div style={{ background: colors.white, borderRadius: "24px", width: "90%", maxWidth: "340px", padding: "24px", textAlign: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
             <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: colors.dangerBg, color: colors.danger, fontSize: "28px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-              🗑️
+              <Trash2 size={32} />
             </div>
             <h3 style={{ margin: "0 0 8px", fontSize: "18px", color: colors.textPrimary, fontWeight: "800" }}>Remove User?</h3>
             <p style={{ margin: "0 0 24px", fontSize: "13px", color: colors.textSecondary, lineHeight: "1.5" }}>

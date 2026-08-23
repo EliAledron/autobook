@@ -6,19 +6,20 @@ import { onAuthStateChanged } from "firebase/auth";
 import { sh, colors, EmptyState } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
+import { Wrench, CheckCircle2, XCircle, Circle, Calendar, ClipboardList, User, Star, Flag, Bell } from "lucide-react";
 
 const typeIcon = (type) => {
   switch (type) {
-    case "job_started":            return "🔧";
-    case "job_completed":          return "✅";
-    case "job_cancelled":          return "❌";
-    case "mechanic_availability":  return "🟢";
-    case "booking_created":        return "📅";
-    case "job_assigned":           return "📋";
-    case "new_user":               return "👤";
-    case "new_rating":             return "⭐";
-    case "shop_report":            return "🚩";
-    default:                       return "🔔";
+    case "job_started":            return <Wrench size={18} />;
+    case "job_completed":          return <CheckCircle2 size={18} />;
+    case "job_cancelled":          return <XCircle size={18} />;
+    case "mechanic_availability":  return <Circle fill="currentColor" size={18} />;
+    case "booking_created":        return <Calendar size={18} />;
+    case "job_assigned":           return <ClipboardList size={18} />;
+    case "new_user":               return <User size={18} />;
+    case "new_rating":             return <Star fill="currentColor" size={18} />;
+    case "shop_report":            return <Flag fill="currentColor" size={18} />;
+    default:                       return <Bell size={18} />;
   }
 };
 
@@ -282,7 +283,7 @@ export default function AdminAlerts() {
           <SkeletonLoader count={3} type="card" />
         ) : alerts.length === 0 ? (
           <EmptyState
-            icon="🔔"
+            icon={<Bell size={48} />}
             title="No system alerts yet"
             subtitle="Activity from mechanics and bookings will appear here."
           />

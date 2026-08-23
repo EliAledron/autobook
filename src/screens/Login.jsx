@@ -4,6 +4,7 @@ import { auth, db } from "../firebase";
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import BackButton from "../components/BackButton";
 import { doc, getDoc } from "firebase/firestore";
+import { AlertTriangle, Wrench } from "lucide-react";
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
@@ -106,7 +107,7 @@ export default function Login() {
         {error && (
           <div style={s.errorOverlay}>
             <div style={s.errorModal}>
-              <div style={s.errorModalIcon}>⚠️</div>
+              <div style={s.errorModalIcon}><AlertTriangle size={24} color="#ef4444" /></div>
               <h3 style={s.errorModalTitle}>Oops!</h3>
               <p style={s.errorModalText}>{error}</p>
               <button style={s.errorModalBtn} onClick={() => setError("")}>Okay</button>
@@ -142,7 +143,7 @@ export default function Login() {
                 onClick={() => navigate("/dashboard")}
                 style={s.devBtn}
               >
-                🔧 Go to Admin Dashboard
+                <Wrench size={16} /> Go to Admin Dashboard
               </button>
             </>
           )}

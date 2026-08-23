@@ -8,6 +8,7 @@ import {
 import { sh, colors, EmptyState } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
+import { Wrench, CheckCircle2, XCircle, Clock } from "lucide-react";
 
 const STATUS_TABS = ["All", "Pending", "In Progress", "Completed", "Cancelled"];
 
@@ -21,10 +22,10 @@ const statusStyle = (s) => {
 
 const statusIcon = (s) => {
   const sl = (s || "").toLowerCase();
-  if (sl === "completed")   return "✅";
-  if (sl === "in progress") return "🔧";
-  if (sl === "cancelled")   return "❌";
-  return "🕐";
+  if (sl === "completed")   return <CheckCircle2 size={16} />;
+  if (sl === "in progress") return <Wrench size={16} />;
+  if (sl === "cancelled")   return <XCircle size={16} />;
+  return <Clock size={16} />;
 };
 
 function timeAgo(ts) {
@@ -100,7 +101,7 @@ export default function MechanicBookings() {
         if (msgMap[newStatus]) {
           await addDoc(collection(db, "notifications"), {
             userId: customerId,
-            title: newStatus === "In Progress" ? "Job Started 🔧" : "Job Completed ✅",
+            title: newStatus === "In Progress" ? "Job Started" : "Job Completed",
             message: msgMap[newStatus],
             type: "status_update",
             read: false,
@@ -111,9 +112,9 @@ export default function MechanicBookings() {
 
       setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: newStatus } : b));
       if (selected?.id === bookingId) setSelected(prev => ({ ...prev, status: newStatus }));
-      showToast(newStatus === "In Progress" ? "🔧 Job started!" : "✅ Marked as completed!");
+      showToast(newStatus === "In Progress" ? "Job started!" : "Marked as completed!");
     } catch (e) {
-      showToast("❌ Failed to update. Try again.");
+      showToast("Failed to update. Try again.");
     }
     setSaving(false);
   };
@@ -151,7 +152,7 @@ export default function MechanicBookings() {
 
       {/* HERO */}
       <div style={sh.hero}>
-        <div style={sh.rolePill}><div style={sh.roleDot} /><span style={sh.roleText}>🔧 Mechanic</span></div>
+        <div style={sh.rolePill}><div style={sh.roleDot} /><span style={sh.roleText}><Wrench size={10} style={{verticalAlign: 'middle', marginRight: '2px'}} /> Mechanic</span></div>
         <div style={sh.heroGreeting}>My Bookings</div>
         <div style={sh.heroSub}>
           {stats.inProgress > 0 ? `${stats.inProgress} job${stats.inProgress > 1 ? "s" : ""} in progress` : stats.pending > 0 ? `${stats.pending} pending assignment${stats.pending > 1 ? "s" : ""}` : "All caught up!"}
@@ -197,7 +198,7 @@ export default function MechanicBookings() {
           {loading ? (
             <SkeletonLoader count={3} type="card" />
           ) : filtered.length === 0 ? (
-            <EmptyState icon="🔧" title={`No ${activeTab !== "All" ? activeTab.toLowerCase() + " " : ""}bookings`} subtitle="No assigned bookings match this filter." />
+            <EmptyState icon={<Wrench size={48} color={colors.info} />} title={`No ${activeTab !== "All" ? activeTab.toLowerCase() + " " : ""}bookings`} subtitle="No assigned bookings match this filter." />
           ) : (
             filtered.map((b, i) => (
               <div
@@ -232,7 +233,7 @@ export default function MechanicBookings() {
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 100, display: "flex", alignItems: "flex-end", animation: "ab-fade-in 0.2s ease-out" }} onClick={() => setSelected(null)}>
           <div style={{ background: colors.white, borderRadius: "24px 24px 0 0", width: "100%", padding: "1.5rem 1.25rem", maxHeight: "90vh", overflowY: "auto", animation: "ab-slide-up 0.35s cubic-bezier(0.16,1,0.3,1) forwards" }} onClick={e => e.stopPropagation()}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-              <div style={{ fontWeight: "800", fontSize: "17px", color: colors.navy }}>🔧 Booking Details</div>
+              <div style={{ fontWeight: "800", fontSize: "17px", color: colors.navy, display: "flex", alignItems: "center", gap: "6px" }}><Wrench size={18} /> Booking Details</div>
               <button onClick={() => setSelected(null)} style={{ background: colors.bg, border: "none", width: "32px", height: "32px", borderRadius: "50%", fontSize: "18px", cursor: "pointer", color: colors.textSecondary, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
             </div>
 
@@ -259,23 +260,23 @@ export default function MechanicBookings() {
                 <button
                   onClick={() => updateStatus(selected.id, "In Progress")}
                   disabled={saving}
-                  style={{ width: "100%", padding: "14px", background: `linear-gradient(135deg, ${colors.info}, #1e40af)`, color: "#fff", fontSize: "14px", fontWeight: "700", border: "none", borderRadius: "14px", cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(37,99,235,0.3)" }}
+                  style={{ width: "100%", padding: "14px", background: `linear-gradient(135deg, ${colors.info}, #1e40af)`, color: "#fff", fontSize: "14px", fontWeight: "700", border: "none", borderRadius: "14px", cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(37,99,235,0.3)", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
                 >
-                  {saving ? "Updating..." : "🔧 Start Working"}
+                  {saving ? "Updating..." : <><Wrench size={16} /> Start Working</>}
                 </button>
               )}
               {(selected.status || "").toLowerCase() === "in progress" && (
                 <button
                   onClick={() => updateStatus(selected.id, "Completed")}
                   disabled={saving}
-                  style={{ width: "100%", padding: "14px", background: `linear-gradient(135deg, ${colors.success}, #15803d)`, color: "#fff", fontSize: "14px", fontWeight: "700", border: "none", borderRadius: "14px", cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(22,163,74,0.3)" }}
+                  style={{ width: "100%", padding: "14px", background: `linear-gradient(135deg, ${colors.success}, #15803d)`, color: "#fff", fontSize: "14px", fontWeight: "700", border: "none", borderRadius: "14px", cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(22,163,74,0.3)", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
                 >
-                  {saving ? "Saving..." : "✅ Mark as Completed"}
+                  {saving ? "Saving..." : <><CheckCircle2 size={16} /> Mark as Completed</>}
                 </button>
               )}
               {["completed", "cancelled"].includes((selected.status || "").toLowerCase()) && (
-                <div style={{ fontSize: "13px", color: selected.status === "Completed" ? colors.success : colors.danger, fontWeight: "600", padding: "12px", background: selected.status === "Completed" ? colors.successBg : colors.dangerBg, borderRadius: "12px" }}>
-                  {selected.status === "Completed" ? "✅ This job is completed." : "❌ This booking was cancelled."}
+                <div style={{ fontSize: "13px", color: selected.status === "Completed" ? colors.success : colors.danger, fontWeight: "600", padding: "12px", background: selected.status === "Completed" ? colors.successBg : colors.dangerBg, borderRadius: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                  {selected.status === "Completed" ? <><CheckCircle2 size={16} /> This job is completed.</> : <><XCircle size={16} /> This booking was cancelled.</>}
                 </div>
               )}
               <button onClick={() => setSelected(null)} style={{ ...sh.outlineBtn, borderRadius: "14px", padding: "14px" }}>Close</button>

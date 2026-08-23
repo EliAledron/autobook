@@ -1,11 +1,12 @@
 import { colors } from "./dashboardShared";
+import { Snowflake, Wrench } from "lucide-react";
 
 export const SHOPS = [
   {
     id: "JME",
     name: "JME Car Aircon and Motor Services",
     shortName: "JME",
-    icon: "❄️",
+    icon: <Snowflake size={24} />,
     tagline: "Aircon, motor & full car services",
     services: ["Car Aircon", "Motor Repair", "Oil Change", "General Inspection"],
     bg: colors.infoBg,
@@ -17,7 +18,7 @@ export const SHOPS = [
     id: "GRHE",
     name: "GRHE Auto Services",
     shortName: "GRHE",
-    icon: "🔧",
+    icon: <Wrench size={24} />,
     tagline: "Comprehensive auto repair & maintenance",
     services: ["Brake Repair", "Tire Services", "Engine Tuning", "Electrical"],
     bg: colors.warningBg,

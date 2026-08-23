@@ -5,6 +5,7 @@ import { doc, updateDoc, addDoc, setDoc, collection, serverTimestamp, getDocs, q
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import BackButton from "../components/BackButton";
+import { Store, AlertTriangle, FileText, Check, Star, Edit, Flag, Calendar, Heart } from "lucide-react";
 
 function timeAgo(timestamp) {
   if (!timestamp) return "Just now";
@@ -50,7 +51,7 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
   const [name, setName] = useState(shop?.name || "");
   const [shortName, setShortName] = useState(shop?.shortName || "");
   const [tagline, setTagline] = useState(shop?.tagline || "");
-  const [icon, setIcon] = useState(shop?.icon || "🏪");
+  const [icon, setIcon] = useState(shop?.icon || "store");
   const [bg, setBg] = useState(shop?.bg || colors.infoBg);
   const [accent, setAccent] = useState(shop?.accent || colors.info);
   const [services, setServices] = useState(shop?.services || []);
@@ -90,7 +91,7 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
         name: name.trim(),
         shortName: shortName.trim(),
         tagline: tagline.trim(),
-        icon: icon.trim() || "🏪",
+        icon: icon.trim() || "store",
         bg,
         accent,
         services,
@@ -132,7 +133,7 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
       <div style={{ background: colors.white, borderRadius: "32px 32px 0 0", width: "100%", padding: "2rem 1.5rem", maxHeight: "90vh", overflowY: "auto", animation: "ab-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards", boxShadow: "0 -4px 24px rgba(0,0,0,0.15)" }} onClick={e => e.stopPropagation()}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px" }}>🏪</div>
+            <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.info }}><Store size={24} /></div>
             <div>
               <div style={{ fontWeight: "800", fontSize: "18px", color: colors.textPrimary }}>Edit Shop Profile</div>
               <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "500", marginTop: "2px" }}>Update your shop details</div>
@@ -141,7 +142,7 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
           <button onClick={onClose} style={{ background: colors.bg, border: "none", width: "36px", height: "36px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", cursor: "pointer", color: colors.textSecondary }}>×</button>
         </div>
 
-        {error && <div style={{ background: colors.dangerBg, border: `1px solid ${colors.danger}`, borderRadius: "12px", padding: "12px 16px", fontSize: "13px", color: colors.danger, marginBottom: "1.5rem", fontWeight: "600" }}>⚠️ {error}</div>}
+        {error && <div style={{ background: colors.dangerBg, border: `1px solid ${colors.danger}`, borderRadius: "12px", padding: "12px 16px", fontSize: "13px", color: colors.danger, marginBottom: "1.5rem", fontWeight: "600", display: "flex", alignItems: "center", gap: "6px" }}><AlertTriangle size={16} /> {error}</div>}
 
         {/* IMAGE UPLOADS */}
         <div style={{ display: "flex", gap: "12px", marginBottom: "1.25rem" }}>
@@ -204,7 +205,7 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
                 <button onClick={(e) => { e.stopPropagation(); setDtiFile(null); setDtiPreview(""); }} style={{ position: "absolute", top: "8px", right: "8px", background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: "50%", width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: "14px" }}>×</button>
               </>
             ) : (
-              <span style={{ fontSize: "12px", color: colors.textMuted }}>📄 Tap to upload DTI</span>
+              <span style={{ fontSize: "12px", color: colors.textMuted, display: "flex", alignItems: "center", gap: "6px" }}><FileText size={14} /> Tap to upload DTI</span>
             )}
           </div>
         </div>
@@ -266,7 +267,7 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
         </div>
 
         <button onClick={handleSubmit} disabled={saving} style={{ width: "100%", padding: "16px", background: colors.blue, color: "#fff", border: "none", borderRadius: "16px", fontSize: "16px", fontWeight: "800", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", boxShadow: "0 8px 20px rgba(42, 82, 152, 0.25)", transition: "all 0.2s" }}>
-          {saving ? "Saving..." : "✓ Save Changes"}
+          {saving ? "Saving..." : <><Check size={16} /> Save Changes</>}
         </button>
         <div style={{ height: "12px" }} />
         <button onClick={onClose} style={{ width: "100%", padding: "16px", borderRadius: "16px", fontSize: "15px", border: "none", background: "transparent", color: colors.textSecondary, fontWeight: "700", cursor: "pointer" }}>Cancel</button>
@@ -575,7 +576,7 @@ export default function AutoShopProfile() {
               <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.85)", marginBottom: "8px", fontWeight: "500" }}>{shop.tagline || "Quality auto services"}</div>
               
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <span style={{ color: "#f59e0b", fontSize: "16px" }}>★</span>
+                <Star fill="currentColor" size={16} style={{ color: "#f59e0b" }} />
                 <span style={{ fontSize: "14px", fontWeight: "700", color: "#fff" }}>
                   {shop.rating && !isNaN(Number(shop.rating)) && Number(shop.rating) > 0 ? Number(shop.rating).toFixed(1) : "New"}
                 </span>
@@ -589,7 +590,7 @@ export default function AutoShopProfile() {
                   onClick={() => setShowEditModal(true)}
                   style={{ padding: "12px 20px", background: "rgba(255,255,255,0.15)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)", borderRadius: "14px", fontWeight: "700", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "14px", fontFamily: "inherit", backdropFilter: "blur(8px)", transition: "all 0.2s" }}
                 >
-                  ✏️ Edit Profile
+                  <Edit size={14} /> Edit Profile
                 </button>
               ) : (
                 <>
@@ -597,13 +598,13 @@ export default function AutoShopProfile() {
                     onClick={handleFlagShopClick}
                     style={{ padding: "12px 16px", background: "rgba(239, 68, 68, 0.15)", color: "#fca5a5", border: "1px solid rgba(239, 68, 68, 0.4)", borderRadius: "14px", fontWeight: "700", display: "flex", justifyContent: "center", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "14px", fontFamily: "inherit", backdropFilter: "blur(8px)", transition: "all 0.2s" }}
                   >
-                    🚩 Flag Shop
+                    <Flag size={14} /> Flag Shop
                   </button>
                   <button 
                     onClick={() => navigate("/customer/book-service", { state: { shop, prefilledService } })}
                     style={{ padding: "12px 24px", background: colors.accent, color: colors.navy, border: "none", borderRadius: "14px", fontWeight: "800", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "14px", fontFamily: "inherit", boxShadow: "0 4px 16px rgba(70,233,255,0.3)", transition: "all 0.2s" }}
                   >
-                    📅 Book Now
+                    <Calendar size={14} /> Book Now
                   </button>
                 </>
               )}
@@ -642,7 +643,7 @@ export default function AutoShopProfile() {
                   <div style={{ borderTop: `1px solid ${colors.border}`, margin: "16px 0" }} />
                   {displayServices.map(s => (
                     <div key={s} style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px", color: colors.textPrimary, fontSize: "14px", fontWeight: "600" }}>
-                      <span style={{ fontSize: "18px", color: colors.info }}>✓</span> Provides {s}
+                      <Check size={18} style={{ color: colors.info }} /> Provides {s}
                     </div>
                   ))}
                 </>
@@ -684,8 +685,8 @@ export default function AutoShopProfile() {
                         onClick={() => toggleLike(post)} 
                         style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", color: post.likes?.includes(uid) ? colors.danger : colors.textSecondary, fontSize: "13px", fontWeight: "700", padding: 0, transition: "color 0.2s" }}
                       >
-                        <span style={{ fontSize: "18px", transition: "transform 0.2s", transform: post.likes?.includes(uid) ? "scale(1.1)" : "scale(1)" }}>
-                          {post.likes?.includes(uid) ? "❤️" : "🤍"}
+                        <span style={{ transition: "transform 0.2s", transform: post.likes?.includes(uid) ? "scale(1.1)" : "scale(1)", display: "flex", alignItems: "center" }}>
+                          {post.likes?.includes(uid) ? <Heart fill="currentColor" size={18} style={{color: colors.danger}} /> : <Heart size={18} />}
                         </span> 
                         {post.likes?.length || 0}
                       </button>
@@ -733,7 +734,7 @@ export default function AutoShopProfile() {
               <>
                 <div style={{ borderTop: `1px solid ${colors.border}`, margin: "20px 0 16px 0" }} />
                 <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: "800", color: colors.textPrimary, display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span style={{ color: colors.info, fontSize: "18px" }}>✓</span> Verified DTI Certificate
+                  <Check size={18} style={{ color: colors.info }} /> Verified DTI Certificate
                 </h3>
                 <div style={{ borderRadius: "12px", overflow: "hidden", border: `1px solid ${colors.border}`, display: "inline-block", padding: "4px", background: colors.bg }}>
                   <img src={shop.dtiURL || ownerData?.dtiUrl} alt="DTI Certificate" style={{ width: "100%", maxWidth: "400px", borderRadius: "8px", display: "block" }} />
@@ -754,9 +755,9 @@ export default function AutoShopProfile() {
                     <button 
                       key={star}
                       onClick={() => setReviewRating(star)}
-                      style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: star <= reviewRating ? "#f59e0b" : "#e5e7eb", transition: "color 0.2s" }}
+                      style={{ background: "none", border: "none", cursor: "pointer", color: star <= reviewRating ? "#f59e0b" : "#e5e7eb", transition: "color 0.2s", display: "flex", alignItems: "center", justifyContent: "center" }}
                     >
-                      ★
+                      <Star fill="currentColor" size={24} />
                     </button>
                   ))}
                 </div>
@@ -794,7 +795,9 @@ export default function AutoShopProfile() {
                     </div>
                     <div style={{ color: "#f59e0b", fontSize: "14px", fontWeight: "700", display: "flex", gap: "2px" }}>
                       {[1, 2, 3, 4, 5].map(star => (
-                        <span key={star} style={{ color: star <= r.rating ? "#f59e0b" : "#e5e7eb" }}>★</span>
+                        <span key={star} style={{ color: star <= r.rating ? "#f59e0b" : "#e5e7eb", display: "flex", alignItems: "center" }}>
+                          <Star fill="currentColor" size={14} />
+                        </span>
                       ))}
                     </div>
                   </div>
@@ -827,8 +830,8 @@ export default function AutoShopProfile() {
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }} onClick={() => !reporting && setShowReportModal(false)}>
           <div style={{ background: colors.white, borderRadius: "24px", width: "100%", maxWidth: "400px", padding: "24px", boxShadow: "0 10px 40px rgba(0,0,0,0.2)", position: "relative" }} onClick={e => e.stopPropagation()}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-              <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(239, 68, 68, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>
-                🚩
+              <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(239, 68, 68, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: colors.danger }}>
+                <Flag size={20} />
               </div>
               <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: colors.textPrimary }}>Report Shop</h2>
             </div>

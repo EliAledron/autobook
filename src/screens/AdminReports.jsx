@@ -7,6 +7,7 @@ import { sh, colors, getInitials, EmptyState } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
 import BackButton from "../components/BackButton";
+import { Calendar, Wrench, BarChart3, PhilippinePeso } from "lucide-react";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -280,7 +281,7 @@ export default function AdminReports() {
           <SkeletonLoader count={3} type="card" />
         ) : (
           <>
-            <div style={sh.sectionLabel}>📊 Monthly Analytics</div>
+            <div style={sh.sectionLabel}><BarChart3 size={18} style={{display:'inline', verticalAlign:'middle', marginRight:'6px'}}/> Monthly Analytics</div>
 
             <div style={{ display: "flex", gap: "10px", marginBottom: "1.5rem", alignItems: "center" }}>
               <select value={selMonth} onChange={(e) => setSelMonth(Number(e.target.value))} style={{...inputStyle, flex: 1}}>
@@ -336,9 +337,9 @@ export default function AdminReports() {
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "12px", marginBottom: "1.5rem" }}>
               {[
-                { label: "Total Bookings", value: monthlyBookings.length, icon: "📅", color: colors.navy },
-                { label: "Est. Revenue", value: `₱${monthlyRevenue.toLocaleString("en-PH")}`, icon: "💰", color: colors.success },
-                { label: "Parts Ordered", value: monthlyParts.length, icon: "🔩", color: colors.warning },
+                { label: "Total Bookings", value: monthlyBookings.length, icon: <Calendar size={20} />, color: colors.navy },
+                { label: "Est. Revenue", value: `₱${monthlyRevenue.toLocaleString("en-PH")}`, icon: <PhilippinePeso size={20} />, color: colors.success },
+                { label: "Parts Ordered", value: monthlyParts.length, icon: <Wrench size={20} />, color: colors.warning },
               ].map((stat, i) => (
                 <div key={i} style={{ borderRadius: "20px", padding: "16px", border: `1px solid ${colors.border}`, background: colors.white, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
@@ -406,8 +407,8 @@ export default function AdminReports() {
             </div>
 
             <div style={{ ...sh.sectionLabel, marginBottom: "1.5rem" }}>
-              <span style={{ background: colors.warningBg, color: colors.warning, padding: "6px 12px", borderRadius: "8px" }}>
-                🗓 End of Day Report
+              <span style={{ background: colors.warningBg, color: colors.warning, padding: "6px 12px", borderRadius: "8px", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                <Calendar size={14} /> End of Day Report
               </span>
             </div>
 
@@ -445,7 +446,7 @@ export default function AdminReports() {
             <div style={{ ...sh.card, marginBottom: "1.5rem", padding: 0, overflow: "hidden", borderRadius: "20px" }}>
               {eodBookings.length === 0 ? (
                 <EmptyState
-                  icon="📅"
+                  icon={<Calendar size={48} />}
                   title="No bookings recorded"
                   subtitle="No bookings were completed on this day."
                 />
@@ -461,7 +462,7 @@ export default function AdminReports() {
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1 }}>
-                        <div style={{ ...sh.rowIcon(colors.infoBg), fontSize: "16px" }}>🔧</div>
+                        <div style={{ ...sh.rowIcon(colors.infoBg), fontSize: "16px", color: colors.info }}><Wrench size={16} /></div>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: "14px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>
                             {b.serviceType || b.service || "Service"}
@@ -487,7 +488,7 @@ export default function AdminReports() {
             <div style={{ ...sh.card, marginBottom: "1.5rem", padding: 0, overflow: "hidden", borderRadius: "20px" }}>
               {eodParts.length === 0 ? (
                 <EmptyState
-                  icon="🔩"
+                  icon={<Wrench size={48} />}
                   title="No parts ordered"
                   subtitle="No car parts were ordered on this day."
                 />
@@ -503,7 +504,7 @@ export default function AdminReports() {
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1 }}>
-                        <div style={{ ...sh.rowIcon(colors.warningBg), fontSize: "16px" }}>🔩</div>
+                        <div style={{ ...sh.rowIcon(colors.warningBg), fontSize: "16px", color: colors.warning }}><Wrench size={16} /></div>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: "14px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>
                             {p.partName || p.name || "Part"}

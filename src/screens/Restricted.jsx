@@ -1,4 +1,5 @@
 import React from "react";
+import { Ban } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../firebase";
 import { signOut } from "firebase/auth";
@@ -36,7 +37,7 @@ export default function Restricted() {
 
       <div style={sh.content}>
         <div style={{ background: colors.white, borderRadius: "20px", padding: "40px 20px", textAlign: "center", border: `1px solid ${colors.border}`, boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
-          <div style={{ fontSize: "60px", marginBottom: "16px" }}>🚫</div>
+          <div style={{ fontSize: "60px", marginBottom: "16px" }}><Ban size={60} /></div>
           <h2 style={{ color: colors.textPrimary, margin: "0 0 16px 0", fontSize: "20px", fontWeight: "800" }}>Your account is restricted.</h2>
           <p style={{ color: colors.textSecondary, fontSize: "15px", lineHeight: "1.6", maxWidth: "400px", margin: "0 auto" }}>
             We've temporarily disabled your access due to a violation of our terms of service or multiple community reports. 

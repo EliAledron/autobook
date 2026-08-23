@@ -7,6 +7,7 @@ import { sh, colors, EmptyState, getInitials, SharedSearchBar } from "./dashboar
 import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
 import BackButton from "../components/BackButton";
+import { CheckCircle2, Wrench, XCircle, Clock, Check, X, Trash2, Calendar, Search, AlertTriangle } from "lucide-react";
 
 const STATUS_TABS = ["All", "Pending", "In Progress", "Completed", "Cancelled"];
 
@@ -21,10 +22,10 @@ const statusStyle = (status) => {
 
 const statusIcon = (status) => {
   switch ((status || "").toLowerCase()) {
-    case "completed":   return "✅";
-    case "in progress": return "🔧";
-    case "cancelled":   return "❌";
-    default:            return "🕐";
+    case "completed":   return <CheckCircle2 size={16} />;
+    case "in progress": return <Wrench size={16} />;
+    case "cancelled":   return <XCircle size={16} />;
+    default:            return <Clock size={16} />;
   }
 };
 
@@ -301,9 +302,9 @@ export default function AdminBookings() {
     try {
       await updateDoc(doc(db, "shops", currentShop.id), { dailyCapacity: Number(dailyCapacity) || 8 });
       setCurrentShop(prev => ({ ...prev, dailyCapacity: Number(dailyCapacity) || 8 }));
-      showToast("✅ Daily capacity updated successfully!");
+      showToast(<><Check size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Daily capacity updated successfully!</>);
     } catch (e) {
-      showToast("❌ Failed to update daily capacity.");
+      showToast(<><X size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Failed to update daily capacity.</>);
     }
     setSavingCapacity(false);
   };
@@ -380,7 +381,7 @@ export default function AdminBookings() {
     if (!selected) return;
 
     if ((newStatus === "In Progress" || newStatus === "Completed") && !newMechanic) {
-      showToast(`❌ Cannot set to ${newStatus} without an assigned mechanic.`);
+      showToast(<><X size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Cannot set to {newStatus} without an assigned mechanic.</>);
       return;
     }
 
@@ -404,7 +405,7 @@ export default function AdminBookings() {
       if (parsedPrice !== undefined && selected.price === undefined && selected.customerId) {
         await addDoc(collection(db, "notifications"), {
           userId: selected.customerId,
-          title: "Service Quote Updated 💰",
+          title: "Service Quote Updated",
           message: `${selected.shopName || "The shop"} has set a price of ₱${parsedPrice} for your ${selected.serviceType || "service"}.`,
           type: "status_update",
           bookingId: selected.id,
@@ -416,7 +417,7 @@ export default function AdminBookings() {
       if (newStatus === "Pending" && selected.status !== "Pending" && selected.customerId) {
         await addDoc(collection(db, "notifications"), {
           userId: selected.customerId,
-          title: "Booking Status Updated 🔄",
+          title: "Booking Status Updated",
           message: `Your booking for ${selected.serviceType || "a service"} at ${selected.shopName || "the shop"} has been moved back to Pending.`,
           type: "status_update",
           bookingId: selected.id,
@@ -428,7 +429,7 @@ export default function AdminBookings() {
       if (newStatus === "Cancelled" && selected.status !== "Cancelled" && selected.customerId) {
         await addDoc(collection(db, "notifications"), {
           userId: selected.customerId,
-          title: "Booking Cancelled ❌",
+          title: "Booking Cancelled",
           message: `Your booking for ${selected.serviceType || "a service"} has been cancelled by ${selected.shopName || "the shop"}.`,
           type: "status_update",
           bookingId: selected.id,
@@ -440,7 +441,7 @@ export default function AdminBookings() {
       if (newStatus === "Completed" && selected.status !== "Completed" && selected.customerId) {
         await addDoc(collection(db, "notifications"), {
           userId: selected.customerId,
-          title: "Job Completed! ✅",
+          title: "Job Completed!",
           message: `Your booking for ${selected.serviceType || "a service"} at ${selected.shopName || "the shop"} has been marked as completed. Thank you for choosing us!`,
           type: "status_update",
           bookingId: selected.id,
@@ -460,7 +461,7 @@ export default function AdminBookings() {
         if (selected.customerId) {
           await addDoc(collection(db, "notifications"), {
             userId: selected.customerId,
-            title: "Mechanic Assigned 🔧",
+            title: "Mechanic Assigned",
             message: `Your booking for ${selected.serviceType || "a service"} at ${selected.shopName || "the shop"} on ${selected.date || "your scheduled date"} has been confirmed and assigned to ${mechanicName}. Your mechanic will begin work soon!`,
             type: "booking_confirmed",
             bookingId: selected.id,
@@ -473,7 +474,7 @@ export default function AdminBookings() {
         if (mechanicRecord?.userId) {
           await addDoc(collection(db, "notifications"), {
             userId: mechanicRecord.userId,
-            title: "New Job Assigned 🔧",
+            title: "New Job Assigned",
             message: `You have been assigned to a ${selected.serviceType || "service"} booking for ${selected.customerName || "a customer"} on ${selected.date || "an upcoming date"} at ${selected.shopName || "the shop"}.`,
             type: "job_assigned",
             bookingId: selected.id,
@@ -482,9 +483,9 @@ export default function AdminBookings() {
           });
         }
 
-        showToast(`✅ Assigned to ${mechanicName} — notified!`);
+        showToast(<><Check size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Assigned to {mechanicName} — notified!</>);
       } else {
-        showToast("✅ Booking updated successfully!");
+        showToast(<><Check size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Booking updated successfully!</>);
       }
 
       setBookings((prev) => {
@@ -505,7 +506,7 @@ export default function AdminBookings() {
       setNewPrice("");
     } catch (e) {
       console.error(e);
-      showToast("❌ Failed to save changes.");
+      showToast(<><X size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Failed to save changes.</>);
     }
     setSaving(false);
   };
@@ -532,10 +533,10 @@ export default function AdminBookings() {
       });
       setShowDeleteConfirm(false);
       setSelected(null);
-      showToast("🗑️ Booking deleted successfully.");
+      showToast(<><Trash2 size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Booking deleted successfully.</>);
     } catch (e) {
       console.error("Failed to delete booking:", e);
-      showToast("❌ Failed to delete booking.");
+      showToast(<><X size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Failed to delete booking.</>);
     }
     setDeleting(false);
   };
@@ -584,7 +585,7 @@ export default function AdminBookings() {
         {b.price !== undefined ? (
           <span style={{ fontSize: "15px", fontWeight: "800", color: colors.navy }}>₱{String(b.price).includes('-') || String(b.price).includes('+') ? b.price : Number(b.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</span>
         ) : (
-          <span style={{ fontSize: "11px", color: colors.danger, fontWeight: "700", background: colors.dangerBg, padding: "4px 8px", borderRadius: "8px" }}>⚠ Set price</span>
+          <span style={{ fontSize: "11px", color: colors.danger, fontWeight: "700", background: colors.dangerBg, padding: "4px 8px", borderRadius: "8px", display: "inline-flex", alignItems: "center", gap: "4px" }}><AlertTriangle size={12} /> Set price</span>
         )}
       </div>
 
@@ -851,7 +852,7 @@ export default function AdminBookings() {
             </div>
             {bookingsByDate["No date"] && bookingsByDate["No date"].length > 0 && (
               <div onClick={() => setSelectedDateStr("No date")} style={{ ...sh.card, cursor: "pointer", background: colors.warningBg, border: `1.5px solid ${colors.warning}`, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
-                <div style={{ fontWeight: "800", color: colors.warning }}>⚠ Bookings with no specified date</div>
+                <div style={{ fontWeight: "800", color: colors.warning, display: "flex", alignItems: "center", gap: "6px" }}><AlertTriangle size={16} /> Bookings with no specified date</div>
                 <div style={{ background: colors.warning, color: "#fff", padding: "4px 12px", borderRadius: "12px", fontSize: "12px", fontWeight: "700" }}>{bookingsByDate["No date"].length} booking{bookingsByDate["No date"].length > 1 ? 's' : ''}</div>
               </div>
             )}
@@ -906,7 +907,7 @@ export default function AdminBookings() {
           <SkeletonLoader count={3} type="card" />
         ) : filtered.length === 0 ? (
           <EmptyState
-            icon="📅"
+            icon={<Calendar size={48} />}
             title="No bookings found"
             subtitle="There are no bookings matching your current filter criteria."
           />
@@ -950,11 +951,13 @@ export default function AdminBookings() {
                       </div>
                     </td>
                     <td style={{ padding: "16px", verticalAlign: "middle" }}>
-                      <div style={{ fontSize: "13px", fontWeight: "800", color: b.mechanicId ? colors.navy : colors.warning, marginBottom: "6px" }}>
-                        {b.mechanicId ? getMechanicName(b.mechanicId, b.mechanicName) : "⚠ Unassigned"}
-                      </div>
-                      <div style={{ fontSize: "13px", fontWeight: "800", color: b.price !== undefined ? colors.success : colors.danger }}>
-                        {b.price !== undefined ? (String(b.price).includes('-') || String(b.price).includes('+') ? `₱${b.price}` : `₱${Number(b.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`) : "⚠ Needs Price"}
+                      <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+                        <div style={{ fontSize: "12px", color: b.mechanicId ? colors.info : colors.warning, fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}>
+                          {b.mechanicId ? getMechanicName(b.mechanicId, b.mechanicName) : <><AlertTriangle size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Unassigned</>}
+                        </div>
+                        <div style={{ fontSize: "14px", fontWeight: "800", color: b.price !== undefined ? colors.navy : colors.danger }}>
+                          {b.price !== undefined ? (String(b.price).includes('-') || String(b.price).includes('+') ? `₱${b.price}` : `₱${Number(b.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`) : <><AlertTriangle size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Needs Price</>}
+                        </div>
                       </div>
                     </td>
                     <td style={{ padding: "16px", verticalAlign: "middle" }}>
@@ -1052,7 +1055,7 @@ export default function AdminBookings() {
             {/* ASSIGN MECHANIC */}
             <div style={{ marginBottom: "1.25rem", padding: !selected.mechanicId ? "16px" : "0", background: !selected.mechanicId ? colors.warningBg : "transparent", borderRadius: "16px", border: !selected.mechanicId ? `2px dashed ${colors.warning}` : "none" }}>
               <div style={{ fontSize: "12px", color: !selected.mechanicId ? colors.warning : colors.textMuted, fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
-                {!selected.mechanicId && <span style={{ fontSize: "18px", animation: "ab-bounce 1s infinite" }}>⚠️</span>} 
+                {!selected.mechanicId && <span style={{ fontSize: "18px", animation: "ab-bounce 1s infinite", display: "inline-block", color: colors.warning }}><AlertTriangle size={18} /></span>} 
                 Assign Mechanic
               </div>
               {!selected.mechanicId && (
@@ -1108,14 +1111,14 @@ export default function AdminBookings() {
 
                 if (mechanics.length === 0) {
                   return (
-                    <div style={{ fontSize: "12px", color: colors.danger, padding: "8px 10px", background: colors.dangerBg, borderRadius: "8px" }}>
-                      ⚠ No mechanics found. Add mechanics from the Owner Dashboard first.
+                    <div style={{ fontSize: "12px", color: colors.danger, padding: "8px 10px", background: colors.dangerBg, borderRadius: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <AlertTriangle size={14} /> No mechanics found. Add mechanics from the Owner Dashboard first.
                     </div>
                   );
                 } else if (relevantMechanics.length === 0) {
                   return (
-                    <div style={{ fontSize: "12px", color: colors.warning, padding: "8px 10px", background: colors.warningBg, borderRadius: "8px" }}>
-                      ⚠ No mechanics match the required specialization for this service.
+                    <div style={{ fontSize: "12px", color: colors.warning, padding: "8px 10px", background: colors.warningBg, borderRadius: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <AlertTriangle size={14} /> No mechanics match the required specialization for this service.
                     </div>
                   );
                 } else {
@@ -1128,7 +1131,7 @@ export default function AdminBookings() {
                         }}
                         style={{ padding: "12px 16px", borderRadius: "14px", border: newMechanic === "" ? `2px solid ${colors.blue}` : `1.5px solid ${colors.border}`, background: newMechanic === "" ? colors.infoBg : colors.white, cursor: "pointer", display: "flex", alignItems: "center", gap: "12px", transition: "all 0.2s ease" }}
                       >
-                        <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>🚫</div>
+                        <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}><XCircle size={16} color={colors.textSecondary} /></div>
                         <div style={{ fontSize: "14px", fontWeight: "700", color: newMechanic === "" ? colors.blue : colors.textPrimary }}>Leave Unassigned</div>
                         {newMechanic === "" && <div style={{ marginLeft: "auto", color: colors.blue, fontSize: "18px", fontWeight: "800" }}>✓</div>}
                       </div>
@@ -1175,7 +1178,7 @@ export default function AdminBookings() {
               {selected.status === "Completed" || selected.status === "Cancelled" ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   <div style={{ fontSize: "13px", color: selected.status === "Completed" ? colors.success : colors.danger, fontWeight: "600", padding: "10px", background: selected.status === "Completed" ? colors.successBg : colors.dangerBg, borderRadius: "10px", border: `1px solid ${selected.status === "Completed" ? "rgba(22,163,74,0.3)" : "rgba(220,38,38,0.3)"}` }}>
-                    {selected.status === "Completed" ? "✅ This booking is completed." : "❌ This booking was cancelled."}
+                    {selected.status === "Completed" ? <><CheckCircle2 size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> This booking is completed.</> : <><XCircle size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> This booking was cancelled.</>}
                   </div>
                   {(selected.status === "Cancelled" || selected.status === "Completed") && (
                     <button
@@ -1186,7 +1189,7 @@ export default function AdminBookings() {
                           if (selected.customerId) {
                             await addDoc(collection(db, "notifications"), {
                               userId: selected.customerId,
-                              title: "Booking Restored 🔄",
+                              title: "Booking Restored",
                               message: `Your booking for ${selected.serviceType || "a service"} at ${selected.shopName || "the shop"} has been restored to Pending.`,
                               type: "status_update",
                               read: false,
@@ -1196,16 +1199,16 @@ export default function AdminBookings() {
                           setBookings(prev => prev.map(b => b.id === selected.id ? { ...b, status: "Pending" } : b));
                           setSelected(prev => ({ ...prev, status: "Pending" }));
                           setNewStatus("Pending");
-                          showToast("✅ Booking restored to Pending.");
+                          showToast(<><Check size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Booking restored to Pending.</>);
                         } catch(e) {
-                          showToast("❌ Failed to restore booking.");
+                          showToast(<><X size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Failed to restore booking.</>);
                         }
                         setSaving(false);
                       }}
                       disabled={saving || deleting}
                       style={{ padding: "10px 14px", background: colors.warningBg, color: colors.warning, border: `1.5px solid rgba(245,158,11,0.3)`, borderRadius: "10px", fontSize: "13px", fontWeight: "700", cursor: "pointer", transition: "all 0.2s", opacity: (saving || deleting) ? 0.7 : 1 }}
                     >
-                      {saving ? "Restoring..." : "↩️ Restore to Pending"}
+                      {saving ? "Restoring..." : <><Clock size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Restore to Pending</>}
                     </button>
                   )}
                 </div>
@@ -1223,7 +1226,7 @@ export default function AdminBookings() {
                     return (
                       <button key={s} onClick={() => {
                         if ((s === "In Progress" || s === "Completed") && !newMechanic) {
-                          showToast("⚠ Please assign a mechanic first.");
+                          showToast(<><AlertTriangle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Please assign a mechanic first.</>);
                           return;
                         }
                         setNewStatus(s);
@@ -1256,8 +1259,8 @@ export default function AdminBookings() {
               ) : (
                 <>
                   {selected.price === undefined && (
-                    <div style={{ fontSize: "12px", color: colors.danger, marginBottom: "8px", padding: "6px 10px", background: colors.dangerBg, borderRadius: "8px", fontWeight: "600" }}>
-                      ⚠ No price set — required for reports and earnings.
+                    <div style={{ fontSize: "12px", color: colors.danger, marginBottom: "8px", padding: "6px 10px", background: colors.dangerBg, borderRadius: "8px", fontWeight: "600", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <AlertTriangle size={14} /> No price set — required for reports and earnings.
                     </div>
                   )}
                   <div style={{ position: "relative" }}>
