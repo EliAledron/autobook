@@ -6,7 +6,7 @@ import {
   deleteDoc, onSnapshot
 } from "firebase/firestore";
 import { db, auth } from "../firebase";
-import { sh, colors, getGreeting, getInitials, CustomDropdown } from "./dashboardShared";
+import { sh, colors, getGreeting, getInitials, CustomDropdown, ErrorModal } from "./dashboardShared";
 import TopbarAvatar from "./TopbarAvatar";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
