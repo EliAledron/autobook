@@ -8,7 +8,7 @@ import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
 import { CheckCircle2, Wrench, XCircle, Clock, ClipboardList, Store, Calendar, Car, X, RefreshCw } from "lucide-react";
 
-const STATUS_TABS = ["All", "Pending", "In Progress", "Completed", "Cancelled"];
+const STATUS_TABS = ["All", "Pending", "In Progress", "Completed", "Cancelled", "Archived"];
 
 const statusStyle = (s) => {
   if ((s || "").toLowerCase() === "completed") return sh.badge(colors.successBg, colors.success);
@@ -157,7 +157,7 @@ export default function BookingHistory() {
       );
       const snap = await getDocs(q);
       const allBookings = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setBookings(allBookings.filter(b => b.archived !== true));
+      setBookings(allBookings);
     } catch (e) { setBookings([]); }
   }, []);
 
@@ -229,7 +229,12 @@ export default function BookingHistory() {
   };
 
   const filtered = bookings.filter((b) => {
-    if (activeTab !== "All" && (b.status || "Pending").toLowerCase() !== activeTab.toLowerCase()) return false;
+    if (activeTab === "Archived") {
+      if (b.archived !== true) return false;
+    } else {
+      if (b.archived === true) return false;
+      if (activeTab !== "All" && (b.status || "Pending").toLowerCase() !== activeTab.toLowerCase()) return false;
+    }
 
     if (search.trim()) {
       const s = search.toLowerCase();
@@ -240,12 +245,13 @@ export default function BookingHistory() {
     return true;
   });
 
+  const statsBookings = bookings.filter(b => !b.archived);
   const stats = {
-    total: bookings.length,
-    pending: bookings.filter((b) => (b.status || "Pending").toLowerCase() === "pending").length,
-    inProgress: bookings.filter((b) => (b.status || "").toLowerCase() === "in progress").length,
-    completed: bookings.filter((b) => (b.status || "").toLowerCase() === "completed").length,
-    cancelled: bookings.filter((b) => (b.status || "").toLowerCase() === "cancelled").length,
+    total: statsBookings.length,
+    pending: statsBookings.filter((b) => (b.status || "Pending").toLowerCase() === "pending").length,
+    inProgress: statsBookings.filter((b) => (b.status || "").toLowerCase() === "in progress").length,
+    completed: statsBookings.filter((b) => (b.status || "").toLowerCase() === "completed").length,
+    cancelled: statsBookings.filter((b) => (b.status || "").toLowerCase() === "cancelled").length,
   };
 
   return (
