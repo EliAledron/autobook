@@ -149,6 +149,7 @@ export default function AdminBookings() {
   const [newMechanic, setNewMechanic] = useState("");
   const [newStatus, setNewStatus] = useState("");
   const [newCancelReason, setNewCancelReason] = useState("");
+  const [archiveCancelReason, setArchiveCancelReason] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -515,14 +516,44 @@ export default function AdminBookings() {
 
   const handleDelete = () => {
     if (!selected) return;
+    setArchiveCancelReason("");
     setShowDeleteConfirm(true);
   };
 
   const confirmDelete = async () => {
     if (!selected) return;
+    
+    const currentStatus = (selected.status || "Pending").toLowerCase();
+    const isActive = currentStatus === "pending" || currentStatus === "in progress";
+    
+    if (isActive && !archiveCancelReason.trim()) {
+      showToast(<><AlertTriangle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Please provide a reason to cancel this active booking.</>);
+      return;
+    }
+
     setDeleting(true);
     try {
-      await updateDoc(doc(db, "bookings", selected.id), { archived: true });
+      const updates = { archived: true };
+      
+      if (isActive) {
+        updates.status = "Cancelled";
+        updates.cancelReason = archiveCancelReason.trim();
+      }
+      
+      await updateDoc(doc(db, "bookings", selected.id), updates);
+      
+      if (isActive && selected.customerId) {
+        await addDoc(collection(db, "notifications"), {
+          userId: selected.customerId,
+          title: "Booking Cancelled",
+          message: `Your booking for ${selected.serviceType || "a service"} has been cancelled by ${selected.shopName || "the shop"}. Reason: ${archiveCancelReason.trim()}`,
+          type: "status_update",
+          bookingId: selected.id,
+          read: false,
+          createdAt: serverTimestamp(),
+        });
+      }
+
       const mId = selected.mechanicId;
       setBookings((prev) => {
         const nextBookings = prev.filter((b) => b.id !== selected.id);
@@ -1325,9 +1356,24 @@ export default function AdminBookings() {
           <div style={{ background: colors.white, borderRadius: "24px", width: "90%", maxWidth: "340px", padding: "24px", textAlign: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
             <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: colors.dangerBg, color: colors.danger, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}><Trash2 size={28} /></div>
             <h3 style={{ margin: "0 0 8px", fontSize: "18px", color: colors.textPrimary, fontWeight: "800" }}>Archive Booking?</h3>
-            <p style={{ margin: "0 0 24px", fontSize: "13px", color: colors.textSecondary, lineHeight: "1.5" }}>
+            <p style={{ margin: "0 0 16px", fontSize: "13px", color: colors.textSecondary, lineHeight: "1.5" }}>
               Are you sure you want to archive this booking for <strong>{getCustomerName(selected)}</strong>? It will be hidden from the active list.
             </p>
+            {selected && (selected.status === "Pending" || selected.status === "In Progress") && (
+              <div style={{ marginBottom: "20px", textAlign: "left" }}>
+                <div style={{ fontSize: "12px", color: colors.warning, fontWeight: "700", marginBottom: "8px" }}>
+                  <AlertTriangle size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/>
+                  Archiving an active booking will cancel it.
+                </div>
+                <input
+                  type="text"
+                  placeholder="Reason for cancellation *"
+                  value={archiveCancelReason}
+                  onChange={(e) => setArchiveCancelReason(e.target.value)}
+                  style={inputStyle}
+                />
+              </div>
+            )}
             <div style={{ display: "flex", gap: "12px" }}>
               <button onClick={() => setShowDeleteConfirm(false)} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.bg, border: `1px solid ${colors.border}`, color: colors.textSecondary, fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "14px" }}>Cancel</button>
               <button onClick={confirmDelete} disabled={deleting} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.danger, border: "none", color: "#fff", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "14px", opacity: deleting ? 0.7 : 1 }}>
