@@ -79,6 +79,15 @@ export default function AdminReports() {
   const [selYear,  setSelYear]  = useState(now.getFullYear());
   const [selDay, setSelDay] = useState(now.toISOString().slice(0, 10));
   const [excludeCancelled, setExcludeCancelled] = useState(true);
+  const [animate, setAnimate] = useState(false);
+
+  useEffect(() => {
+    if (!loading) {
+      setAnimate(false);
+      const t = setTimeout(() => setAnimate(true), 100);
+      return () => clearTimeout(t);
+    }
+  }, [loading, selMonth, selYear]);
 
     const fetchAll = async (userObj) => {
       setLoading(true);
@@ -205,38 +214,8 @@ export default function AdminReports() {
     boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
   };
 
-  const keyframes = `
-  @property --fill-angle {
-    syntax: "<angle>";
-    inherits: false;
-    initial-value: 0deg;
-  }
-  @keyframes gauge-fill {
-    from { --fill-angle: 0deg; }
-    to { --fill-angle: 180deg; }
-  }
-  .gauge-chart-mask {
-    position: absolute; inset: -1px; border-radius: 50%;
-    background: conic-gradient(from 270deg, transparent 0deg, transparent var(--fill-angle, 180deg), var(--card-bg, #ffffff) var(--fill-angle, 180deg), var(--card-bg, #ffffff) 180deg, transparent 180deg);
-    animation: gauge-fill 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-  .gauge-needle {
-    position: absolute; bottom: 0; left: 50%; width: 4px; height: 50%;
-    background: #111827; border-radius: 4px 4px 0 0;
-    transform-origin: bottom center;
-    transform: translateX(-50%) rotate(calc(var(--fill-angle, 180deg) - 90deg));
-    animation: gauge-fill 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    z-index: 2;
-  }
-  .gauge-needle::after {
-    content: ""; position: absolute; bottom: -4px; left: -4px; width: 12px; height: 12px;
-    background: #111827; border-radius: 50%;
-  }
-  `;
-
   return (
     <div style={sh.page}>
-      <style>{keyframes}</style>
 
       {/* TOPBAR */}
       <div style={sh.topbar}>
@@ -298,8 +277,29 @@ export default function AdminReports() {
                     background: fullGradient,
                     boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
                   }} />
-                  {monthlyBookings.length > 0 && <div className="gauge-chart-mask" style={{ "--card-bg": colors.white }} />}
-                  <div className="gauge-needle" />
+                  {monthlyBookings.length > 0 && (
+                    <div style={{
+                      position: "absolute", top: 0, left: 0, width: "140px", height: "140px", borderRadius: "50%",
+                      background: colors.white,
+                      clipPath: "polygon(0 0, 100% 0, 100% 50%, 0 50%)",
+                      transform: `rotate(${animate ? 180 : 0}deg)`,
+                      transformOrigin: "center center",
+                      transition: "transform 1s cubic-bezier(0.16, 1, 0.3, 1)"
+                    }} />
+                  )}
+                  <div style={{
+                    position: "absolute", bottom: 0, left: "50%", width: "4px", height: "50%",
+                    background: "#111827", borderRadius: "4px 4px 0 0",
+                    transformOrigin: "bottom center",
+                    transform: `translateX(-50%) rotate(${animate ? 90 : -90}deg)`,
+                    transition: "transform 1s cubic-bezier(0.16, 1, 0.3, 1)",
+                    zIndex: 2
+                  }}>
+                    <div style={{
+                      position: "absolute", bottom: "-4px", left: "-4px", width: "12px", height: "12px",
+                      background: "#111827", borderRadius: "50%"
+                    }} />
+                  </div>
                   <div style={{
                     width: "90px", height: "45px", background: colors.white, borderRadius: "45px 45px 0 0",
                     display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end",
@@ -368,18 +368,22 @@ export default function AdminReports() {
                         style={{
                           width: "100%",
                           maxWidth: "36px",
-                          height: `calc(${heightPct}% - 20px)`,
-                          minHeight: bar.value > 0 ? "4px" : "0",
+                          height: animate ? `calc(${heightPct}% - 20px)` : "0px",
+                          minHeight: (animate && bar.value > 0) ? "4px" : "0",
                           borderRadius: "6px 6px 0 0",
                           background: bar.value > 0
                             ? `linear-gradient(180deg, ${colors.blue} 0%, rgba(42,82,152,0.4) 100%)`
                             : "transparent",
-                          transition: "height 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                          transition: "height 0.8s cubic-bezier(0.16, 1, 0.3, 1), min-height 0.8s",
                           boxShadow: bar.value > 0 ? "0 4px 12px rgba(42,82,152,0.15)" : "none",
                           position: "relative"
                         }}
                       >
-                        <div style={{ position: "absolute", top: "-20px", left: "50%", transform: "translateX(-50%)", fontSize: "12px", color: bar.value > 0 ? colors.navy : "transparent", fontWeight: "800", transition: "all 0.3s ease" }}>
+                        <div style={{
+                          position: "absolute", top: "-20px", left: "50%", transform: "translateX(-50%)",
+                          fontSize: "12px", color: bar.value > 0 ? colors.navy : "transparent",
+                          fontWeight: "800", opacity: animate ? 1 : 0, transition: "opacity 0.4s ease 0.4s"
+                        }}>
                           {bar.value > 0 ? bar.value : ""}
                         </div>
                       </div>
