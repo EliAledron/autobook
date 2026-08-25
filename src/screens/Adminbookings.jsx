@@ -586,6 +586,7 @@ export default function AdminBookings() {
 
       if (!b.isRead) {
         updateDoc(doc(db, "bookings", b.id), { isRead: true }).catch(() => {});
+        setBookings(prev => prev.map(bk => bk.id === b.id ? { ...bk, isRead: true } : bk));
       }
     }}>
       {/* Header: Status & Price */}
@@ -970,12 +971,29 @@ export default function AdminBookings() {
                       </div>
                     </td>
                     <td style={{ padding: "16px", verticalAlign: "middle" }}>
-                      <span style={{ display: "inline-block", padding: "6px 12px", borderRadius: "8px", fontSize: "12px", fontWeight: "800", background: (b.status === "Pending" ? colors.warningBg : b.status === "In Progress" ? colors.infoBg : b.status === "Completed" ? colors.successBg : colors.dangerBg), color: (b.status === "Pending" ? colors.warning : b.status === "In Progress" ? colors.info : b.status === "Completed" ? colors.success : colors.danger) }}>
-                        {b.status || "Pending"}
-                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{ display: "inline-block", padding: "6px 12px", borderRadius: "8px", fontSize: "12px", fontWeight: "800", background: (b.status === "Pending" ? colors.warningBg : b.status === "In Progress" ? colors.infoBg : b.status === "Completed" ? colors.successBg : colors.dangerBg), color: (b.status === "Pending" ? colors.warning : b.status === "In Progress" ? colors.info : b.status === "Completed" ? colors.success : colors.danger) }}>
+                          {b.status || "Pending"}
+                        </span>
+                        {!b.isRead && getDaysAgo(b.createdAt) < 1 && (
+                          <span style={{ fontSize: "10px", fontWeight: "800", background: colors.danger, color: "#fff", padding: "3px 6px", borderRadius: "6px", letterSpacing: "0.5px" }}>NEW</span>
+                        )}
+                        {!b.isRead && getDaysAgo(b.createdAt) >= 1 && (
+                          <span style={{ fontSize: "10px", fontWeight: "800", background: colors.warning, color: "#fff", padding: "3px 6px", borderRadius: "6px", letterSpacing: "0.5px" }}>UNREAD</span>
+                        )}
+                      </div>
                     </td>
                     <td style={{ padding: "16px", verticalAlign: "middle", textAlign: "right" }}>
-                      <button onClick={() => setSelected(b)} style={{ background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", border: "none", padding: "6px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: "700", cursor: "pointer", transition: "all 0.2s ease", boxShadow: "0 2px 8px rgba(26,58,92,0.25)" }} onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(26,58,92,0.35)"; }} onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(26,58,92,0.25)"; }}>
+                      <button onClick={() => {
+                        setSelected(b);
+                        setNewStatus(b.status || "Pending");
+                        setNewMechanic(b.mechanicId || "");
+                        setNewCancelReason("");
+                        if (!b.isRead) {
+                          updateDoc(doc(db, "bookings", b.id), { isRead: true }).catch(() => {});
+                          setBookings(prev => prev.map(bk => bk.id === b.id ? { ...bk, isRead: true } : bk));
+                        }
+                      }} style={{ background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", border: "none", padding: "6px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: "700", cursor: "pointer", transition: "all 0.2s ease", boxShadow: "0 2px 8px rgba(26,58,92,0.25)" }} onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(26,58,92,0.35)"; }} onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(26,58,92,0.25)"; }}>
                         Manage
                       </button>
                     </td>
