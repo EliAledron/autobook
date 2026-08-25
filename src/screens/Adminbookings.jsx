@@ -374,8 +374,13 @@ export default function AdminBookings() {
   const days = Array(startDay).fill(null).concat(Array.from({ length: daysInMon }, (_, i) => i + 1));
   const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
+  const activeBookings = bookings.filter(b => {
+    const s = (b.status || "Pending").toLowerCase();
+    return s !== "completed" && s !== "cancelled";
+  });
+
   const bookingsByDate = {};
-  bookings.forEach((b) => {
+  activeBookings.forEach(b => {
     const d = b.date ? b.date.trim() : "No date";
     if (!bookingsByDate[d]) bookingsByDate[d] = [];
     bookingsByDate[d].push(b);
