@@ -265,7 +265,7 @@ export function ErrorModal({ error, onClose }) {
 }
 
 // ─── Shared Custom Dropdown ───────────────────────────────────────────────────
-export function CustomDropdown({ value, onChange, options, style, placeholder }) {
+export function CustomDropdown({ value, onChange, options, style, placeholder, disabled }) {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef(null);
 
@@ -300,16 +300,16 @@ export function CustomDropdown({ value, onChange, options, style, placeholder })
   return (
     <div ref={ref} style={wrapperStyle}>
       <div 
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => { if (!disabled) setIsOpen(!isOpen); }}
         style={{
           padding: innerStyle.padding || "12px 36px 12px 14px",
           borderRadius: innerStyle.borderRadius || "12px",
           border: isOpen ? `1.5px solid ${colors.blue}` : (innerStyle.border || `1.5px solid ${colors.border}`),
           fontSize: innerStyle.fontSize || "13px",
           fontWeight: innerStyle.fontWeight || "600",
-          backgroundColor: innerStyle.backgroundColor || innerStyle.background || colors.white,
-          color: selectedOpt ? colors.textPrimary : colors.textMuted,
-          cursor: "pointer",
+          backgroundColor: disabled ? "#f3f4f6" : (innerStyle.backgroundColor || innerStyle.background || colors.white),
+          color: disabled ? "#9ca3af" : (selectedOpt ? colors.textPrimary : colors.textMuted),
+          cursor: disabled ? "not-allowed" : "pointer",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",

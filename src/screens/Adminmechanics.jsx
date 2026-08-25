@@ -37,16 +37,7 @@ async function uploadToCloudinary(file) {
   return data.secure_url;
 }
 
-function formatCurrency(n) {
-  return "₱" + Number(n || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 });
-}
 
-function parsePriceValue(val) {
-  if (!val) return 0;
-  if (typeof val === 'number') return val;
-  const match = String(val).replace(/,/g, '').match(/\d+/);
-  return match ? Number(match[0]) : 0;
-}
 
 const keyframes = `
   @property --fill-angle {
@@ -277,7 +268,7 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
   const mRequests = allRequests.filter(r => r.assignedMechanicId === mechanic.id);
   const completedJobs = mJobs.filter(b => (b.status || "").toLowerCase() === "completed");
   const activeJobs = mJobs.filter(b => !["completed", "cancelled"].includes((b.status || "").toLowerCase()));
-  const totalPartsCost = mParts.reduce((s, p) => s + parsePriceValue(p.price) * Number(p.quantity || 1), 0);
+
 
   const statusStyle = (s) => {
     if ((s || "").toLowerCase() === "completed") return sh.badge(colors.successBg, colors.success);
@@ -368,11 +359,10 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
               {[
                 ["Active Jobs", activeJobs.length, <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>, colors.infoBg, colors.info],
                 ["Completed", completedJobs.length, <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>, colors.successBg, colors.success],
-                ["Parts Cost", formatCurrency(totalPartsCost), <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>, colors.dangerBg, colors.danger],
               ].map(([label, val, icon, bg, color]) => (
                 <div key={label} style={{ background: bg, borderRadius: "20px", padding: "20px", textAlign: "center", border: `1px solid ${color}30` }}>
                   <div style={{ fontSize: "20px", marginBottom: "8px" }}>{icon}</div>
-                  <div style={{ fontSize: String(val).includes("₱") ? "14px" : "22px", fontWeight: "800", color }}>{val}</div>
+                  <div style={{ fontSize: "22px", fontWeight: "800", color }}>{val}</div>
                   <div style={{ fontSize: "12px", color, fontWeight: "700", marginTop: "4px" }}>{label}</div>
                 </div>
               ))}
@@ -437,18 +427,11 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
                     </div>
                     <div>
                       <div style={{ fontSize: "14px", fontWeight: "700", color: colors.textPrimary, marginBottom: "2px" }}>{p.partName}</div>
-                      <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "500" }}>Qty: {p.quantity} · {typeof p.price === 'string' && (p.price.includes('-') || p.price.includes('+')) ? `₱${p.price}` : formatCurrency(p.price)} each</div>
+                      <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "500" }}>Qty: {p.quantity}</div>
                     </div>
                   </div>
-                  <div style={{ fontSize: "15px", fontWeight: "800", color: colors.navy }}>{formatCurrency(parsePriceValue(p.price) * Number(p.quantity))}+</div>
                 </div>
               ))}
-            {mParts.length > 0 && (
-              <div style={{ display: "flex", justifyContent: "space-between", paddingTop: "10px", marginTop: "4px", borderTop: `1.5px solid ${colors.border}` }}>
-                <span style={{ fontSize: "13px", fontWeight: "700", color: colors.textSecondary }}>Total</span>
-                <span style={{ fontSize: "14px", fontWeight: "800", color: colors.navy }}>{formatCurrency(totalPartsCost)}+</span>
-              </div>
-            )}
           </div>
         )}
 

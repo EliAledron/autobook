@@ -49,6 +49,55 @@ const MECHANIC_SPECIALTIES = [
   "Paint & Body", "Tire & Alignment"
 ];
 
+const CAR_BRANDS_AND_MODELS = {
+  "Toyota": ["Vios", "Innova", "Fortuner", "Hilux", "Wigo", "Avanza", "Rush", "Camry", "Corolla Cross", "Land Cruiser", "Raize", "Hiace", "Yaris", "Fj Cruiser", "Alphard"],
+  "Honda": ["City", "Civic", "CR-V", "HR-V", "BR-V", "Brio", "Jazz", "Accord", "Pilot", "Odyssey", "Brio Amaze", "Mobilio"],
+  "Mitsubishi": ["Mirage", "Mirage G4", "Xpander", "Montero Sport", "Strada", "L300", "Outlander", "Pajero", "Lancer", "Adventure", "Triton"],
+  "Nissan": ["Almera", "Navara", "Terra", "Urvan", "X-Trail", "Patrol", "Kicks", "Sylphy", "Juke", "Livina", "GT-R", "370Z"],
+  "Ford": ["Ranger", "Everest", "Territory", "Mustang", "Explorer", "F-150", "EcoSport", "Expedition", "Fiesta", "Focus"],
+  "Hyundai": ["Accent", "Tucson", "Santa Fe", "Staria", "Kona", "Creta", "Palisade", "Elantra", "Eon", "Grand Starex", "Reina", "Ioniq", "Venue"],
+  "Kia": ["Soluto", "Stonic", "Seltos", "Sportage", "Carnival", "Sorento", "Picanto", "Rio", "Forte", "Carens"],
+  "Suzuki": ["Ertiga", "Swift", "Dzire", "Jimny", "S-Presso", "XL7", "Celerio", "Vitara", "APV", "Alto"],
+  "Isuzu": ["D-Max", "mu-X", "Traviz", "Crosswind", "Alterra"],
+  "Mazda": ["Mazda2", "Mazda3", "Mazda6", "CX-3", "CX-5", "CX-8", "CX-9", "CX-30", "CX-60", "CX-90", "BT-50", "MX-5"],
+  "Chevrolet": ["Trailblazer", "Tracker", "Colorado", "Suburban", "Tahoe", "Camaro", "Spark", "Sail", "Cruze", "Captiva", "Spin"],
+  "Subaru": ["Forester", "XV", "Outback", "WRX", "BRZ", "Evoltis", "Impreza", "Levorg", "Legacy"],
+  "Geely": ["Coolray", "Okavango", "Azkarra", "Emgrand", "GX3 Pro", "Binray"],
+  "MG": ["ZS", "RX5", "MG5", "MG6", "HS", "GT", "One"],
+  "Volkswagen": ["Santana", "Lavida", "Lamando", "T-Cross", "Tiguan", "Touareg", "Golf", "Polo", "Jetta", "Passat", "Beetle"],
+  "Peugeot": ["2008", "3008", "5008", "Traveller"],
+  "BMW": ["1 Series", "2 Series", "3 Series", "4 Series", "5 Series", "6 Series", "7 Series", "8 Series", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "Z4", "iX"],
+  "Mercedes-Benz": ["A-Class", "B-Class", "C-Class", "E-Class", "S-Class", "GLA", "GLB", "GLC", "GLE", "GLS", "G-Class", "CLA", "CLS"],
+  "Audi": ["A1", "A3", "A4", "A5", "A6", "A7", "A8", "Q2", "Q3", "Q5", "Q7", "Q8", "TT", "R8", "e-tron"],
+  "Lexus": ["IS", "ES", "LS", "UX", "NX", "RX", "GX", "LX", "LC", "RC"],
+  "Porsche": ["911", "Cayenne", "Macan", "Panamera", "Taycan", "718 Boxster", "718 Cayman"],
+  "Volvo": ["XC40", "XC60", "XC90", "S60", "S90", "V60", "V90"],
+  "Land Rover": ["Range Rover", "Range Rover Sport", "Range Rover Velar", "Range Rover Evoque", "Defender", "Discovery", "Discovery Sport"],
+  "Jaguar": ["XE", "XF", "XJ", "F-Pace", "E-Pace", "I-Pace", "F-Type"],
+  "Mini": ["Cooper", "Clubman", "Countryman"],
+  "Chery": ["Tiggo 2", "Tiggo 5X", "Tiggo 7 Pro", "Tiggo 8 Pro", "Arrizo"],
+  "GAC": ["GS3", "GS4", "GS8", "GN6", "GN8", "Empow", "Emkoo"],
+  "Changan": ["Alsvin", "CS35 Plus", "CS55 Plus", "CS75 Plus", "Uni-T", "Uni-K"],
+  "Foton": ["Thunder", "Toplander", "TransVan", "Traveller", "Toano", "View"],
+  "Maxus": ["G50", "G10", "V80", "T60", "D60", "D90"],
+  "Dongfeng": ["Rich 6", "Captain", "K01S"],
+  "BYD": ["Dolphin", "Atto 3", "Han", "Tang", "Song Plus", "Seagull", "Seal"],
+  "Jeep": ["Wrangler", "Grand Cherokee", "Compass", "Renegade", "Gladiator"],
+  "Chrysler": ["300c", "Town and Country", "Pacifica"],
+  "Dodge": ["Charger", "Challenger", "Durango"],
+  "Ram": ["1500", "2500"],
+  "Maserati": ["Ghibli", "Quattroporte", "Levante", "Grecale"],
+  "Ferrari": ["488", "F8", "Roma", "Portofino", "SF90", "Purosangue"],
+  "Lamborghini": ["Huracan", "Aventador", "Urus"],
+  "Aston Martin": ["Vantage", "DB11", "DBS", "DBX"],
+  "Bentley": ["Continental GT", "Flying Spur", "Bentayga"],
+  "Rolls-Royce": ["Phantom", "Ghost", "Wraith", "Dawn", "Cullinan"],
+  "McLaren": ["540C", "570S", "720S", "Artura", "GT", "Senna", "P1"],
+  "Alfa Romeo": ["Giulia", "Stelvio"],
+  "Fiat": ["500", "Punto"],
+  "Other": ["Other"]
+};
+
 const COLORS_LIST = ["White", "Black", "Silver", "Gray", "Red", "Blue", "Green", "Yellow", "Orange", "Brown", "Other"];
 
 /* ─── Cloudinary config ───────────────────────────────────────── */
@@ -634,10 +683,29 @@ function SignupForm({ goBack, navigate }) {
               </div>
 
               <label style={s.label}>Vehicle Make *</label>
-              <input className="ab-input" type="text" placeholder="e.g. Toyota" value={vehicleMake} onChange={(e) => setVehicleMake(e.target.value)} style={s.input} required />
+              <CustomDropdown
+                value={vehicleMake}
+                onChange={(val) => { setVehicleMake(val); setVehicleModel(""); }}
+                options={[
+                  { value: "", label: "Select Make" },
+                  ...Object.keys(CAR_BRANDS_AND_MODELS).sort().map(make => ({ value: make, label: make }))
+                ]}
+                placeholder="Select Make"
+                style={{ ...s.input, backgroundColor: '#f9fafb', padding: "14px 36px 14px 16px", borderRadius: "14px" }}
+              />
 
               <label style={s.label}>Vehicle Model *</label>
-              <input className="ab-input" type="text" placeholder="e.g. Vios" value={vehicleModel} onChange={(e) => setVehicleModel(e.target.value)} style={s.input} required />
+              <CustomDropdown
+                value={vehicleModel}
+                onChange={setVehicleModel}
+                options={[
+                  { value: "", label: "Select Model" },
+                  ...(vehicleMake && CAR_BRANDS_AND_MODELS[vehicleMake] ? [...CAR_BRANDS_AND_MODELS[vehicleMake]].sort().map(model => ({ value: model, label: model })) : [])
+                ]}
+                placeholder="Select Model"
+                disabled={!vehicleMake}
+                style={{ ...s.input, backgroundColor: '#f9fafb', padding: "14px 36px 14px 16px", borderRadius: "14px" }}
+              />
 
               <label style={s.label}>Year</label>
               <input className="ab-input" type="text" placeholder="e.g. 2023" value={vehicleYear} onChange={(e) => setVehicleYear(e.target.value.replace(/[^0-9]/g, ''))} style={s.input} />

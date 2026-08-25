@@ -7,7 +7,7 @@ import { sh, colors, getInitials, EmptyState, CustomDropdown } from "./dashboard
 import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
 import BackButton from "../components/BackButton";
-import { Calendar, Wrench, BarChart3, PhilippinePeso } from "lucide-react";
+import { Calendar, Wrench, BarChart3 } from "lucide-react";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -23,13 +23,6 @@ function toDate(val) {
   }
   if (val instanceof Date) return val;
   return null;
-}
-
-function parsePrice(val) {
-  if (!val) return 0;
-  if (typeof val === 'number') return val;
-  const match = String(val).replace(/,/g, '').match(/\d+(\.\d+)?/);
-  return match ? Number(match[0]) : 0;
 }
 
 function isSameDay(date, target) {
@@ -160,10 +153,6 @@ export default function AdminReports() {
     isSameDay(toDate(p.date || p.createdAt), eodTarget)
   );
 
-  const monthlyRevenue = monthlyBookings.reduce((sum, b) => sum + parsePrice(b.price), 0) + 
-                         monthlyParts.reduce((sum, p) => sum + (parsePrice(p.price) * (Number(p.quantity) || 1)), 0);
-  const eodRevenue = eodBookings.reduce((sum, b) => sum + parsePrice(b.price), 0) + 
-                     eodParts.reduce((sum, p) => sum + (parsePrice(p.price) * (Number(p.quantity) || 1)), 0);
 
   const barData = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
@@ -340,7 +329,6 @@ export default function AdminReports() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "12px", marginBottom: "1.5rem" }}>
               {[
                 { label: "Total Bookings", value: monthlyBookings.length, icon: <Calendar size={20} />, color: colors.navy },
-                { label: "Est. Revenue", value: `₱${monthlyRevenue.toLocaleString("en-PH")}`, icon: <PhilippinePeso size={20} />, color: colors.success },
                 { label: "Parts Ordered", value: monthlyParts.length, icon: <Wrench size={20} />, color: colors.warning },
               ].map((stat, i) => (
                 <div key={i} style={{ borderRadius: "20px", padding: "16px", border: `1px solid ${colors.border}`, background: colors.white, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
@@ -438,7 +426,6 @@ export default function AdminReports() {
                   </div>
                   <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.9)", fontWeight: "500" }}>
                     {eodBookings.length} service{eodBookings.length !== 1 ? "s" : ""} · {eodParts.length} part order{eodParts.length !== 1 ? "s" : ""}
-                    {eodRevenue > 0 && ` · ₱${eodRevenue.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
                   </div>
                 </div>
               </div>
@@ -475,11 +462,6 @@ export default function AdminReports() {
                           </div>
                         </div>
                       </div>
-                      {b.price !== undefined && parsePrice(b.price) > 0 && (
-                        <div style={{ fontSize: "14px", fontWeight: "800", color: colors.navy, marginLeft: "12px" }}>
-                          ₱{parsePrice(b.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}
-                        </div>
-                      )}
                     </div>
                   ))}
                 </>
@@ -516,11 +498,6 @@ export default function AdminReports() {
                           </div>
                         </div>
                       </div>
-                      {p.price !== undefined && parsePrice(p.price) > 0 && (
-                        <div style={{ fontSize: "14px", fontWeight: "800", color: colors.navy, marginLeft: "12px" }}>
-                          ₱{(parsePrice(p.price) * (Number(p.quantity) || 1)).toLocaleString("en-PH", { minimumFractionDigits: 2 })}
-                        </div>
-                      )}
                     </div>
                   ))}
                 </>

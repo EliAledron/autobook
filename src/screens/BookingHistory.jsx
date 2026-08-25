@@ -342,9 +342,6 @@ export default function BookingHistory() {
                 onClick={() => setSelected(b)}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                     <span style={{ ...statusStyle(b.status), padding: "4px 10px", borderRadius: "8px", fontSize: "11px", display: "inline-block" }}>{b.status || "Pending"}</span>
-                    {b.price !== undefined && (
-                      <span style={{ fontSize: "15px", fontWeight: "800", color: colors.navy }}>₱{Number(b.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</span>
-                    )}
                   </div>
 
                   <div>

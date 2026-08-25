@@ -247,7 +247,7 @@ export default function MechanicBookings() {
               ["Customer", selected.customerName || "—"],
               ["Shop", selected.shopName || "—"],
               ["Vehicle", selected.vehicleLabel || "—"],
-              ["Price", selected.price ? `₱${Number(selected.price).toLocaleString()}` : "—"],
+
             ].map(([label, value]) => (
               <div key={label} style={{ marginBottom: "0.85rem" }}>
                 <div style={{ fontSize: "11px", color: colors.textMuted, fontWeight: "600", textTransform: "uppercase", marginBottom: "3px" }}>{label}</div>

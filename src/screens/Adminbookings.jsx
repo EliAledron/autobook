@@ -139,7 +139,7 @@ export default function AdminBookings() {
   const [newMechanic, setNewMechanic] = useState("");
   const [newStatus, setNewStatus] = useState("");
   const [newCancelReason, setNewCancelReason] = useState("");
-  const [newPrice, setNewPrice] = useState("");
+
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -397,9 +397,6 @@ export default function AdminBookings() {
       if (newStatus) updates.status = newStatus;
       if (newStatus === "Cancelled") updates.cancelReason = newCancelReason.trim();
       if (newMechanic !== undefined) updates.mechanicId = newMechanic || null;
-      
-      const parsedPrice = newPrice !== "" ? newPrice : undefined;
-      if (parsedPrice !== undefined) updates.price = parsedPrice;
 
       // FIX: also store mechanicName so reports can display it
       if (newMechanic) {
@@ -408,18 +405,6 @@ export default function AdminBookings() {
 
       await updateDoc(doc(db, "bookings", selected.id), updates);
 
-      // Notify customer if price was just set by the admin
-      if (parsedPrice !== undefined && selected.price === undefined && selected.customerId) {
-        await addDoc(collection(db, "notifications"), {
-          userId: selected.customerId,
-          title: "Service Quote Updated",
-          message: `${selected.shopName || "The shop"} has set a price of ₱${parsedPrice} for your ${selected.serviceType || "service"}.`,
-          type: "status_update",
-          bookingId: selected.id,
-          read: false,
-          createdAt: serverTimestamp(),
-        });
-      }
 
       if (newStatus === "Pending" && selected.status !== "Pending" && selected.customerId) {
         await addDoc(collection(db, "notifications"), {
@@ -510,7 +495,7 @@ export default function AdminBookings() {
       setSelected(null);
       setNewMechanic("");
       setNewStatus("");
-      setNewPrice("");
+
     } catch (e) {
       console.error(e);
       showToast(<><X size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Failed to save changes.</>);
@@ -579,7 +564,7 @@ export default function AdminBookings() {
       setSelected(b);
       setNewStatus(b.status || "Pending");
       setNewMechanic(b.mechanicId || "");
-      setNewPrice(b.price !== undefined ? String(b.price) : "");
+
       setNewCancelReason("");
     }}>
       {/* Header: Status & Price */}
@@ -590,11 +575,7 @@ export default function AdminBookings() {
             <span style={{ fontSize: "10px", fontWeight: "800", background: colors.danger, color: "#fff", padding: "3px 6px", borderRadius: "6px", letterSpacing: "0.5px", boxShadow: "0 2px 4px rgba(220,38,38,0.3)" }}>NEW</span>
           )}
         </div>
-        {b.price !== undefined ? (
-          <span style={{ fontSize: "15px", fontWeight: "800", color: colors.navy }}>₱{String(b.price).includes('-') || String(b.price).includes('+') ? b.price : Number(b.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</span>
-        ) : (
-          <span style={{ fontSize: "11px", color: colors.danger, fontWeight: "700", background: colors.dangerBg, padding: "4px 8px", borderRadius: "8px", display: "inline-flex", alignItems: "center", gap: "4px" }}><AlertTriangle size={12} /> Set price</span>
-        )}
+
       </div>
 
       {/* Main Info */}
@@ -925,7 +906,7 @@ export default function AdminBookings() {
                   <th style={{ padding: "14px 16px", textAlign: "left", fontSize: "12px", color: colors.textSecondary, fontWeight: "800", textTransform: "uppercase" }}>Customer & Service</th>
                   <th style={{ padding: "14px 16px", textAlign: "left", fontSize: "12px", color: colors.textSecondary, fontWeight: "800", textTransform: "uppercase" }}>Schedule</th>
                   <th style={{ padding: "14px 16px", textAlign: "left", fontSize: "12px", color: colors.textSecondary, fontWeight: "800", textTransform: "uppercase" }}>Vehicle</th>
-                  <th style={{ padding: "14px 16px", textAlign: "left", fontSize: "12px", color: colors.textSecondary, fontWeight: "800", textTransform: "uppercase" }}>Mechanic / Price</th>
+                  <th style={{ padding: "14px 16px", textAlign: "left", fontSize: "12px", color: colors.textSecondary, fontWeight: "800", textTransform: "uppercase" }}>Mechanic</th>
                   <th style={{ padding: "14px 16px", textAlign: "left", fontSize: "12px", color: colors.textSecondary, fontWeight: "800", textTransform: "uppercase" }}>Status</th>
                   <th style={{ padding: "14px 16px", textAlign: "right", fontSize: "12px", color: colors.textSecondary, fontWeight: "800", textTransform: "uppercase" }}>Action</th>
                 </tr>
@@ -961,9 +942,7 @@ export default function AdminBookings() {
                         <div style={{ fontSize: "12px", color: b.mechanicId ? colors.info : colors.warning, fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}>
                           {b.mechanicId ? getMechanicName(b.mechanicId, b.mechanicName) : <><AlertTriangle size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Unassigned</>}
                         </div>
-                        <div style={{ fontSize: "14px", fontWeight: "800", color: b.price !== undefined ? colors.navy : colors.danger }}>
-                          {b.price !== undefined ? (String(b.price).includes('-') || String(b.price).includes('+') ? `₱${b.price}` : `₱${Number(b.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`) : <><AlertTriangle size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Needs Price</>}
-                        </div>
+
                       </div>
                     </td>
                     <td style={{ padding: "16px", verticalAlign: "middle" }}>
@@ -1275,34 +1254,7 @@ export default function AdminBookings() {
               )}
             </div>
 
-            {/* PRICE FIELD */}
-            <div style={{ marginBottom: "1.25rem" }}>
-              <div style={{ fontSize: "11px", color: colors.textMuted, fontWeight: "600", textTransform: "uppercase", marginBottom: "6px" }}>Service Price (₱)</div>
-              {selected.status === "Completed" || selected.status === "Cancelled" ? (
-                <div style={{ fontSize: "15px", color: colors.textPrimary, fontWeight: "700" }}>
-                  {selected.price !== undefined ? (String(selected.price).includes('-') || String(selected.price).includes('+') ? `₱${selected.price}` : `₱${Number(selected.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`) : "Not set"}
-                </div>
-              ) : (
-                <>
-                  {selected.price === undefined && (
-                    <div style={{ fontSize: "12px", color: colors.danger, marginBottom: "8px", padding: "6px 10px", background: colors.dangerBg, borderRadius: "8px", fontWeight: "600", display: "flex", alignItems: "center", gap: "6px" }}>
-                      <AlertTriangle size={14} /> No price set — required for reports and earnings.
-                    </div>
-                  )}
-                  <div style={{ position: "relative" }}>
-                    <span style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", fontSize: "15px", fontWeight: "700", color: colors.textSecondary }}>₱</span>
-                    <input
-                      type="text"
-                      placeholder="e.g. 500"
-                      value={newPrice} onChange={(e) => setNewPrice(e.target.value.replace(/[^0-9]/g, ''))}
-                      style={{ ...inputStyle, paddingLeft: "36px" }}
-                      onFocus={(e) => { e.target.style.border = `1.5px solid ${colors.blue}`; e.target.style.backgroundColor = colors.white; e.target.style.boxShadow = "0 4px 12px rgba(42,82,152,0.1)"; }}
-                      onBlur={(e) => { e.target.style.border = `1.5px solid ${colors.border}`; e.target.style.backgroundColor = "#f9fafb"; e.target.style.boxShadow = "none"; }}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+
 
             {selected.status !== "Completed" && selected.status !== "Cancelled" && (
               <>
