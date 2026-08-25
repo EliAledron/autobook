@@ -204,7 +204,7 @@ export default function BookingHistory() {
 
       {/* HERO */}
       <div style={sh.hero}>
-        <div style={sh.rolePill}><div style={sh.roleDot} /><span style={sh.roleText}>History</span></div>
+        <div style={sh.rolePill}><div style={sh.roleDot} /><span style={sh.roleText}>Bookings History</span></div>
         <div style={sh.heroGreeting}>My Bookings</div>
         <div style={sh.heroSub}>Track all your service appointments.</div>
       </div>

@@ -22,7 +22,7 @@ const QUICK_ACTIONS = [
   { id: "feed",     Icon: IcoFeed,    label: "Shop Feed",        sub: "News & promos",        path: "/customer/feed",        iconColor: "#d97706", iconBg: "#fef3c7" },
   { id: "mechanic", Icon: IcoSearch,  label: "Find Mechanic",    sub: "Browse available",     path: "/customer/mechanics",  iconColor: "#059669", iconBg: "#d1fae5" },
   { id: "vehicles", Icon: IcoCar,     label: "My Vehicles",      sub: "Manage your cars",     path: "/customer/vehicles",   iconColor: "#1a3a5c", iconBg: "#e0f2fe" },
-  { id: "history",  Icon: IcoHistory, label: "History",          sub: "Past services",        path: "/customer/history",    iconColor: "#dc2626", iconBg: "#fee2e2" },
+  { id: "history",  Icon: IcoHistory, label: "Bookings History", sub: "Past services",        path: "/customer/history",    iconColor: "#dc2626", iconBg: "#fee2e2" },
 ];
 
 const keyframes = `
