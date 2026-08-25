@@ -46,6 +46,7 @@ export default function BookService() {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const [customService, setCustomService] = useState(location.state?.prefilledService || "");
+  const [serviceSearch, setServiceSearch] = useState("");
   const [vehicleId, setVehicleId] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
@@ -270,8 +271,22 @@ export default function BookService() {
           <div style={{ marginBottom: "16px" }}>
             <div style={{ fontSize: "11px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>Select a Service *</div>
             
+            <input
+              type="text"
+              placeholder="Search available services..."
+              value={serviceSearch}
+              onChange={(e) => setServiceSearch(e.target.value)}
+              style={{
+                width: "100%", padding: "10px 14px", borderRadius: "12px", boxSizing: "border-box",
+                border: `1px solid ${colors.border}`, marginBottom: "12px",
+                fontSize: "13px", outline: "none", backgroundColor: "#f9fafb"
+              }}
+            />
+            
             <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-              {(shop?.services?.length > 0 ? shop.services : ["Oil Change", "Brake Inspection", "Tire Rotation", "Aircon Cleaning", "Battery Replacement", "General Checkup"]).map((s) => (
+              {(shop?.services?.length > 0 ? shop.services : ["Oil Change", "Brake Inspection", "Tire Rotation", "Aircon Cleaning", "Battery Replacement", "General Checkup"])
+              .filter(s => s.toLowerCase().includes(serviceSearch.toLowerCase()))
+              .map((s) => (
                 <button
                   key={s}
                   onClick={() => setCustomService(s)}

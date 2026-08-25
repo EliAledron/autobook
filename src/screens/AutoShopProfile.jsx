@@ -286,6 +286,7 @@ export default function AutoShopProfile() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [posts, setPosts] = useState([]);
   const [activeTab, setActiveTab] = useState("Posts");
+  const [serviceSearch, setServiceSearch] = useState("");
   const [ownerData, setOwnerData] = useState(null);
   const [uid, setUid] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
@@ -708,9 +709,22 @@ export default function AutoShopProfile() {
             <div style={{ borderTop: `1px solid ${colors.border}`, margin: "16px 0" }} />
             
             <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: "800", color: colors.textPrimary }}>Services</h3>
+            <input
+              type="text"
+              placeholder="Search available services..."
+              value={serviceSearch}
+              onChange={(e) => setServiceSearch(e.target.value)}
+              style={{
+                width: "100%", padding: "10px 14px", borderRadius: "12px", boxSizing: "border-box",
+                border: `1px solid ${colors.border}`, marginBottom: "16px",
+                fontSize: "13px", outline: "none", backgroundColor: "#f9fafb"
+              }}
+            />
             {displayServices.length > 0 ? (
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                {displayServices.map(s => (
+                {displayServices
+                  .filter(s => s.toLowerCase().includes(serviceSearch.toLowerCase()))
+                  .map(s => (
                   <span key={s} style={{ background: colors.bg, color: colors.textPrimary, padding: "8px 14px", borderRadius: "12px", fontSize: "13px", fontWeight: "600", border: `1px solid ${colors.border}` }}>
                     {s}
                   </span>
