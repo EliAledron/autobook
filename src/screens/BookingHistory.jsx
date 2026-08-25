@@ -41,6 +41,64 @@ function timeAgo(timestamp) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+function BookingStepper({ status }) {
+  const currentStatus = (status || "Pending").toLowerCase();
+  const isCancelled = currentStatus === "cancelled";
+
+  if (isCancelled) {
+    return (
+      <div style={{ padding: "16px", background: colors.dangerBg, borderRadius: "16px", textAlign: "center", marginBottom: "1.5rem" }}>
+        <div style={{ color: colors.danger, fontWeight: "800", fontSize: "16px", marginBottom: "4px" }}>Booking Cancelled</div>
+        <div style={{ color: colors.textSecondary, fontSize: "13px" }}>This service request was cancelled.</div>
+      </div>
+    );
+  }
+
+  const steps = [
+    { key: "pending", label: "Booked", desc: "Waiting for shop to assign a mechanic" },
+    { key: "in progress", label: "In Progress", desc: "Mechanic is working on your vehicle" },
+    { key: "completed", label: "Completed", desc: "Service is finished" }
+  ];
+
+  let activeIndex = 0;
+  if (currentStatus === "in progress") activeIndex = 1;
+  if (currentStatus === "completed") activeIndex = 2;
+
+  return (
+    <div style={{ padding: "20px", background: "#f9fafb", borderRadius: "20px", marginBottom: "1.5rem", border: `1px solid ${colors.border}` }}>
+      {steps.map((step, index) => {
+        const isPast = index < activeIndex;
+        const isActive = index === activeIndex;
+        const isLast = index === steps.length - 1;
+
+        let dotColor = colors.border;
+        if (isActive) dotColor = colors.navy;
+        if (isPast) dotColor = colors.success;
+
+        return (
+          <div key={step.key} style={{ display: "flex", gap: "16px", position: "relative", minHeight: isLast ? "auto" : "60px" }}>
+            {/* Timeline Line */}
+            {!isLast && (
+              <div style={{ position: "absolute", left: "11px", top: "24px", bottom: "-8px", width: "2px", background: isPast ? colors.success : colors.border }} />
+            )}
+            
+            {/* Dot */}
+            <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: dotColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, zIndex: 2, marginTop: "2px", border: isActive ? `4px solid ${colors.infoBg}` : 'none', boxSizing: "content-box", transform: isActive ? "translateX(-4px)" : "none" }}>
+              {isPast ? <CheckCircle2 size={16} color="#fff" /> : <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#fff" }} />}
+            </div>
+
+            {/* Content */}
+            <div style={{ paddingBottom: isLast ? "0" : "20px" }}>
+              <div style={{ fontSize: "15px", fontWeight: isActive ? "800" : "600", color: isActive || isPast ? colors.textPrimary : colors.textMuted }}>{step.label}</div>
+              <div style={{ fontSize: "13px", color: isActive ? colors.textSecondary : colors.textMuted, marginTop: "4px" }}>{step.desc}</div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 const keyframes = `
   @keyframes ab-fade-in {
     from { opacity: 0; }
@@ -400,10 +458,7 @@ export default function BookingHistory() {
               <button onClick={() => setSelected(null)} style={{ background: colors.bg, border: "none", width: "32px", height: "32px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", cursor: "pointer", color: colors.textSecondary }}>×</button>
             </div>
 
-            <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-              <div style={{ fontSize: "36px", marginBottom: "6px" }}>{statusIcon(selected.status)}</div>
-              <span style={{ ...statusStyle(selected.status), padding: "6px 12px", borderRadius: "10px", fontSize: "13px" }}>{selected.status || "Pending"}</span>
-            </div>
+            <BookingStepper status={selected.status} />
 
             {[
               ["Shop", selected.shopName],
