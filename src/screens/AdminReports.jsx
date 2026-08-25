@@ -78,6 +78,7 @@ export default function AdminReports() {
   const [selMonth, setSelMonth] = useState(now.getMonth());
   const [selYear,  setSelYear]  = useState(now.getFullYear());
   const [selDay, setSelDay] = useState(now.toISOString().slice(0, 10));
+  const [activeTab, setActiveTab] = useState("Monthly");
   const [excludeCancelled, setExcludeCancelled] = useState(true);
   const [animate, setAnimate] = useState(false);
 
@@ -149,10 +150,49 @@ export default function AdminReports() {
     isSameMonth(toDate(p.date || p.createdAt), monthTarget)
   );
 
+
   const eodTarget = (() => {
     const [y, m, d] = selDay.split("-").map(Number);
     return new Date(y, m - 1, d);
   })();
+
+  const weekStart = new Date(eodTarget);
+  const day = weekStart.getDay();
+  const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1);
+  weekStart.setDate(diff);
+  weekStart.setHours(0,0,0,0);
+  
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+  weekEnd.setHours(23,59,59,999);
+
+  const weeklyBookings = bookings.filter(b => {
+    const d = toDate(b.date || b.createdAt);
+    return d >= weekStart && d <= weekEnd && (b.status || "").toLowerCase() === "completed";
+  });
+  
+  const weeklyParts = carParts.filter(p => {
+    const d = toDate(p.date || p.createdAt);
+    return d >= weekStart && d <= weekEnd;
+  });
+
+  const weeklyBarData = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((label, i) => {
+    const dStart = new Date(weekStart);
+    dStart.setDate(weekStart.getDate() + i);
+    dStart.setHours(0,0,0,0);
+    const dEnd = new Date(dStart);
+    dEnd.setHours(23,59,59,999);
+    
+    const count = bookings.filter(b => {
+      const bd = toDate(b.date || b.createdAt);
+      if (bd < dStart || bd > dEnd) return false;
+      if (excludeCancelled && (b.status || "").toLowerCase() === "cancelled") return false;
+      return true;
+    }).length;
+    return { label, value: count };
+  });
+  const weeklyBarMax = Math.max(...weeklyBarData.map(d => d.value), 4);
+
 
   const eodBookings = bookings.filter((b) =>
   isSameDay(toDate(b.date || b.createdAt), eodTarget) &&
@@ -240,7 +280,7 @@ export default function AdminReports() {
           <span style={sh.roleText}>Reports</span>
         </div>
         <div style={sh.heroGreeting}>Analytics & Reports</div>
-        <div style={sh.heroSub}>Monthly insights and end-of-day summaries.</div>
+        <div style={sh.heroSub}>Monthly, Weekly, and Daily operational insights.</div>
       </div>
 
       <div style={sh.content} className="stagger-slide-up">
@@ -249,7 +289,30 @@ export default function AdminReports() {
           <SkeletonLoader count={3} type="card" />
         ) : (
           <>
-            <div style={sh.sectionLabel}><BarChart3 size={18} style={{display:'inline', verticalAlign:'middle', marginRight:'6px'}}/> Monthly Analytics</div>
+            
+            <div style={{ display: "flex", gap: "8px", marginBottom: "1.5rem", overflowX: "auto", paddingBottom: "4px" }}>
+              {["Monthly", "Weekly", "Daily"].map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  style={{
+                    padding: "8px 16px", borderRadius: "20px", fontSize: "13px", fontWeight: "700",
+                    border: "none", cursor: "pointer", whiteSpace: "nowrap",
+                    background: activeTab === tab ? colors.navy : colors.white,
+                    color: activeTab === tab ? colors.white : colors.textSecondary,
+                    boxShadow: activeTab === tab ? "0 4px 12px rgba(15,38,64,0.2)" : "0 2px 4px rgba(0,0,0,0.02)",
+                    transition: "all 0.2s"
+                  }}
+                >
+                  {tab} Reports
+                </button>
+              ))}
+            </div>
+
+            {activeTab === "Monthly" && (
+              <>
+                <div style={sh.sectionLabel}><BarChart3 size={18} style={{display:'inline', verticalAlign:'middle', marginRight:'6px'}}/> Monthly Analytics</div>
+
 
             <div style={{ display: "flex", gap: "10px", marginBottom: "1.5rem", alignItems: "center" }}>
               <CustomDropdown
@@ -507,10 +570,11 @@ export default function AdminReports() {
                 </>
               )}
             </div>
+              </>
+            )}
           </>
         )}
       </div>
-
     </div>
   );
 }
