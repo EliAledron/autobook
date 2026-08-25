@@ -60,16 +60,17 @@ const keyframes = `
 export default function MechanicRequests() {
   const navigate = useNavigate();
   const [animate, setAnimate] = useState(false);
-  useEffect(() => {
-    setAnimate(false);
-    const t = setTimeout(() => setAnimate(true), 100);
-    return () => clearTimeout(t);
-  }, []);
   const [uid, setUid] = useState(null);
   const [userRole, setUserRole] = useState("");
   const [mechanicName, setMechanicName] = useState("");
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    if (loading) return;
+    setAnimate(false);
+    const t = setTimeout(() => setAnimate(true), 100);
+    return () => clearTimeout(t);
+  }, [loading]);
   const [activeTab, setActiveTab] = useState("All");
   const [selected, setSelected] = useState(null);
   const [saving, setSaving] = useState(false);

@@ -119,11 +119,6 @@ const keyframes = `
 export default function AdminBookings() {
   const navigate = useNavigate();
   const [animate, setAnimate] = useState(false);
-  useEffect(() => {
-    setAnimate(false);
-    const t = setTimeout(() => setAnimate(true), 100);
-    return () => clearTimeout(t);
-  }, []);
   const [bookings, setBookings] = useState([]);
   // FIX: combined mechanic list from both users collection and shopMechanics collection
   const [mechanics, setMechanics] = useState([]);
@@ -131,6 +126,12 @@ export default function AdminBookings() {
   const [activeTab, setActiveTab] = useState("All");
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    if (loading) return;
+    setAnimate(false);
+    const t = setTimeout(() => setAnimate(true), 100);
+    return () => clearTimeout(t);
+  }, [loading]);
   const [newMechanic, setNewMechanic] = useState("");
   const [newStatus, setNewStatus] = useState("");
   const [newCancelReason, setNewCancelReason] = useState("");

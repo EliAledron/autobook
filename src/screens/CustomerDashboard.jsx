@@ -99,15 +99,16 @@ const getLastServiceDate = (bookings, keyword) => {
 export default function CustomerDashboard() {
   const navigate = useNavigate();
   const [animate, setAnimate] = useState(false);
-  useEffect(() => {
-    setAnimate(false);
-    const t = setTimeout(() => setAnimate(true), 100);
-    return () => clearTimeout(t);
-  }, []);
   const [user, setUser] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    if (loading) return;
+    setAnimate(false);
+    const t = setTimeout(() => setAnimate(true), 100);
+    return () => clearTimeout(t);
+  }, [loading]);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {

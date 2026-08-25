@@ -471,16 +471,17 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
 export default function AdminMechanics() {
   const navigate = useNavigate();
   const [animate, setAnimate] = useState(false);
-  useEffect(() => {
-    setAnimate(false);
-    const t = setTimeout(() => setAnimate(true), 100);
-    return () => clearTimeout(t);
-  }, []);
   const [mechanics, setMechanics] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [allCarParts, setAllCarParts] = useState([]);
   const [allRequests, setAllRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    if (loading) return;
+    setAnimate(false);
+    const t = setTimeout(() => setAnimate(true), 100);
+    return () => clearTimeout(t);
+  }, [loading]);
   const [selected, setSelected] = useState(null);
   const [saving, setSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);

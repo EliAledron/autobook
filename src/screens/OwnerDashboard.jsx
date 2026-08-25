@@ -242,6 +242,11 @@ export default function OwnerDashboard({ user }) {
     const t = setTimeout(() => setAnimate(true), 100);
     return () => clearTimeout(t);
   }, []);
+  useEffect(() => {
+    setAnimate(false);
+    const t = setTimeout(() => setAnimate(true), 100);
+    return () => clearTimeout(t);
+  }, []);
   const firstName = user?.name?.split(" ")[0] || user?.role || "Owner";
   const isAdmin = (user?.role || "").toLowerCase() === "admin";
 

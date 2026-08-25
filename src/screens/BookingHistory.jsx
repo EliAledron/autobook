@@ -118,14 +118,15 @@ const keyframes = `
 export default function BookingHistory() {
   const navigate = useNavigate();
   const [animate, setAnimate] = useState(false);
-  useEffect(() => {
-    setAnimate(false);
-    const t = setTimeout(() => setAnimate(true), 100);
-    return () => clearTimeout(t);
-  }, []);
   const [uid, setUid] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    if (loading) return;
+    setAnimate(false);
+    const t = setTimeout(() => setAnimate(true), 100);
+    return () => clearTimeout(t);
+  }, [loading]);
   const [activeTab, setActiveTab] = useState("All");
   const [selected, setSelected] = useState(null);
   const [cancelling, setCancelling] = useState(false);

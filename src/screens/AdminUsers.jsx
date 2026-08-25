@@ -49,11 +49,6 @@ const keyframes = `
 export default function AdminUsers() {
   const navigate = useNavigate();
   const [animate, setAnimate] = useState(false);
-  useEffect(() => {
-    setAnimate(false);
-    const t = setTimeout(() => setAnimate(true), 100);
-    return () => clearTimeout(t);
-  }, []);
   const location = useLocation();
 
   const [currentUser, setCurrentUser] = useState(null);
@@ -75,6 +70,12 @@ export default function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [filter, setFilter] = useState("pending");
   const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    if (loading) return;
+    setAnimate(false);
+    const t = setTimeout(() => setAnimate(true), 100);
+    return () => clearTimeout(t);
+  }, [loading]);
   const [selected, setSelected] = useState(null);
   const [saving, setSaving] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
