@@ -236,17 +236,6 @@ function CarPartsModal({ user, mechanics, onClose, onSaved, shopId }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function OwnerDashboard({ user }) {
   const navigate = useNavigate();
-  const [animate, setAnimate] = useState(false);
-  useEffect(() => {
-    setAnimate(false);
-    const t = setTimeout(() => setAnimate(true), 100);
-    return () => clearTimeout(t);
-  }, []);
-  useEffect(() => {
-    setAnimate(false);
-    const t = setTimeout(() => setAnimate(true), 100);
-    return () => clearTimeout(t);
-  }, []);
   const firstName = user?.name?.split(" ")[0] || user?.role || "Owner";
   const isAdmin = (user?.role || "").toLowerCase() === "admin";
 
@@ -265,6 +254,13 @@ export default function OwnerDashboard({ user }) {
   const [userSearch, setUserSearch] = useState("");
   const [mechanics, setMechanics] = useState([]);
   const [allBookings, setAllBookings] = useState([]);
+  const [animate, setAnimate] = useState(false);
+  useEffect(() => {
+    if (allBookings.length === 0 && users.length === 0) return;
+    setAnimate(false); // trigger
+    const t = setTimeout(() => setAnimate(true), 100);
+    return () => clearTimeout(t);
+  }, [allBookings.length, users.length]);
   const [allCarParts, setAllCarParts] = useState([]);
   const [mechanicRequests, setMechanicRequests] = useState([]);
 
