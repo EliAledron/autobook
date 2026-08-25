@@ -40,32 +40,11 @@ async function uploadToCloudinary(file) {
 
 
 const keyframes = `
-  @property --fill-angle {
-    syntax: "<angle>";
-    inherits: false;
-    initial-value: 0deg;
-  }
-  @keyframes gauge-fill {
-    from { --fill-angle: 0deg; }
-    to { --fill-angle: 180deg; }
-  }
-  .gauge-chart-mask {
-    position: absolute; top: -1px; left: -1px; width: calc(100% + 2px); height: calc(200% + 2px); border-radius: 50%;
-    background: conic-gradient(from 270deg, transparent 0deg, transparent var(--fill-angle, 180deg), var(--card-bg, #ffffff) var(--fill-angle, 180deg), var(--card-bg, #ffffff) 180deg, transparent 180deg);
-    animation: gauge-fill 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-  .gauge-needle {
-    position: absolute; bottom: 0; left: 50%; width: 4px; height: calc(100% - 12px);
-    background: #111827; border-radius: 4px 4px 0 0;
-    transform-origin: bottom center;
-    transform: translateX(-50%) rotate(calc(var(--fill-angle, 180deg) - 90deg));
-    animation: gauge-fill 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    z-index: 2;
-  }
-  .gauge-needle::after {
-    content: ""; position: absolute; bottom: -4px; left: -4px; width: 12px; height: 12px;
-    background: #111827; border-radius: 50%;
-  }
+  
+  
+  
+  
+  
 `;
 
 // ─── Add / Edit Mechanic Modal ────────────────────────────────────────────────
@@ -491,6 +470,12 @@ function MechanicDetailModal({ mechanic, allBookings, allCarParts, allRequests, 
 
 export default function AdminMechanics() {
   const navigate = useNavigate();
+  const [animate, setAnimate] = useState(false);
+  useEffect(() => {
+    setAnimate(false);
+    const t = setTimeout(() => setAnimate(true), 100);
+    return () => clearTimeout(t);
+  }, []);
   const [mechanics, setMechanics] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [allCarParts, setAllCarParts] = useState([]);
@@ -705,8 +690,29 @@ export default function AdminMechanics() {
                 : `conic-gradient(from 270deg, ${colors.border} 0% 50%, transparent 50%)`,
                 boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
               }} />
-              {stats.total > 0 && <div className="gauge-chart-mask" style={{ "--card-bg": colors.white }} />}
-              <div className="gauge-needle" />
+              {stats.total > 0 && (
+                    <div style={{
+                      position: "absolute", top: 0, left: 0, width: "100%", height: "200%", borderRadius: "50%",
+                      background: colors.white,
+                      clipPath: "polygon(0 0, 100% 0, 100% 50%, 0 50%)",
+                      transform: `rotate(${animate ? 180 : 0}deg)`,
+                      transformOrigin: "center center",
+                      transition: "transform 1s cubic-bezier(0.16, 1, 0.3, 1)"
+                    }} />
+                  )}
+              <div style={{
+                    position: "absolute", bottom: 0, left: "50%", width: "4px", height: "100%",
+                    background: "#111827", borderRadius: "4px 4px 0 0",
+                    transformOrigin: "bottom center",
+                    transform: `translateX(-50%) rotate(${animate ? 90 : -90}deg)`,
+                    transition: "transform 1s cubic-bezier(0.16, 1, 0.3, 1)",
+                    zIndex: 2
+                  }}>
+                    <div style={{
+                      position: "absolute", bottom: "-4px", left: "-4px", width: "12px", height: "12px",
+                      background: "#111827", borderRadius: "50%"
+                    }} />
+                  </div>
               <div style={{
                 width: "80px", height: "40px", background: colors.white, borderRadius: "40px 40px 0 0",
                 display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end",
