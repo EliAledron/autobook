@@ -36,6 +36,16 @@ const getSortTime = (booking) => {
   return 0;
 };
 
+function getDaysAgo(timestamp) {
+  if (!timestamp) return 0;
+  let ts;
+  if (timestamp.toDate) ts = timestamp.toDate().getTime();
+  else if (timestamp.seconds) ts = timestamp.seconds * 1000;
+  else if (typeof timestamp === 'number') ts = timestamp;
+  else ts = new Date(timestamp).getTime();
+  return Math.floor((Date.now() - ts) / (1000 * 60 * 60 * 24));
+}
+
 function timeAgo(timestamp) {
   if (!timestamp) return "Just now";
   let ts;
@@ -542,15 +552,22 @@ export default function AdminBookings() {
   };
 
   const renderBookingCard = (b) => {
-    const isNewBooking = !b.mechanicId && (b.status || "Pending").toLowerCase() === "pending";
+    const daysAgo = getDaysAgo(b.createdAt);
+    const isUnread = !b.isRead;
+    
+    const showNew = isUnread && daysAgo < 1;
+    const showOverdue = isUnread && daysAgo >= 1;
+    
+    const borderColor = showNew ? colors.danger : (showOverdue ? colors.warning : colors.border);
+    const bgColor = showNew ? "#fff5f5" : (showOverdue ? colors.warningBg : colors.white);
 
     return (
     <div key={b.id} style={{
-      background: isNewBooking ? "#fff5f5" : colors.white,
+      background: bgColor,
       borderRadius: "16px",
-      border: isNewBooking ? `1px solid ${colors.danger}40` : `1px solid ${colors.border}`,
-      borderLeft: isNewBooking ? `5px solid ${colors.danger}` : `1px solid ${colors.border}`,
-      boxShadow: isNewBooking ? "0 4px 16px rgba(220,38,38,0.12)" : "0 4px 12px rgba(0,0,0,0.05)",
+      border: showNew || showOverdue ? `1px solid ${borderColor}40` : `1px solid ${borderColor}`,
+      borderLeft: showNew || showOverdue ? `5px solid ${borderColor}` : `1px solid ${borderColor}`,
+      boxShadow: showNew || showOverdue ? `0 4px 16px ${borderColor}20` : "0 4px 12px rgba(0,0,0,0.05)",
       padding: "16px",
       cursor: "pointer",
       display: "flex",
@@ -558,21 +575,28 @@ export default function AdminBookings() {
       gap: "12px",
       transition: "transform 0.2s ease, box-shadow 0.2s ease",
     }} 
-    onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = isNewBooking ? "0 8px 24px rgba(220,38,38,0.2)" : "0 8px 24px rgba(0,0,0,0.1)"; }}
-    onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = isNewBooking ? "0 4px 16px rgba(220,38,38,0.12)" : "0 4px 12px rgba(0,0,0,0.05)"; }}
+    onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = showNew || showOverdue ? `0 8px 24px ${borderColor}30` : "0 8px 24px rgba(0,0,0,0.1)"; }}
+    onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = showNew || showOverdue ? `0 4px 16px ${borderColor}20` : "0 4px 12px rgba(0,0,0,0.05)"; }}
     onClick={() => {
       setSelected(b);
       setNewStatus(b.status || "Pending");
       setNewMechanic(b.mechanicId || "");
 
       setNewCancelReason("");
+
+      if (!b.isRead) {
+        updateDoc(doc(db, "bookings", b.id), { isRead: true }).catch(() => {});
+      }
     }}>
       {/* Header: Status & Price */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <span style={statusStyle(b.status)}>{b.status || "Pending"}</span>
-          {isNewBooking && (
+          {showNew && (
             <span style={{ fontSize: "10px", fontWeight: "800", background: colors.danger, color: "#fff", padding: "3px 6px", borderRadius: "6px", letterSpacing: "0.5px", boxShadow: "0 2px 4px rgba(220,38,38,0.3)" }}>NEW</span>
+          )}
+          {showOverdue && (
+            <span style={{ fontSize: "10px", fontWeight: "800", background: colors.warning, color: "#fff", padding: "3px 6px", borderRadius: "6px", letterSpacing: "0.5px", boxShadow: "0 2px 4px rgba(217,119,6,0.3)" }}>UNREAD</span>
           )}
         </div>
 
