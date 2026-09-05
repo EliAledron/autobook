@@ -6,7 +6,7 @@ import { collection, query, where, getDocs, orderBy, updateDoc, doc, addDoc, ser
 import { sh, colors, EmptyState, getInitials, SharedSearchBar } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
-import { CheckCircle2, Wrench, XCircle, Clock, ClipboardList, Store, Calendar, Car, X, RefreshCw } from "lucide-react";
+import { CheckCircle2, Wrench, XCircle, Clock, ClipboardList, Store, Calendar, Car, X, RefreshCw, Star } from "lucide-react";
 
 const STATUS_TABS = ["All", "Pending", "In Progress", "Completed", "Cancelled", "Archived"];
 
@@ -133,6 +133,44 @@ export default function BookingHistory() {
   const [search, setSearch] = useState("");
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  const handleSubmitReview = async () => {
+    if (!selected) return;
+    if (!reviewText.trim()) return alert("Please write a review.");
+    setSubmittingReview(true);
+    try {
+      await updateDoc(doc(db, "bookings", selected.id), {
+        rating: reviewRating,
+        review: reviewText.trim(),
+        ratedAt: serverTimestamp()
+      });
+
+      await addDoc(collection(db, "adminAlerts"), {
+        type: "new_rating",
+        title: "New Review Received",
+        message: `Customer ${selected.customerName || "A customer"} left a ${reviewRating}-star review for their ${selected.serviceType} service.`,
+        shopId: selected.shopId || null,
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+
+      setBookings(prev => prev.map(b => b.id === selected.id ? { ...b, rating: reviewRating, review: reviewText.trim(), ratedAt: new Date() } : b));
+      setSelected(prev => ({ ...prev, rating: reviewRating, review: reviewText.trim(), ratedAt: new Date() }));
+      
+      setShowReviewModal(false);
+      setReviewText("");
+      setReviewRating(5);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to submit review.");
+    }
+    setSubmittingReview(false);
+  };
 
   const loadBookings = useCallback(async (customerId) => {
     try {
@@ -533,6 +571,43 @@ export default function BookingHistory() {
               </>
             )}
 
+            {/* Review Section - only for completed bookings */}
+            {(selected.status || "").toLowerCase() === "completed" && (
+              <div style={{ marginBottom: "1.5rem", padding: "16px", borderRadius: "16px", background: "#f9fafb", border: `1px solid ${colors.border}` }}>
+                {selected.rating ? (
+                  <>
+                    <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Your Review</div>
+                    <div style={{ display: "flex", gap: "2px", marginBottom: "8px" }}>
+                      {[1, 2, 3, 4, 5].map(star => (
+                        <span key={star} style={{ color: star <= selected.rating ? "#f59e0b" : "#e5e7eb" }}>
+                          <Star fill="currentColor" size={16} />
+                        </span>
+                      ))}
+                    </div>
+                    {selected.review && <div style={{ fontSize: "14px", color: colors.textPrimary, fontStyle: "italic", lineHeight: "1.5" }}>"{selected.review}"</div>}
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontSize: "14px", color: colors.textPrimary, fontWeight: "600", marginBottom: "12px" }}>How was your service?</div>
+                    <button
+                      onClick={() => setShowReviewModal(true)}
+                      style={{
+                        width: "100%", padding: "12px",
+                        background: colors.navy, color: "#fff",
+                        fontSize: "14px", fontWeight: "700",
+                        border: "none", borderRadius: "12px",
+                        cursor: "pointer", fontFamily: "inherit",
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                        transition: "all 0.2s ease",
+                      }}
+                    >
+                      <Star size={16} /> Leave a Review
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+
             <button onClick={() => setSelected(null)} style={{ ...sh.outlineBtn, padding: "16px", borderRadius: "16px", fontSize: "15px", border: "none", background: colors.bg, color: colors.textSecondary, fontWeight: "700" }}>Close</button>
           </div>
         </div>
@@ -576,6 +651,57 @@ export default function BookingHistory() {
               <button onClick={() => { setShowCancelConfirm(false); setCancelReason(""); }} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.bg, border: `1px solid ${colors.border}`, color: colors.textSecondary, fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "14px" }}>No, keep it</button>
               <button onClick={handleCancel} disabled={cancelling || !cancelReason.trim()} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.danger, border: "none", color: "#fff", fontWeight: "700", cursor: cancelReason.trim() ? "pointer" : "not-allowed", fontFamily: "inherit", fontSize: "14px", opacity: (cancelling || !cancelReason.trim()) ? 0.5 : 1 }}>
                 {cancelling ? "Cancelling..." : "Yes, cancel"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* REVIEW MODAL */}
+      {showReviewModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 120, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", animation: "ab-fade-in 0.2s ease-out" }} onClick={() => { setShowReviewModal(false); setReviewText(""); setReviewRating(5); }}>
+          <div style={{ background: colors.white, borderRadius: "24px", width: "100%", maxWidth: "340px", padding: "28px 24px", textAlign: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
+            <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: colors.infoBg, color: colors.info, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}><Star size={28} /></div>
+            <h3 style={{ margin: "0 0 8px", fontSize: "18px", color: colors.textPrimary, fontWeight: "800" }}>Rate your experience</h3>
+            <p style={{ margin: "0 0 20px", fontSize: "13px", color: colors.textSecondary, lineHeight: "1.5" }}>
+              How was the <strong>{selected?.serviceType}</strong> service at <strong>{selected?.shopName}</strong>?
+            </p>
+
+            <div style={{ display: "flex", gap: "8px", justifyContent: "center", marginBottom: "20px" }}>
+              {[1, 2, 3, 4, 5].map(star => (
+                <button
+                  key={star}
+                  onClick={() => setReviewRating(star)}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: star <= reviewRating ? "#f59e0b" : "#e5e7eb", transition: "color 0.2s", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
+                >
+                  <Star fill="currentColor" size={32} />
+                </button>
+              ))}
+            </div>
+
+            <div style={{ textAlign: "left", marginBottom: "20px" }}>
+              <div style={{ fontSize: "12px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>
+                Write a review <span style={{ color: colors.danger }}>*</span>
+              </div>
+              <textarea
+                value={reviewText}
+                onChange={e => setReviewText(e.target.value)}
+                placeholder="Share details of your experience..."
+                rows={4}
+                style={{
+                  width: "100%", padding: "12px 14px", borderRadius: "12px",
+                  border: `1.5px solid ${colors.border}`,
+                  fontSize: "13px", fontFamily: "inherit", outline: "none",
+                  background: "#f9fafb", color: colors.textPrimary,
+                  resize: "none", boxSizing: "border-box", lineHeight: "1.5"
+                }}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: "12px" }}>
+              <button onClick={() => { setShowReviewModal(false); setReviewText(""); setReviewRating(5); }} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.bg, border: `1px solid ${colors.border}`, color: colors.textSecondary, fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "14px" }}>Cancel</button>
+              <button onClick={handleSubmitReview} disabled={submittingReview || !reviewText.trim()} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.navy, border: "none", color: "#fff", fontWeight: "700", cursor: reviewText.trim() ? "pointer" : "not-allowed", fontFamily: "inherit", fontSize: "14px", opacity: (submittingReview || !reviewText.trim()) ? 0.5 : 1 }}>
+                {submittingReview ? "Submitting..." : "Submit Review"}
               </button>
             </div>
           </div>

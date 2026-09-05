@@ -352,23 +352,6 @@ export default function AutoShopProfile() {
           finalReviews = ratedBookings.length;
         }
 
-        // Fetch Direct Reviews
-        let directReviews = [];
-        if (sId) {
-          try {
-            const rSnap = await getDocs(query(collection(db, "shops", sId, "reviews"), orderBy("createdAt", "desc")));
-            directReviews = rSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-          } catch(e) {}
-        }
-        
-        if (directReviews.length > 0) {
-          // Combine or just use direct reviews for average
-          const totalRating = directReviews.reduce((sum, r) => sum + Number(r.rating), 0);
-          // If we want to combine both sources:
-          finalRating = (totalRating + (finalRating * finalReviews)) / (directReviews.length + finalReviews);
-          finalReviews = directReviews.length + finalReviews;
-        }
-
         // Map rated bookings to review objects so they appear in the UI
         const bookingReviews = ratedBookings.map(b => ({
           id: b.id || Math.random().toString(36).substring(7),
@@ -378,7 +361,7 @@ export default function AutoShopProfile() {
           createdAt: b.ratedAt || b.createdAt,
         }));
 
-        const allReviews = [...directReviews, ...bookingReviews].sort((a, b) => {
+        const allReviews = [...bookingReviews].sort((a, b) => {
           const tA = a.createdAt?.seconds || 0;
           const tB = b.createdAt?.seconds || 0;
           return tB - tA;
@@ -487,39 +470,7 @@ export default function AutoShopProfile() {
     setReporting(false);
   };
 
-  const handleSubmitReview = async () => {
-    if (!uid) return alert("Please log in to leave a review.");
-    if (!reviewText.trim()) return alert("Please write a review.");
-    if (!shop.id) return alert("Shop ID not found. Cannot submit review.");
-    setSubmittingReview(true);
-    try {
-      const newReview = {
-        userId: uid,
-        userName: currentUser?.displayName || "Customer",
-        rating: reviewRating,
-        text: reviewText.trim(),
-        createdAt: serverTimestamp(),
-      };
-      const rRef = await addDoc(collection(db, "shops", shop.id, "reviews"), newReview);
-      setReviews([{ id: rRef.id, ...newReview, createdAt: new Date() }, ...reviews]);
-      setReviewText("");
-      setReviewRating(5);
-      
-      // Update shop average rating
-      const newTotalReviews = (shop.reviews || 0) + 1;
-      const newAvgRating = (((shop.rating || 0) * (shop.reviews || 0)) + reviewRating) / newTotalReviews;
-      await updateDoc(doc(db, "shops", shop.id), {
-        rating: newAvgRating,
-        reviews: newTotalReviews
-      });
-      setShop(prev => ({ ...prev, rating: newAvgRating, reviews: newTotalReviews }));
-      
-      alert("Review submitted successfully!");
-    } catch (e) {
-      alert("Failed to submit review: " + e.message);
-    }
-    setSubmittingReview(false);
-  };
+
 
   if (!shop) {
     return (
@@ -760,36 +711,7 @@ export default function AutoShopProfile() {
 
         {activeTab === "Reviews" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            {/* Write a review (Customers only) */}
-            {!isOwner && (
-              <div style={{ background: colors.white, borderRadius: "20px", padding: "20px", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}` }}>
-                <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: "800", color: colors.textPrimary }}>Write a Review</h3>
-                <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
-                  {[1, 2, 3, 4, 5].map(star => (
-                    <button 
-                      key={star}
-                      onClick={() => setReviewRating(star)}
-                      style={{ background: "none", border: "none", cursor: "pointer", color: star <= reviewRating ? "#f59e0b" : "#e5e7eb", transition: "color 0.2s", display: "flex", alignItems: "center", justifyContent: "center" }}
-                    >
-                      <Star fill="currentColor" size={24} />
-                    </button>
-                  ))}
-                </div>
-                <textarea 
-                  value={reviewText}
-                  onChange={e => setReviewText(e.target.value)}
-                  placeholder="Share your experience with this shop..."
-                  style={{ width: "100%", padding: "16px", borderRadius: "12px", border: `1px solid ${colors.border}`, fontSize: "14px", fontFamily: "inherit", minHeight: "100px", resize: "vertical", boxSizing: "border-box", marginBottom: "16px", outline: "none" }}
-                />
-                <button 
-                  onClick={handleSubmitReview}
-                  disabled={submittingReview}
-                  style={{ padding: "12px 24px", background: colors.navy, color: "#fff", border: "none", borderRadius: "12px", fontWeight: "700", cursor: "pointer", fontSize: "14px", opacity: submittingReview ? 0.7 : 1 }}
-                >
-                  {submittingReview ? "Submitting..." : "Submit Review"}
-                </button>
-              </div>
-            )}
+
 
             {/* Reviews List */}
             {reviews.length === 0 ? (
