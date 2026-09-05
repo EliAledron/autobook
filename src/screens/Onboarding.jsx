@@ -852,7 +852,16 @@ function LoginForm({ goBack, navigate }) {
           <input className="ab-input" type="email" placeholder="you@email.com" value={email} onChange={e => setEmail(e.target.value)} style={s.input} />
 
           <label style={s.label}>Password</label>
-          <input className="ab-input" type="password" placeholder="Your password" value={password} onChange={e => setPassword(e.target.value)} style={s.input} />
+          <input className="ab-input" type="password" placeholder="Your password" value={password} onChange={e => setPassword(e.target.value)} style={{ ...s.input, marginBottom: "8px" }} />
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px" }}>
+            <button
+              type="button"
+              onClick={() => navigate("/forgot-password")}
+              style={{ background: "none", border: "none", color: "#2a5298", fontSize: "12px", fontWeight: "700", cursor: "pointer", padding: 0 }}
+            >
+              Forgot password?
+            </button>
+          </div>
 
           <button onClick={handleLogin} className="ab-btn" style={{ ...s.primaryBtn, opacity: loading ? 0.75 : 1 }} disabled={loading}>
             {loading ? "Signing in…" : "Log In"}

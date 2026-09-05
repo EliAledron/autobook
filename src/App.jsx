@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { UserProvider } from "./UserContext";
 import Signup from "./screens/Signup";
 import Login from "./screens/Login";
+import ForgotPassword from "./screens/ForgotPassword";
 import Dashboard from "./screens/Dashboard";
 import Profile from "./screens/Profile";
 import Onboarding from "./screens/Onboarding";
@@ -52,6 +53,7 @@ function App() {
           <Route path="/" element={<Onboarding />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Shared */}
           <Route path="/dashboard" element={<Dashboard />} />
