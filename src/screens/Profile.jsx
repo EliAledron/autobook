@@ -6,6 +6,7 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { sh, colors, getInitials, ErrorModal } from "./dashboardShared";
 import { useUser } from "../UserContext";
 import BackButton from "../components/BackButton";
+import { Save } from "lucide-react";
 import ReviewAppModal from "../components/ReviewAppModal";
 
 const CLOUDINARY_CLOUD = "dpwojan8w";
@@ -540,21 +541,23 @@ export default function Profile() {
         {/* SAVE BUTTON */}
         {editing && (
           <button
-            className="profile-save-btn profile-input-row"
-            style={{ 
-              width: "100%", padding: "16px",
-              background: `linear-gradient(135deg, ${colors.navy} 0%, ${colors.blue} 50%, #4facfe 100%)`,
-              color: "#fff", fontSize: "15px", fontWeight: "700",
-              border: "none", borderRadius: "16px", cursor: "pointer", 
-              fontFamily: "inherit", marginBottom: "20px",
-              opacity: saving ? 0.75 : 1,
-              animationDelay: "0.3s"
-            }}
-            onClick={handleSave}
-            disabled={saving}
-          >
-            {saving ? "Saving…" : "Save changes"}
-          </button>
+              className="profile-save-btn profile-input-row"
+              style={{
+                width: "100%", padding: "16px",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                background: colors.navy,
+                color: "#fff", fontSize: "15px", fontWeight: "700",
+                border: "none", borderRadius: "16px", cursor: "pointer", 
+                fontFamily: "inherit", marginBottom: "20px",
+                opacity: saving ? 0.75 : 1,
+                animationDelay: "0.3s"
+              }}
+              onClick={handleSave}
+              disabled={saving}
+            >
+              <Save size={18} />
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
         )}
 
                 <div style={sh.sectionLabel}>Feedback</div>
