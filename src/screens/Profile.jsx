@@ -46,10 +46,12 @@ async function uploadToCloudinary(file) {
   return data.secure_url;
 }
 
+import DesktopAdminProfile from "./desktop/DesktopAdminProfile";
+
 export default function Profile() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
-  const { refreshUserProfile } = useUser();
+  const { userProfile, refreshUserProfile } = useUser();
 
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -57,6 +59,9 @@ export default function Profile() {
   const [toast, setToast] = useState(false);
   const [error, setError] = useState("");
   const [showReviewModal, setShowReviewModal] = useState(false);
+
+  const isAdmin = userProfile?.role?.toLowerCase() === "admin";
+  if (isAdmin) return <DesktopAdminProfile />;
 
   const [uid, setUid] = useState("");
   const [role, setRole] = useState("");
