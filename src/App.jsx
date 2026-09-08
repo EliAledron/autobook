@@ -13,6 +13,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import Restricted from "./screens/Restricted";
 import DesktopOnly from "./components/DesktopOnly";
 import AdminLayout from "./components/AdminLayout";
+import DesktopAdminReportedShops from "./screens/desktop/DesktopAdminReportedShops";
 
 // Owner/Admin screens
 import AdminUsers from "./screens/AdminUsers";
@@ -68,6 +69,7 @@ function App() {
           <Route path="/admin/bookings" element={<AdminBookings />} />
           <Route path="/admin/mechanics" element={<AdminMechanics />} />
           <Route path="/admin/reports" element={<AdminReports />} />
+          <Route path="/admin/reported-shops" element={<DesktopAdminReportedShops />} />
           <Route path="/admin/alerts" element={<AdminAlerts />} />
           <Route path="/admin/carparts" element={<AdminCarParts />} />
           <Route path="/admin/reviews" element={<AdminReviews />} />

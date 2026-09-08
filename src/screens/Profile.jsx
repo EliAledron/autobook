@@ -6,6 +6,7 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { sh, colors, getInitials, ErrorModal } from "./dashboardShared";
 import { useUser } from "../UserContext";
 import BackButton from "../components/BackButton";
+import ReviewAppModal from "../components/ReviewAppModal";
 
 const CLOUDINARY_CLOUD = "dpwojan8w";
 const CLOUDINARY_PRESET = "autobook_uploads";
@@ -55,6 +56,7 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(false);
   const [error, setError] = useState("");
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   const [uid, setUid] = useState("");
   const [role, setRole] = useState("");
@@ -550,6 +552,18 @@ export default function Profile() {
           </button>
         )}
 
+                <div style={sh.sectionLabel}>Feedback</div>
+        <div className="profile-card" style={{ ...sh.card, padding: 0, borderRadius: "20px", border: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.03)", marginBottom: "32px" }}>
+          <button
+            className="profile-btn profile-outline-btn"
+            style={{ width: "100%", padding: "16px", fontSize: "15px", fontWeight: "700", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", background: "transparent", color: colors.navy }}
+            onClick={() => setShowReviewModal(true)}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            Rate AutoBook
+          </button>
+        </div>
+
         {/* SIGN OUT */}
         <div style={sh.sectionLabel}>Account</div>
         <div className="profile-card" style={{ ...sh.card, padding: 0, borderRadius: "20px", border: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.03)" }}>
@@ -589,7 +603,8 @@ export default function Profile() {
         }}
       >
         {toast}
-      </div>
+        </div>
+      {showReviewModal && <ReviewAppModal onClose={() => setShowReviewModal(false)} userProfile={{id: uid, name: name, role: role}} />}
     </div>
   );
 }
