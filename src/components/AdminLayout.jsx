@@ -16,6 +16,8 @@ export default function AdminLayout({ children }) {
 
   const [pendingUsers, setPendingUsers] = useState(0);
   const [unreadAlerts, setUnreadAlerts] = useState(0);
+  const [alertsList, setAlertsList] = useState([]);
+  const [showNotif, setShowNotif] = useState(false);
 
   useEffect(() => {
     const unsubscribers = [];
@@ -29,7 +31,10 @@ export default function AdminLayout({ children }) {
       where("type", "in", ["new_user", "shop_report", "new_rating", "system_alert"])
     );
     unsubscribers.push(onSnapshot(qAlerts, (snap) => {
-      setUnreadAlerts(snap.docs.filter(d => !d.data().read).length);
+      const list = snap.docs.map(d => ({id: d.id, ...d.data()}));
+      list.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+      setAlertsList(list);
+      setUnreadAlerts(list.filter(d => !d.read).length);
     }));
 
     return () => unsubscribers.forEach(u => u());
