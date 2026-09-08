@@ -7,6 +7,8 @@ import CarLoader from "./CarLoader";
 import CustomerDashboard from "./CustomerDashboard";
 import OwnerDashboard from "./OwnerDashboard";
 import MechanicDashboard from "./MechanicDashboard";
+import AdminDashboard from "./AdminDashboard";
+import DesktopOnly from "../components/DesktopOnly";
 
 function isEmail(str) {
   return typeof str === "string" && str.includes("@");
@@ -91,8 +93,17 @@ export default function Dashboard() {
   const props = { user, onLogout: handleLogout };
   const role = user?.role?.toLowerCase();
 
-  // Owner covers both "owner" and legacy "admin" roles
-  if (role === "owner" || role === "admin") return <OwnerDashboard {...props} />;
+  if (role === "admin") {
+    return (
+      <DesktopOnly>
+        <AdminDashboard {...props} />
+      </DesktopOnly>
+    );
+  }
+  
+  if (role === "owner") return <OwnerDashboard {...props} />;
+  
   if (role === "mechanic") return <MechanicDashboard {...props} />;
+  
   return <CustomerDashboard {...props} />;
 }

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { collection, getDocs, updateDoc, doc, orderBy, query, writeBatch, where, getDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import RoleBasedWrapper from "../components/RoleBasedWrapper";
 import { sh, colors, EmptyState } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
@@ -72,7 +73,13 @@ function timeAgo(timestamp) {
   return date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
+import DesktopAdminAlerts from "./desktop/DesktopAdminAlerts";
+import { useUser } from "../UserContext";
+
 export default function AdminAlerts() {
+  const { userProfile } = useUser();
+  if (userProfile?.role?.toLowerCase() === "admin") return <DesktopAdminAlerts />;
+
   const navigate = useNavigate();
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -250,24 +257,8 @@ export default function AdminAlerts() {
   );
 
   return (
-    <div style={sh.page}>
+    <RoleBasedWrapper title="Management">
       {/* TOPBAR */}
-      <div style={sh.topbar}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
-          <BackButton />
-          <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
-        </div>
-        {unreadCount > 0 && (
-          <button
-            onClick={markAllRead}
-            style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", fontSize: "11px", fontWeight: "600", padding: "5px 12px", borderRadius: "20px", cursor: "pointer", fontFamily: "inherit" }}
-          >
-            Mark all read
-          </button>
-        )}
-      </div>
-
-      {/* HERO */}
       <div style={sh.hero}>
         <div style={sh.rolePill}><div style={sh.roleDot} /><span style={sh.roleText}>{currentUser?.role || "Owner"}</span></div>
         <div style={sh.heroGreeting}>System Alerts</div>
@@ -334,6 +325,6 @@ export default function AdminAlerts() {
         )}
       </div>
 
-          </div>
+          </RoleBasedWrapper>
   );
 }

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { collection, getDocs, doc, getDoc, query, where } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import RoleBasedWrapper from "../components/RoleBasedWrapper";
 import { sh, colors, getInitials, EmptyState, CustomDropdown } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
@@ -50,7 +51,13 @@ const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
+import DesktopAdminReports from "./desktop/DesktopAdminReports";
+import { useUser } from "../UserContext";
+
 export default function AdminReports() {
+  const { userProfile } = useUser();
+  if (userProfile?.role?.toLowerCase() === "admin") return <DesktopAdminReports />;
+
   const navigate = useNavigate();
 
   // ✅ FIX 1: Fetch logged-in admin's own Firestore data
@@ -255,25 +262,9 @@ export default function AdminReports() {
   };
 
   return (
-    <div style={sh.page}>
+    <RoleBasedWrapper title="Management">
 
       {/* TOPBAR */}
-      <div style={sh.topbar}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <BackButton />
-          <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
-        </div>
-        <div style={sh.topbarRight}>
-          <div style={sh.topbarMeta}>
-            {/* ✅ FIX 1: Real admin name */}
-            <div style={sh.topbarName}>{currentUser?.displayName || "Admin"}</div>
-            <div>{currentUser?.role || "Admin"}</div>
-          </div>
-          <TopbarAvatar onClick={() => navigate("/profile")} />
-        </div>
-      </div>
-
-      {/* HERO */}
       <div style={sh.hero}>
         <div style={sh.rolePill}>
           <div style={sh.roleDot} />
@@ -575,6 +566,6 @@ export default function AdminReports() {
           </>
         )}
       </div>
-    </div>
+    </RoleBasedWrapper>
   );
 }

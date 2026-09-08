@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { collection, getDocs, updateDoc, doc, getDoc, query, where, addDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import RoleBasedWrapper from "../components/RoleBasedWrapper";
 import { sh, colors, EmptyState, getInitials, SharedSearchBar, ErrorModal } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
@@ -643,25 +644,10 @@ export default function AdminMechanics() {
   });
 
   return (
-    <div style={sh.page}>
+    <RoleBasedWrapper title="Management">
       <style>{keyframes}</style>
 
       {/* TOPBAR */}
-      <div style={sh.topbar}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <BackButton />
-          <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
-        </div>
-        <div style={sh.topbarRight}>
-          <div style={sh.topbarMeta}>
-            <div style={sh.topbarName}>{currentUser?.displayName || "Owner"}</div>
-            <div>{currentUser?.role || "Owner"}</div>
-          </div>
-          <TopbarAvatar onClick={() => navigate("/profile")} />
-        </div>
-      </div>
-
-      {/* HERO */}
       <div style={sh.hero}>
         <div style={sh.rolePill}>
           <div style={sh.roleDot} />
@@ -873,6 +859,6 @@ export default function AdminMechanics() {
         </div>
       )}
 
-    </div>
+    </RoleBasedWrapper>
   );
 }

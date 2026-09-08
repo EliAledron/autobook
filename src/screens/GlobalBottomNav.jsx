@@ -161,6 +161,9 @@ export default function GlobalBottomNav() {
   const role = (userProfile.role || "customer").toLowerCase();
   const path = location.pathname;
 
+  // Hide completely for super admins (they use the desktop sidebar layout)
+  if (role === "admin") return null;
+
   const navStyle = {
     position: "fixed",
     bottom: 0,

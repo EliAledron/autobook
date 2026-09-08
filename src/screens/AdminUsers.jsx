@@ -46,7 +46,13 @@ const keyframes = `
   
 `;
 
+import DesktopAdminUsers from "./desktop/DesktopAdminUsers";
+import { useUser } from "../UserContext";
+
 export default function AdminUsers() {
+  const { userProfile } = useUser();
+  if (userProfile?.role?.toLowerCase() === "admin") return <DesktopAdminUsers />;
+
   const navigate = useNavigate();
   const [animate, setAnimate] = useState(false);
   const location = useLocation();
