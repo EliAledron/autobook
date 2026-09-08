@@ -37,6 +37,7 @@ import Alerts from "./screens/Alerts";
 import ShopFeed from "./screens/ShopFeed";
 import GlobalBottomNav from "./screens/GlobalBottomNav";
 import StrategicCheckup from "./screens/StrategicCheckup";
+import CustomerReviews from "./screens/CustomerReviews";
 
 // Mechanic screens
 import MechanicDashboard from "./screens/MechanicDashboard";
@@ -87,6 +88,7 @@ function App() {
           <Route path="/customer/alerts" element={<Alerts />} />
           <Route path="/customer/feed" element={<ShopFeed />} />
           <Route path="/customer/checkup" element={<StrategicCheckup />} />
+          <Route path="/customer/reviews" element={<CustomerReviews />} />
           <Route path="/customer/shop-profile" element={<AutoShopProfile />} />
 
           {/* Mechanic */}

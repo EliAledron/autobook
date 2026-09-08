@@ -15,14 +15,16 @@ const IcoFeed    = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="n
 const IcoSearch  = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>;
 const IcoCar     = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 17H3v-5l2-5h14l2 5v5h-2"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>;
 const IcoHistory = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>;
+const IcoStar    = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>;
 
 const QUICK_ACTIONS = [
-  { id: "book",     Icon: IcoBook,    label: "Book a Service",   sub: "Schedule a repair",    path: "/customer/shop-select", iconColor: "#2a5298", iconBg: "#dbeafe" },
-  { id: "checkup",  Icon: IcoDiag,    label: "Diagnostic Check", sub: "Analyze symptoms",     path: "/customer/checkup",     iconColor: "#7c3aed", iconBg: "#ede9fe" },
-  { id: "feed",     Icon: IcoFeed,    label: "Shop Feed",        sub: "News & promos",        path: "/customer/feed",        iconColor: "#d97706", iconBg: "#fef3c7" },
-  { id: "mechanic", Icon: IcoSearch,  label: "Find Mechanic",    sub: "Browse available",     path: "/customer/mechanics",  iconColor: "#059669", iconBg: "#d1fae5" },
-  { id: "vehicles", Icon: IcoCar,     label: "My Vehicles",      sub: "Manage your cars",     path: "/customer/vehicles",   iconColor: "#1a3a5c", iconBg: "#e0f2fe" },
-  { id: "history",  Icon: IcoHistory, label: "Bookings History", sub: "Past services",        path: "/customer/history",    iconColor: "#dc2626", iconBg: "#fee2e2" },
+  { id: "book",     Icon: IcoBook,    label: "Book a Service",   sub: "Schedule a repair",  path: "/customer/shop-select", iconColor: "#2a5298", iconBg: "#dbeafe" },
+  // Hidden: { id: "checkup", Icon: IcoDiag, label: "Diagnostic Check", sub: "Analyze symptoms", path: "/customer/checkup", iconColor: "#7c3aed", iconBg: "#ede9fe" },
+  { id: "reviews",  Icon: IcoStar,    label: "My Reviews",       sub: "Shops I've rated",   path: "/customer/reviews",     iconColor: "#7c3aed", iconBg: "#ede9fe" },
+  { id: "feed",     Icon: IcoFeed,    label: "Shop Feed",        sub: "News & promos",      path: "/customer/feed",        iconColor: "#d97706", iconBg: "#fef3c7" },
+  { id: "mechanic", Icon: IcoSearch,  label: "Find Mechanic",    sub: "Browse available",   path: "/customer/mechanics",   iconColor: "#059669", iconBg: "#d1fae5" },
+  { id: "vehicles", Icon: IcoCar,     label: "My Vehicles",      sub: "Manage your cars",   path: "/customer/vehicles",    iconColor: "#1a3a5c", iconBg: "#e0f2fe" },
+  { id: "history",  Icon: IcoHistory, label: "Bookings History", sub: "Past services",      path: "/customer/history",     iconColor: "#dc2626", iconBg: "#fee2e2" },
 ];
 
 const keyframes = `
