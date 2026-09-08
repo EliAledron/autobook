@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { collection, onSnapshot, updateDoc, doc, deleteDoc } from "firebase/firestore";
+import { collection, onSnapshot, updateDoc, doc, deleteDoc, query, where, writeBatch } from "firebase/firestore";
 import { db } from "../../firebase";
 import { colors } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
-import { AlertTriangle, CheckCircle, Trash2, Search, Info, ShieldAlert, Star } from "lucide-react";
+import { AlertTriangle, CheckCircle, Trash2, Search, Info, ShieldAlert, Star, CheckCheck } from "lucide-react";
 
 export default function DesktopAdminAlerts() {
   const [alerts, setAlerts] = useState([]);
@@ -12,7 +12,13 @@ export default function DesktopAdminAlerts() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, "adminAlerts"), (snap) => {
+    // Only fetch alerts meant for global platform admins
+    const q = query(
+      collection(db, "adminAlerts"), 
+      where("type", "in", ["new_user", "shop_report", "new_rating", "system_alert"])
+    );
+    
+    const unsub = onSnapshot(q, (snap) => {
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       setAlerts(list);
@@ -20,6 +26,17 @@ export default function DesktopAdminAlerts() {
     });
     return () => unsub();
   }, []);
+
+  const markAllAsRead = async () => {
+    const unreadAlerts = alerts.filter(a => !a.read);
+    if (unreadAlerts.length === 0) return;
+    
+    const batch = writeBatch(db);
+    unreadAlerts.forEach(a => {
+      batch.update(doc(db, "adminAlerts", a.id), { read: true });
+    });
+    try { await batch.commit(); } catch (e) { console.error("Failed to mark all as read", e); }
+  };
 
   const markAsRead = async (id) => {
     try { await updateDoc(doc(db, "adminAlerts", id), { read: true }); } catch (e) {}
@@ -77,15 +94,25 @@ export default function DesktopAdminAlerts() {
             ))}
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", background: "#f8fafc", padding: "10px 16px", borderRadius: "12px", border: `1px solid ${colors.border}`, width: "300px" }}>
-            <Search size={18} color={colors.textMuted} />
-            <input 
-              type="text" 
-              placeholder="Search alerts..." 
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              style={{ border: "none", outline: "none", background: "transparent", width: "100%", fontSize: "14px", color: colors.textPrimary }}
-            />
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            {alerts.some(a => !a.read) && (
+              <button 
+                onClick={markAllAsRead}
+                style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 16px", borderRadius: "10px", background: colors.successBg, color: colors.success, fontWeight: "700", fontSize: "13px", cursor: "pointer", border: "none" }}
+              >
+                <CheckCheck size={18} /> Mark All as Read
+              </button>
+            )}
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", background: "#f8fafc", padding: "10px 16px", borderRadius: "12px", border: `1px solid ${colors.border}`, width: "300px" }}>
+              <Search size={18} color={colors.textMuted} />
+              <input 
+                type="text" 
+                placeholder="Search alerts..." 
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{ border: "none", outline: "none", background: "transparent", width: "100%", fontSize: "14px", color: colors.textPrimary }}
+              />
+            </div>
           </div>
         </div>
 
