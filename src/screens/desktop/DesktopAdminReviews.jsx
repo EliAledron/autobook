@@ -100,7 +100,10 @@ export default function DesktopAdminReviews() {
                       <div style={{ fontSize: "14px", fontWeight: "600", color: colors.textPrimary }}>{r.customerName || "Anonymous"}</div>
                     </td>
                     <td style={{ padding: "16px 24px", verticalAlign: "top" }}>
-                      <div style={{ fontSize: "14px", fontWeight: "600", color: colors.textPrimary }}>{r.shopName || "Unknown Shop"}</div>
+                      <div style={{ fontSize: "14px", fontWeight: "600", color: r.type === "platform" ? colors.navy : colors.textPrimary }}>
+                        {r.type === "platform" ? "AutoBook Platform" : (r.shopName || "Unknown Shop")}
+                      </div>
+                      {r.type === "platform" && <span style={{ fontSize: "11px", fontWeight: "800", textTransform: "uppercase", color: colors.textMuted }}>App Review</span>}
                     </td>
                     <td style={{ padding: "16px 24px", verticalAlign: "top", fontSize: "14px", color: colors.textSecondary }}>
                       {r.createdAt?.seconds ? new Date(r.createdAt.seconds * 1000).toLocaleDateString() : "Unknown"}
