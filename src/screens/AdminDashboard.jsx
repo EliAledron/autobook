@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 import AdminLayout from "../components/AdminLayout";
 import { Users, ClipboardList, AlertTriangle, CheckCircle } from "lucide-react";
@@ -30,7 +30,11 @@ export default function AdminDashboard({ user }) {
       setAllBookings(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     }));
 
-    unsubscribers.push(onSnapshot(collection(db, "adminAlerts"), (snap) => {
+    const qAlerts = query(
+      collection(db, "adminAlerts"),
+      where("type", "in", ["new_user", "shop_report", "new_rating", "system_alert"])
+    );
+    unsubscribers.push(onSnapshot(qAlerts, (snap) => {
       setUnreadAlerts(snap.docs.filter(d => !d.data().read).length);
     }));
 

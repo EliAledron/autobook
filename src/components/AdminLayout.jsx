@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { signOut } from "firebase/auth";
 import TopbarAvatar from "../screens/TopbarAvatar";
@@ -24,7 +24,11 @@ export default function AdminLayout({ children }) {
       setPendingUsers(snap.docs.filter(d => (d.data().status || "pending") === "pending").length);
     }));
 
-    unsubscribers.push(onSnapshot(collection(db, "adminAlerts"), (snap) => {
+    const qAlerts = query(
+      collection(db, "adminAlerts"),
+      where("type", "in", ["new_user", "shop_report", "new_rating", "system_alert"])
+    );
+    unsubscribers.push(onSnapshot(qAlerts, (snap) => {
       setUnreadAlerts(snap.docs.filter(d => !d.data().read).length);
     }));
 
