@@ -80,14 +80,21 @@ const SectionTitle = ({ title, badge, action }) => (
 );
 
 const MAINTENANCE_RULES = [
-  { key: "oil", label: "Oil Change", icon: <Droplet size={22} />, intervalDays: 180, defaultDaysSince: 175 },
-  { key: "tire", label: "Tire Rotation", icon: <Settings size={22} />, intervalDays: 365, defaultDaysSince: 150 },
-  { key: "brake", label: "Brake Inspection", icon: <ShieldAlert size={22} />, intervalDays: 365, defaultDaysSince: 290 },
-  { key: "aircon", label: "Aircon Cleaning", icon: <Snowflake size={22} />, intervalDays: 365, defaultDaysSince: 40 },
+  { key: "oil",     label: "Oil Change",       icon: <Droplet size={22} />,    intervalDays: 180, keywords: ["oil"] },
+  { key: "tire",    label: "Tire Rotation",    icon: <Settings size={22} />,   intervalDays: 365, keywords: ["tire"] },
+  { key: "brake",   label: "Brake Inspection", icon: <ShieldAlert size={22} />,intervalDays: 365, keywords: ["brake"] },
+  { key: "aircon",  label: "Aircon Cleaning",  icon: <Snowflake size={22} />,  intervalDays: 365, keywords: ["aircon", "air con", "ac "] },
+  { key: "battery", label: "Battery Check",    icon: <AlertTriangle size={22} />, intervalDays: 730, keywords: ["battery"] },
+  { key: "checkup", label: "General Checkup",  icon: <Wrench size={22} />,     intervalDays: 365, keywords: ["checkup", "general", "pms"] },
 ];
 
-const getLastServiceDate = (bookings, keyword) => {
-  const completed = bookings.filter(b => (b.status || "").toLowerCase() === "completed" && (b.serviceType || "").toLowerCase().includes(keyword.toLowerCase()));
+const getLastServiceDate = (bookings, keywords, vehicleId) => {
+  const completed = bookings.filter(b => {
+    if ((b.status || "").toLowerCase() !== "completed") return false;
+    if (vehicleId && b.vehicleId && b.vehicleId !== vehicleId) return false;
+    const sType = (b.serviceType || "").toLowerCase();
+    return keywords.some(kw => sType.includes(kw.toLowerCase()));
+  });
   if (completed.length === 0) return null;
   completed.sort((a, b) => {
     const tA = a.date ? new Date(a.date).getTime() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0);
@@ -95,7 +102,7 @@ const getLastServiceDate = (bookings, keyword) => {
     return tB - tA;
   });
   const best = completed[0];
-  return best.date ? new Date(best.date) : (best.createdAt?.seconds ? new Date(best.createdAt.seconds * 1000) : new Date());
+  return best.date ? new Date(best.date) : (best.createdAt?.seconds ? new Date(best.createdAt.seconds * 1000) : null);
 };
 
 export default function CustomerDashboard() {
@@ -103,6 +110,8 @@ export default function CustomerDashboard() {
   const [animate, setAnimate] = useState(false);
   const [user, setUser] = useState(null);
   const [bookings, setBookings] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [selectedVehicleId, setSelectedVehicleId] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -139,7 +148,7 @@ export default function CustomerDashboard() {
         const userUpdates = {};
 
         MAINTENANCE_RULES.forEach(rule => {
-          const lastDate = getLastServiceDate(fetchedBookings, rule.key);
+          const lastDate = getLastServiceDate(fetchedBookings, rule.keywords, null);
           if (lastDate) {
             const daysSince = Math.floor((now - lastDate.getTime()) / (1000 * 3600 * 24));
             const progress = Math.min(100, Math.max(0, Math.round((daysSince / rule.intervalDays) * 100)));
@@ -180,6 +189,14 @@ export default function CustomerDashboard() {
 
         if (updatesNeeded) await updateDoc(doc(db, "users", firebaseUser.uid), userUpdates);
         // --- END FREE TIER ---
+
+        // Fetch customer's registered vehicles
+        try {
+          const vSnap = await getDocs(query(collection(db, "vehicles"), where("ownerId", "==", firebaseUser.uid)));
+          const fetchedVehicles = vSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+          setVehicles(fetchedVehicles);
+          if (fetchedVehicles.length > 0) setSelectedVehicleId(fetchedVehicles[0].id);
+        } catch (e) { setVehicles([]); }
 
       } catch (e) { setBookings([]); }
 
@@ -362,82 +379,163 @@ export default function CustomerDashboard() {
           ))}
         </div>
 
-      <SectionTitle title="Maintenance Roadmap" />
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "1.5rem" }}>
-        {MAINTENANCE_RULES.map(rule => {
-          const actualLastDate = getLastServiceDate(bookings, rule.key);
-          const hasRecord = !!actualLastDate;
-          
-          const daysSince = hasRecord ? Math.floor((Date.now() - actualLastDate.getTime()) / (1000 * 3600 * 24)) : (rule.defaultDaysSince || 0);
-          const progress = Math.min(100, Math.max(0, Math.round((daysSince / rule.intervalDays) * 100)));
-          const daysRemaining = rule.intervalDays - daysSince;
-          
-          let statusText = "Good condition";
-          let color = colors.success;
-          let bgColor = colors.successBg;
-          let estimatedText = "Now";
+      {/* MAINTENANCE ROADMAP */}
+      <SectionTitle
+        title="Maintenance Roadmap"
+        action={
+          <button onClick={() => navigate("/customer/vehicles")} style={{ background: "transparent", border: `1px solid ${colors.border}`, borderRadius: "10px", padding: "6px 12px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", color: colors.textSecondary }}>
+            + Add Vehicle
+          </button>
+        }
+      />
 
-          if (progress < 60) {
-            statusText = "Good condition";
-            color = colors.success;
-            bgColor = colors.successBg;
-          } else if (progress < 90) {
-            statusText = "Due soon";
-            color = colors.warning;
-            bgColor = colors.warningBg;
-          } else {
-            statusText = <span style={{display: 'inline-flex', alignItems: 'center', gap: '4px'}}><AlertTriangle size={12} /> Service recommended</span>;
-            color = colors.danger;
-            bgColor = colors.dangerBg; 
-          }
+      {vehicles.length === 0 ? (
+        /* No vehicles registered */
+        <div style={{ background: colors.white, borderRadius: "20px", padding: "32px 20px", textAlign: "center", border: `1px solid ${colors.border}`, marginBottom: "1.5rem", boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
+          <div style={{ fontSize: "36px", marginBottom: "12px" }}>🚗</div>
+          <div style={{ fontSize: "15px", fontWeight: "800", color: colors.textPrimary, marginBottom: "6px" }}>No vehicle registered yet</div>
+          <div style={{ fontSize: "13px", color: colors.textSecondary, marginBottom: "20px", lineHeight: "1.5" }}>Add your vehicle to get a personalized maintenance roadmap based on your actual service history.</div>
+          <button onClick={() => navigate("/customer/vehicles")} style={{ padding: "12px 28px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", border: "none", borderRadius: "14px", fontWeight: "700", fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}>
+            Add My Vehicle
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* Vehicle selector tabs — shown only when 2+ vehicles */}
+          {vehicles.length > 1 && (
+            <div style={{ display: "flex", gap: "8px", overflowX: "auto", paddingBottom: "4px", marginBottom: "1rem" }}>
+              {vehicles.map(v => {
+                const isSelected = selectedVehicleId === v.id;
+                const label = [v.year, v.make, v.model].filter(Boolean).join(" ") || v.plate || "Vehicle";
+                return (
+                  <button
+                    key={v.id}
+                    onClick={() => setSelectedVehicleId(v.id)}
+                    style={{
+                      padding: "8px 16px", borderRadius: "20px", fontSize: "13px", fontWeight: "700",
+                      whiteSpace: "nowrap", cursor: "pointer", fontFamily: "inherit", flexShrink: 0,
+                      background: isSelected ? `linear-gradient(135deg, ${colors.navy}, ${colors.blue})` : colors.white,
+                      color: isSelected ? "#fff" : colors.textSecondary,
+                      border: isSelected ? "none" : `1px solid ${colors.border}`,
+                      boxShadow: isSelected ? "0 4px 12px rgba(26,58,92,0.2)" : "none",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
-          if (daysRemaining > 30) {
-            estimatedText = `Due in ~${Math.floor(daysRemaining / 30)} mo`;
-          } else if (daysRemaining > 0) {
-            estimatedText = `Due in ${daysRemaining} days`;
-          } else {
-            estimatedText = "Overdue";
-          }
+          {/* Vehicle label above roadmap */}
+          {(() => {
+            const v = vehicles.find(v => v.id === selectedVehicleId) || vehicles[0];
+            const label = [v?.year, v?.make, v?.model].filter(Boolean).join(" ") || v?.plate || "Your Vehicle";
+            return (
+              <div style={{ fontSize: "12px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "1rem" }}>
+                Tracking: <span style={{ color: colors.navy }}>{label}</span>
+              </div>
+            );
+          })()}
 
-          return (
-            <div key={rule.key} className="customer-card" style={{ background: colors.white, borderRadius: "24px", padding: "20px", border: `1px solid ${colors.border}`, display: "flex", flexDirection: "column", gap: "16px", boxShadow: "0 8px 24px rgba(0,0,0,0.04)", position: "relative", overflow: "hidden" }}>
-              {/* Subtle background glow based on status */}
-              <div style={{ position: "absolute", top: "-20px", right: "-20px", width: "100px", height: "100px", background: bgColor, borderRadius: "50%", filter: "blur(40px)", opacity: 0.6, zIndex: 0 }} />
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "1.5rem" }}>
+            {MAINTENANCE_RULES.map(rule => {
+              const actualLastDate = getLastServiceDate(bookings, rule.keywords, selectedVehicleId);
+              const hasRecord = !!actualLastDate;
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", position: "relative", zIndex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                  <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: bgColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", flexShrink: 0, border: `1px solid ${color}30` }}>{rule.icon}</div>
-                  <div>
-                    <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary, marginBottom: "4px", letterSpacing: "-0.2px" }}>{rule.label}</div>
-                    <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "600", display: "flex", alignItems: "center", gap: "6px" }}>
-                      <span style={{display: 'inline-flex', alignItems: 'center', gap: '4px'}}><Calendar size={14} /> {hasRecord ? actualLastDate.toLocaleDateString() : "No record"}</span>
-                      <span style={{ color: colors.border }}>|</span>
-                      <span style={{ color }}>{estimatedText}</span>
+              const daysSince = hasRecord ? Math.floor((Date.now() - actualLastDate.getTime()) / (1000 * 3600 * 24)) : null;
+              const progress = hasRecord ? Math.min(100, Math.max(0, Math.round((daysSince / rule.intervalDays) * 100))) : 0;
+              const daysRemaining = hasRecord ? rule.intervalDays - daysSince : null;
+
+              let statusText = "No record yet";
+              let color = colors.textMuted;
+              let bgColor = colors.bg;
+              let estimatedText = "—";
+
+              if (hasRecord) {
+                if (progress < 60) {
+                  statusText = "Good condition";
+                  color = colors.success;
+                  bgColor = colors.successBg;
+                } else if (progress < 90) {
+                  statusText = "Due soon";
+                  color = colors.warning;
+                  bgColor = colors.warningBg;
+                } else {
+                  statusText = "Service recommended";
+                  color = colors.danger;
+                  bgColor = colors.dangerBg;
+                }
+
+                if (daysRemaining > 30) {
+                  estimatedText = `Due in ~${Math.floor(daysRemaining / 30)} mo`;
+                } else if (daysRemaining > 0) {
+                  estimatedText = `Due in ${daysRemaining} days`;
+                } else {
+                  estimatedText = "Overdue";
+                }
+              }
+
+              return (
+                <div key={rule.key} className="customer-card" style={{ background: colors.white, borderRadius: "24px", padding: "20px", border: `1px solid ${hasRecord ? colors.border : colors.border}`, display: "flex", flexDirection: "column", gap: "16px", boxShadow: "0 8px 24px rgba(0,0,0,0.04)", position: "relative", overflow: "hidden" }}>
+                  {/* Status glow */}
+                  <div style={{ position: "absolute", top: "-20px", right: "-20px", width: "100px", height: "100px", background: bgColor, borderRadius: "50%", filter: "blur(40px)", opacity: 0.6, zIndex: 0 }} />
+
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", position: "relative", zIndex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                      <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: hasRecord ? bgColor : colors.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", flexShrink: 0, border: `1px solid ${hasRecord ? color + "30" : colors.border}`, color: hasRecord ? color : colors.textMuted }}>
+                        {rule.icon}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary, marginBottom: "4px", letterSpacing: "-0.2px" }}>{rule.label}</div>
+                        <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "600", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                            <Calendar size={12} />
+                            {hasRecord ? `Last: ${actualLastDate.toLocaleDateString()}` : "No service logged yet"}
+                          </span>
+                          {hasRecord && (
+                            <>
+                              <span style={{ color: colors.border }}>|</span>
+                              <span style={{ color }}>{estimatedText}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: "11px", fontWeight: "700", color: hasRecord ? color : colors.textMuted, background: hasRecord ? bgColor : colors.bg, padding: "4px 10px", borderRadius: "20px", whiteSpace: "nowrap", border: `1px solid ${hasRecord ? color + "30" : colors.border}` }}>
+                      {`Every ${rule.intervalDays >= 365 ? Math.round(rule.intervalDays / 365) + "yr" : rule.intervalDays / 30 + "mo"}`}
                     </div>
                   </div>
-                </div>
-              </div>
 
-              <div style={{ position: "relative", zIndex: 1 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                  <span style={{ fontSize: "13px", fontWeight: "700", color: colors.textPrimary }}>Wear Progress</span>
-                  <span style={{ fontSize: "13px", fontWeight: "800", color }}>{progress}%</span>
-                </div>
-                <div style={{ width: "100%", height: "10px", background: colors.bg, borderRadius: "5px", overflow: "hidden", border: `1px solid ${colors.border}` }}>
-                  <div style={{ width: `${progress}%`, height: "100%", background: color, borderRadius: "5px", transition: "width 1s cubic-bezier(0.4, 0, 0.2, 1)" }} />
-                </div>
-                <div style={{ textAlign: "right", marginTop: "6px", fontSize: "11px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                  Status: <span style={{ color }}>{statusText}</span>
-                </div>
-              </div>
+                  <div style={{ position: "relative", zIndex: 1 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                      <span style={{ fontSize: "13px", fontWeight: "700", color: colors.textPrimary }}>Wear Progress</span>
+                      <span style={{ fontSize: "13px", fontWeight: "800", color: hasRecord ? color : colors.textMuted }}>{hasRecord ? `${progress}%` : "—"}</span>
+                    </div>
+                    <div style={{ width: "100%", height: "10px", background: colors.bg, borderRadius: "5px", overflow: "hidden", border: `1px solid ${colors.border}` }}>
+                      <div style={{ width: `${progress}%`, height: "100%", background: hasRecord ? color : colors.border, borderRadius: "5px", transition: "width 1s cubic-bezier(0.4, 0, 0.2, 1)" }} />
+                    </div>
+                    <div style={{ textAlign: "right", marginTop: "6px", fontSize: "11px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                      Status: <span style={{ color: hasRecord ? color : colors.textMuted }}>{statusText}</span>
+                    </div>
+                  </div>
 
-              {progress >= 90 && (
-                <button onClick={() => navigate("/customer/shop-select", { state: { prefilledService: rule.label } })} style={{ position: "relative", zIndex: 1, width: "100%", padding: "14px", borderRadius: "14px", border: "none", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", fontSize: "14px", fontWeight: "800", cursor: "pointer", marginTop: "4px", transition: "all 0.2s", boxShadow: "0 4px 12px rgba(42,82,152,0.2)", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }} onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"} onMouseLeave={e => e.currentTarget.style.transform = "none"}><AlertTriangle size={14} /> Schedule {rule.label} Now</button>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                  {!hasRecord ? (
+                    <button onClick={() => navigate("/customer/shop-select", { state: { prefilledService: rule.label } })} style={{ position: "relative", zIndex: 1, width: "100%", padding: "12px", borderRadius: "14px", border: `1px solid ${colors.border}`, background: colors.bg, color: colors.textSecondary, fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                      Book First {rule.label}
+                    </button>
+                  ) : progress >= 90 && (
+                    <button onClick={() => navigate("/customer/shop-select", { state: { prefilledService: rule.label } })} style={{ position: "relative", zIndex: 1, width: "100%", padding: "14px", borderRadius: "14px", border: "none", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", fontSize: "14px", fontWeight: "800", cursor: "pointer", marginTop: "4px", transition: "all 0.2s", boxShadow: "0 4px 12px rgba(42,82,152,0.2)", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }} onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"} onMouseLeave={e => e.currentTarget.style.transform = "none"}>
+                      <AlertTriangle size={14} /> Schedule {rule.label} Now
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
 
         <SectionTitle title="Recent Activity" action={
           <button onClick={() => navigate("/customer/history")} style={{ background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", border: "none", borderRadius: "12px", padding: "8px 16px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(26,58,92,0.2)" }}>
