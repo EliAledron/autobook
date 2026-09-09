@@ -392,7 +392,9 @@ export default function CustomerDashboard() {
       {vehicles.length === 0 ? (
         /* No vehicles registered */
         <div style={{ background: colors.white, borderRadius: "20px", padding: "32px 20px", textAlign: "center", border: `1px solid ${colors.border}`, marginBottom: "1.5rem", boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
-          <div style={{ fontSize: "36px", marginBottom: "12px" }}>🚗</div>
+          <div style={{ width: "56px", height: "56px", borderRadius: "18px", background: colors.infoBg, display: "inline-flex", alignItems: "center", justifyContent: "center", color: colors.info, marginBottom: "16px" }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 17H3v-5l2-5h14l2 5v5h-2"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>
+          </div>
           <div style={{ fontSize: "15px", fontWeight: "800", color: colors.textPrimary, marginBottom: "6px" }}>No vehicle registered yet</div>
           <div style={{ fontSize: "13px", color: colors.textSecondary, marginBottom: "20px", lineHeight: "1.5" }}>Add your vehicle to get a personalized maintenance roadmap based on your actual service history.</div>
           <button onClick={() => navigate("/customer/vehicles")} style={{ padding: "12px 28px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", border: "none", borderRadius: "14px", fontWeight: "700", fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}>
