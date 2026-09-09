@@ -449,6 +449,19 @@ export default function AdminBookings() {
           read: false,
           createdAt: serverTimestamp(),
         });
+
+        // Auto-update maintenance roadmap: notify the customer their roadmap timer has reset
+        if (selected.serviceType) {
+          await addDoc(collection(db, "notifications"), {
+            userId: selected.customerId,
+            title: "🗓️ Maintenance Roadmap Updated",
+            message: `Your ${selected.serviceType} was just completed at ${selected.shopName || "the shop"}. Your maintenance roadmap has been automatically updated — your timer has been reset!`,
+            type: "roadmap_update",
+            bookingId: selected.id,
+            read: false,
+            createdAt: serverTimestamp(),
+          });
+        }
       }
 
       const assignedMechanicId = newMechanic;
