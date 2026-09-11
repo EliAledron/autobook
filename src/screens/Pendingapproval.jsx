@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Hourglass, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Hourglass, Clock, CheckCircle, XCircle, Mail, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -54,6 +54,19 @@ export default function PendingApproval() {
     };
   }, [navigate]);
 
+  
+  const handleCheckVerification = async () => {
+    if (auth.currentUser) {
+      await auth.currentUser.reload();
+      if (auth.currentUser.emailVerified) {
+        setStatus("loading");
+        window.location.reload();
+      } else {
+        alert("Email not verified yet. Please check your inbox or spam folder.");
+      }
+    }
+  };
+
   const handleLogout = async () => {
     await signOut(auth);
     navigate("/");
@@ -102,6 +115,25 @@ export default function PendingApproval() {
 
         {/* ===== CONTENT ===== */}
         <div style={s.content}>
+          
+          {status === "unverified" && (
+            <>
+              <div style={{ ...s.icon, animation: "ab-float 2s ease-in-out infinite" }}><Mail size={48} /></div>
+              <h2 style={s.title}>Verify your email</h2>
+              <p style={s.subtitle}>
+                We sent a verification link to your email address. Please click the link to verify your account, then click the button below.
+              </p>
+
+              <button style={{...s.logoutBtn, background: "rgba(70, 233, 255, 0.2)", color: "#46e9ff", width: "100%", marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"}} onClick={handleCheckVerification}>
+                <RefreshCw size={18} /> I have verified my email
+              </button>
+              
+              <button style={{...s.logoutBtn, background: "transparent", color: "rgba(255,255,255,0.5)", width: "100%", marginTop: 0}} onClick={handleLogout}>
+                Sign out
+              </button>
+            </>
+          )}
+
           {status === "loading" && (
             <>
               <div style={s.icon}><Hourglass size={48} /></div>
