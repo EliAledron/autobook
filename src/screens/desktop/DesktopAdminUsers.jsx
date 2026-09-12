@@ -99,10 +99,12 @@ export default function DesktopAdminUsers() {
   return (
     <>
       <ConfirmModal 
-        isOpen={confirmProps.isOpen}
-        title={confirmProps.title}
-        message={confirmProps.message}
-        type={confirmProps.type}
+          isOpen={confirmProps.isOpen}
+          title={confirmProps.title}
+          message={confirmProps.message}
+          type={confirmProps.type}
+          requireInput={confirmProps.requireInput}
+          inputPlaceholder={confirmProps.inputPlaceholder}
         onCancel={() => setConfirmProps({ isOpen: false })}
         onConfirm={confirmProps.onConfirm}
       />
