@@ -1,14 +1,14 @@
 import React from "react";
 
 const keyframes = `
-  @keyframes ab-drive  { 0%{transform:translateX(-120px)} 100%{transform:translateX(calc(100vw + 120px))} }
+  @keyframes ab-drive  { 0%{transform:translateX(-120px)} 100%{transform:translateX(calc(100% + 120px))} }
   @keyframes ab-wheel  { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
   @keyframes ab-road   { 0%{transform:translateX(0)} 100%{transform:translateX(-80px)} }
   @keyframes ab-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
   @keyframes ab-pulse  { 0%,100%{opacity:1} 50%{opacity:0.35} }
 `;
 
-export default function CarLoader({ text = "Loading..." }) {
+export default function CarLoader({ text = "Loading...", fullWidth = false }) {
   return (
     <div style={s.container}>
       <style>{keyframes}</style>
@@ -65,7 +65,7 @@ const s = {
   },
   scene: {
     width: "100%",
-    maxWidth: "400px",
+    maxWidth: fullWidth ? "100vw" : "400px",
     height: "60px",
     position: "relative",
     overflow: "hidden",
@@ -159,7 +159,7 @@ const s = {
   },
   road: {
     width: "100%",
-    maxWidth: "400px",
+    maxWidth: fullWidth ? "100vw" : "400px",
     height: "6px",
     background: "#e2e8f0", // Lightened road
     overflow: "hidden",

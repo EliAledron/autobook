@@ -101,12 +101,20 @@ export default function PendingApproval() {
     <div style={s.page}>
       <style>{keyframes}</style>
       
+      <div style={{ width: "100%", position: "absolute", top: "10%", left: 0 }}>
+        <CarLoader text="" fullWidth={true} />
+      </div>
+      
       <div style={s.card}>
         {status === "loading" && (
           <div style={s.stateContainer}>
-            <CarLoader text="Loading your profile..." />
+            <div style={{ ...s.iconWrap, background: "#f1f5f9", color: "#64748b", animation: "pulse-soft 2s infinite" }}>
+              <Hourglass size={40} />
+            </div>
+            <h2 style={s.title}>Loading...</h2>
           </div>
         )}
+
 
         {status === "unverified" && (
           <div style={s.stateContainer}>
