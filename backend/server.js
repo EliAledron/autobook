@@ -1,23 +1,24 @@
 const express = require('express');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
-const admin = require('firebase-admin');
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getAuth } = require('firebase-admin/auth');
+const { getMessaging } = require('firebase-admin/messaging');
 require('dotenv').config();
 
 const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
 
-// Initialize Firebase Admin (We will add the service account key via Render Env Vars later)
+// Initialize Firebase Admin
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
+  initializeApp({
+    credential: cert(serviceAccount)
   });
 } else {
   console.warn('⚠️ FIREBASE_SERVICE_ACCOUNT env var is missing! FCM and Auth will fail.');
-  // Fallback for local testing if needed, though best to use the env var
-  admin.initializeApp();
+  initializeApp();
 }
 
 // Nodemailer setup
@@ -38,7 +39,7 @@ const authenticate = async (req, res, next) => {
 
   const token = authHeader.split('Bearer ')[1];
   try {
-    const decodedToken = await admin.auth().verifyIdToken(token);
+    const decodedToken = await getAuth().verifyIdToken(token);
     req.user = decodedToken;
     next();
   } catch (error) {
@@ -90,7 +91,7 @@ app.post('/api/send-push', authenticate, async (req, res) => {
     };
     if (data) message.data = data;
 
-    const response = await admin.messaging().send(message);
+    const response = await getMessaging().send(message);
     res.status(200).json({ success: true, response });
   } catch (error) {
     console.error('Push Error:', error);
