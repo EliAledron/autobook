@@ -23,6 +23,12 @@ export default function DesktopAdminUsers() {
   }, []);
 
   const handleStatusUpdate = async (id, status) => {
+    let msg = "";
+    if (status === "approved") msg = "Are you sure you want to approve this user?";
+    else if (status === "rejected") msg = "Are you sure you want to reject this user?";
+    else if (status === "restricted") msg = "Are you sure you want to restrict this user?";
+    if (msg && !window.confirm(msg)) return;
+
     setActionLoading(id);
     try {
       await updateDoc(doc(db, "users", id), { status });

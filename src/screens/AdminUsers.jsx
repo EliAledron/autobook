@@ -153,6 +153,13 @@ export default function AdminUsers() {
   }, [selected]);
 
   const updateStatus = async (id, status) => {
+    let msg = "";
+    if (status === "approved") msg = "Are you sure you want to approve this user?";
+    else if (status === "rejected") msg = "Are you sure you want to reject this user?";
+    // restrict already has a confirm in the UI, but we can add it here and remove the UI one later if needed.
+    // To be safe, only check approve/reject here if restrict isn't checked
+    if (msg && !window.confirm(msg)) return;
+
     setSaving(true);
     
     const updates = { status };
