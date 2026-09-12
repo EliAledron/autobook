@@ -107,7 +107,9 @@ const getLastServiceDate = (bookings, keywords, vehicleId) => {
   return best.date ? new Date(best.date) : (best.createdAt?.seconds ? new Date(best.createdAt.seconds * 1000) : null);
 };
 
+import { usePushNotifications } from "../hooks/usePushNotifications";
 export default function CustomerDashboard() {
+  usePushNotifications();
   const navigate = useNavigate();
   const [animate, setAnimate] = useState(false);
   const [user, setUser] = useState(null);

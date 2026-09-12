@@ -1,5 +1,5 @@
 import React from "react";
-import NotificationBell from "./NotificationBell";
+
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
@@ -147,7 +147,7 @@ export default function AdminLayout({ children }) {
                 <div style={{ fontSize: "14px", fontWeight: "700", color: colors.textPrimary }}>{userProfile?.displayName || userProfile?.name || "Admin"}</div>
                 <div style={{ fontSize: "12px", color: colors.textSecondary }}>Super Admin</div>
               </div>
-              <NotificationBell />
+              
             <TopbarAvatar onClick={() => navigate("/profile")} />
             </div>
           </div>

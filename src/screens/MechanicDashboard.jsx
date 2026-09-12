@@ -1,5 +1,5 @@
 import React from "react";
-import NotificationBell from "../components/NotificationBell";
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
@@ -125,7 +125,7 @@ export default function MechanicDashboard() {
             <div style={sh.topbarName}>{user?.displayName}</div>
             <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "11px" }}>Mechanic</div>
           </div>
-          <NotificationBell />
+          
             <TopbarAvatar onClick={() => navigate("/profile")} />
         </div>
       </div>

@@ -49,6 +49,7 @@ const keyframes = `
 import DesktopAdminUsers from "./desktop/DesktopAdminUsers";
 import { useUser } from "../UserContext";
 
+import { sendEmailNotification } from "../utils/notifications";
 export default function AdminUsers() {
   const { userProfile } = useUser();
   if (userProfile?.role?.toLowerCase() === "admin") return <DesktopAdminUsers />;

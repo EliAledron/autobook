@@ -45,6 +45,7 @@ const keyframes = `
   ::-webkit-scrollbar { display: none; }
 `;
 
+import { sendPushNotification } from "../utils/notifications";
 export default function MechanicBookings() {
   const navigate = useNavigate();
   const [uid, setUid] = useState(null);

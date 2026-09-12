@@ -45,6 +45,7 @@ const keyframes = `
   ::-webkit-scrollbar { display:none; }
 `;
 
+import { sendPushNotification } from "../utils/notifications";
 export default function MechanicVisitRequests() {
   const navigate = useNavigate();
   const [uid, setUid] = useState(null);
@@ -100,6 +101,11 @@ export default function MechanicVisitRequests() {
       setRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: "Completed" } : r));
       if (selected?.id === requestId) setSelected(prev => ({ ...prev, status: "Completed" }));
       showToast("Visit marked as completed!");
+      if (request.customerId) {
+        const userDoc = await getDoc(doc(db, "users", request.customerId));
+        const token = userDoc.data()?.fcmToken;
+        if (token) sendPushNotification(token, "Visit Completed", "Your mechanic visit has been completed!");
+      }
     } catch (e) {
       showToast("Failed to update. Try again.");
     }

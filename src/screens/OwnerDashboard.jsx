@@ -1,5 +1,4 @@
 import React from "react";
-import NotificationBell from "../components/NotificationBell";
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -606,7 +605,6 @@ export default function OwnerDashboard({ user }) {
             <div style={sh.topbarName}>{user?.name}</div>
             <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)" }}>{user?.role || "Owner"}</div>
           </div>
-          <NotificationBell />
             <TopbarAvatar onClick={() => navigate("/profile")} />
         </div>
       </div>

@@ -5,6 +5,7 @@ import { colors, ConfirmModal } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
 import { Check, X, Ban, Trash2, Search, UserCheck } from "lucide-react";
 
+import { sendEmailNotification } from "../../utils/notifications";
 export default function DesktopAdminUsers() {
   const [users, setUsers] = useState([]);
   const [filter, setFilter] = useState("pending");
