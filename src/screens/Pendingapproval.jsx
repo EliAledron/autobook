@@ -28,6 +28,11 @@ export default function PendingApproval() {
         return;
       }
 
+      if (!user.emailVerified) {
+        setStatus("unverified");
+        return;
+      }
+
       const userRef = doc(db, "users", user.uid);
 
       docUnsub = onSnapshot(userRef, (snap) => {
