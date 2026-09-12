@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Hourglass, Clock, CheckCircle, XCircle, Mail, RefreshCw, LogOut, Send } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import CarLoader from "../components/CarLoader";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged, signOut, sendEmailVerification } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
@@ -103,10 +104,7 @@ export default function PendingApproval() {
       <div style={s.card}>
         {status === "loading" && (
           <div style={s.stateContainer}>
-            <div style={{ ...s.iconWrap, background: "#f1f5f9", color: "#64748b", animation: "pulse-soft 2s infinite" }}>
-              <Hourglass size={40} />
-            </div>
-            <h2 style={s.title}>Loading...</h2>
+            <CarLoader text="Loading your profile..." />
           </div>
         )}
 
