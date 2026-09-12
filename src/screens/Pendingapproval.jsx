@@ -3,7 +3,7 @@ import { Hourglass, Clock, CheckCircle, XCircle, Mail, RefreshCw } from "lucide-
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged, signOut, sendEmailVerification } from "firebase/auth";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 
 const keyframes = `
   @keyframes ab-drive  { 0%{transform:translateX(-120px)} 100%{transform:translateX(calc(100vw + 120px))} }
@@ -18,6 +18,8 @@ export default function PendingApproval() {
   const navigate = useNavigate();
   const [status, setStatus] = useState("loading");
   const [name, setName] = useState("");
+  const [reason, setReason] = useState("");
+  const [reapplying, setReapplying] = useState(false);
 
   useEffect(() => {
     let docUnsub = null;
@@ -43,6 +45,7 @@ export default function PendingApproval() {
 
         const data = snap.data();
         setName(data.displayName?.split(" ")[0] || "there");
+        setReason(data.rejectionReason || "");
 
         const currentStatus = data.status || "pending";
         setStatus(currentStatus);
@@ -94,6 +97,17 @@ export default function PendingApproval() {
         alert("Email not verified yet. Please check your inbox or spam folder.");
       }
     }
+  };
+
+  const handleReapply = async () => {
+    if (!auth.currentUser) return;
+    setReapplying(true);
+    try {
+      await updateDoc(doc(db, "users", auth.currentUser.uid), { status: "pending", rejectionReason: null });
+    } catch (e) {
+      console.error(e);
+    }
+    setReapplying(false);
   };
 
   const handleLogout = async () => {
@@ -200,10 +214,21 @@ export default function PendingApproval() {
           {status === "rejected" && (
             <>
               <div style={s.icon}><XCircle size={48} /></div>
-              <h2 style={s.title}>Account rejected</h2>
+              <h2 style={s.title}>Application Rejected</h2>
               <p style={s.subtitle}>
-                Your application was not approved. Please contact the admin.
+                Unfortunately, your application to join the platform was not approved at this time.
               </p>
+              
+              {reason && (
+                <div style={{ background: "rgba(255,255,255,0.1)", padding: "16px", borderRadius: "12px", width: "100%", boxSizing: "border-box", marginBottom: "24px", borderLeft: "4px solid #ef4444" }}>
+                  <div style={{ fontSize: "12px", textTransform: "uppercase", fontWeight: "700", color: "#fca5a5", marginBottom: "4px" }}>Admin Note:</div>
+                  <div style={{ fontSize: "14px", color: "#fff", lineHeight: "1.5" }}>{reason}</div>
+                </div>
+              )}
+
+              <button style={{ ...s.logoutBtn, background: "#3b82f6", color: "#fff", border: "none", marginBottom: "12px" }} onClick={handleReapply} disabled={reapplying}>
+                {reapplying ? "Submitting..." : "Fix & Re-apply"}
+              </button>
 
               <button style={s.logoutBtn} onClick={handleLogout}>
                 Back to login
