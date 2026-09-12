@@ -1,5 +1,5 @@
 import React from "react";
-import NotificationBell from "../components/NotificationBell";
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
@@ -243,7 +243,7 @@ export default function CustomerDashboard() {
             <div>{user?.role}</div>
           </div>
           {/* Uses global context — updates instantly when profile photo changes */}
-          <NotificationBell />
+          
             <TopbarAvatar onClick={() => navigate("/profile")} />
         </div>
       </div>
