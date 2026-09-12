@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Hourglass, Clock, CheckCircle, XCircle, Mail, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged, signOut, sendEmailVerification } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 
 const keyframes = `
@@ -55,6 +55,30 @@ export default function PendingApproval() {
   }, [navigate]);
 
   
+  
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  const handleResendEmail = async () => {
+    if (auth.currentUser && resendCooldown === 0) {
+      try {
+        await sendEmailVerification(auth.currentUser);
+        alert("Verification email resent! Please check your inbox and spam folder.");
+        setResendCooldown(60);
+        const interval = setInterval(() => {
+          setResendCooldown((prev) => {
+            if (prev <= 1) {
+              clearInterval(interval);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      } catch (err) {
+        alert("Error resending email: " + err.message);
+      }
+    }
+  };
+
   const handleCheckVerification = async () => {
     if (auth.currentUser) {
       await auth.currentUser.reload();
@@ -127,6 +151,11 @@ export default function PendingApproval() {
               <button style={{...s.logoutBtn, background: "rgba(70, 233, 255, 0.2)", color: "#46e9ff", width: "100%", marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"}} onClick={handleCheckVerification}>
                 <RefreshCw size={18} /> I have verified my email
               </button>
+
+              <button style={{...s.logoutBtn, background: "transparent", border: "1px solid rgba(70, 233, 255, 0.5)", color: "#46e9ff", width: "100%", marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "center"}} onClick={handleResendEmail} disabled={resendCooldown > 0}>
+                {resendCooldown > 0 ? `Resend available in ${resendCooldown}s` : 'Resend Verification Email'}
+              </button>
+
               
               <button style={{...s.logoutBtn, background: "transparent", color: "rgba(255,255,255,0.5)", width: "100%", marginTop: 0}} onClick={handleLogout}>
                 Sign out
