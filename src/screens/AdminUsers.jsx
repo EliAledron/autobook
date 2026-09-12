@@ -152,21 +152,50 @@ export default function AdminUsers() {
     fetchDetails();
   }, [selected]);
 
-  const updateStatus = async (id, status) => {
-    let msg = "";
-    if (status === "approved") msg = "Are you sure you want to approve this user?";
-    else if (status === "rejected") msg = "Are you sure you want to reject this user?";
-    // restrict already has a confirm in the UI, but we can add it here and remove the UI one later if needed.
-    // To be safe, only check approve/reject here if restrict isn't checked
-    if (msg && !window.confirm(msg)) return;
+  const updateStatus = (id, status) => {
+    let title = "";
+    let message = "";
+    let type = "primary";
+    let requireInput = false;
+    let inputPlaceholder = "";
 
+    if (status === "approved") {
+      title = "Approve User";
+      message = "Are you sure you want to approve this user? They will gain access to the platform.";
+      type = "success";
+    } else if (status === "rejected") {
+      title = "Reject User";
+      message = "Are you sure you want to reject this user's application? Please provide a reason below.";
+      type = "danger";
+      requireInput = true;
+      inputPlaceholder = "Reason for rejection (e.g. Invalid documents)...";
+    } else if (status === "restricted") {
+      title = "Restrict User";
+      message = "Are you sure you want to restrict this user? They will lose access immediately.";
+      type = "danger";
+    }
+
+    if (title) {
+      setConfirmProps({
+        isOpen: true, title, message, type, requireInput, inputPlaceholder,
+        onConfirm: async (inputValue) => {
+          setConfirmProps({ isOpen: false });
+          await proceedUpdateStatus(id, status, inputValue);
+        }
+      });
+      return;
+    }
+    proceedUpdateStatus(id, status);
+  };
+
+  const proceedUpdateStatus = async (id, status, inputValue) => {
     setSaving(true);
-    
-    const updates = { status };
-
-    // Automatically create a shop profile for owners who are just getting approved
-    if (status === "approved" && selected && (selected.role || "").toLowerCase() === "owner" && !selected.shopId) {
-      try {
+    try {
+      const updates = { status };
+      if (status === "rejected" && inputValue) {
+        updates.rejectionReason = inputValue;
+      }
+      if (status === "approved" && selected && (selected.role || "").toLowerCase() === "owner" && !selected.shopId) {
         const shopData = {
           name: selected.shopName || "Auto Shop",
           shortName: (selected.shopName || "Shop").split(" ")[0],
@@ -179,45 +208,19 @@ export default function AdminUsers() {
           accent: colors.info,
           createdAt: serverTimestamp()
         };
-
-        let customId = null;
-        const sName = (selected.shopName || "").toUpperCase();
-        if (sName.includes("JME")) customId = "JME";
-        else if (sName.includes("GRHE")) customId = "GRHE";
-
-        if (customId) {
-          await setDoc(doc(db, "shops", customId), shopData);
-          updates.shopId = customId;
-        } else {
-          const shopRef = await addDoc(collection(db, "shops"), shopData);
-          updates.shopId = shopRef.id;
-        }
-      } catch (err) {
-        console.error("Failed to create shop:", err);
+        const newShopRef = await addDoc(collection(db, "shops"), shopData);
+        updates.shopId = newShopRef.id;
       }
+      await updateDoc(doc(db, "users", id), updates);
+    } catch (err) {
+      console.error(err);
     }
-
-    if (updates.status === "restricted" && selected && selected.shopId) {
-      try {
-        await updateDoc(doc(db, "shops", selected.shopId), { status: "restricted" });
-      } catch (err) {
-        console.error("Failed to restrict shop:", err);
-      }
-    }
-    
-    // If a restricted user is approved, also unrestrict their shop
-    if (updates.status === "approved" && selected && selected.shopId) {
-      try {
-        await updateDoc(doc(db, "shops", selected.shopId), { status: "active" });
-      } catch (err) {}
-    }
-
-    await updateDoc(doc(db, "users", id), updates);
-    setUsers((prev) =>
-      prev.map((u) => (u.id === id ? { ...u, ...updates } : u))
-    );
-    if (selected?.id === id) setSelected((prev) => ({ ...prev, ...updates }));
     setSaving(false);
+    if (status !== "restricted" && status !== "rejected" && selected) {
+      setSelected({ ...selected, status });
+    } else {
+      setSelected(null);
+    }
   };
 
   const handleDeleteUser = (u) => {
@@ -253,10 +256,12 @@ export default function AdminUsers() {
   return (
     <>
       <ConfirmModal 
-        isOpen={confirmProps.isOpen}
-        title={confirmProps.title}
-        message={confirmProps.message}
-        type={confirmProps.type}
+          isOpen={confirmProps.isOpen}
+          title={confirmProps.title}
+          message={confirmProps.message}
+          type={confirmProps.type}
+          requireInput={confirmProps.requireInput}
+          inputPlaceholder={confirmProps.inputPlaceholder}
         onCancel={() => setConfirmProps({ isOpen: false })}
         onConfirm={confirmProps.onConfirm}
       />
@@ -619,9 +624,7 @@ export default function AdminUsers() {
                   {selected.status !== "restricted" && selected.status === "approved" && (
                     <button
                       onClick={() => {
-                        if (window.confirm("Are you sure you want to restrict this user? They will lose access to their account.")) {
-                          updateStatus(selected.id, "restricted");
-                        }
+                        updateStatus(selected.id, "restricted");
                       }}
                       disabled={saving}
                       style={{

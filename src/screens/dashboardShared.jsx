@@ -239,7 +239,13 @@ export function SharedSearchBar({ value, onChange, placeholder = "Search...", st
 
 // ─── Error Modal ─────────────────────────────────────────────────────────────
 
-export function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, confirmText = "Confirm", cancelText = "Cancel", type = "primary" }) {
+export function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, confirmText = "Confirm", cancelText = "Cancel", type = "primary", requireInput = false, inputPlaceholder = "Type here..." }) {
+  const [inputValue, setInputValue] = useState("");
+
+  useEffect(() => {
+    if (isOpen) setInputValue("");
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const typeColors = {
@@ -249,6 +255,8 @@ export function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, conf
   };
 
   const style = typeColors[type] || typeColors.primary;
+  
+  const isConfirmDisabled = requireInput && !inputValue.trim();
 
   return (
     <div style={{
@@ -285,15 +293,31 @@ export function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, conf
         <div style={{ fontSize: "18px", fontWeight: "800", color: colors.textPrimary, marginBottom: "8px" }}>{title}</div>
         <div style={{ fontSize: "14px", color: colors.textSecondary, lineHeight: "1.5", marginBottom: "24px" }}>{message}</div>
         
+        {requireInput && (
+          <div style={{ marginBottom: "24px" }}>
+            <textarea 
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder={inputPlaceholder}
+              style={{
+                width: "100%", padding: "14px", borderRadius: "12px", border: `1px solid ${colors.border}`,
+                fontSize: "14px", color: colors.textPrimary, fontFamily: "inherit", boxSizing: "border-box",
+                outline: "none", resize: "none", minHeight: "80px", backgroundColor: "#f8fafc"
+              }}
+              onFocus={(e) => e.target.style.border = `1px solid ${style.iconColor}`}
+              onBlur={(e) => e.target.style.border = `1px solid ${colors.border}`}
+            />
+          </div>
+        )}
+
         <div style={{ display: "flex", gap: "12px" }}>
           <button onClick={onCancel} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.bg, border: `1px solid ${colors.border}`, color: colors.textSecondary, fontWeight: "700", cursor: "pointer", fontSize: "14px", transition: "all 0.2s" }}>
             {cancelText}
           </button>
-          <button onClick={onConfirm} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: style.bg, border: "none", color: style.text, fontWeight: "700", cursor: "pointer", fontSize: "14px", transition: "all 0.2s" }}>
+          <button onClick={() => isConfirmDisabled ? null : onConfirm(inputValue)} disabled={isConfirmDisabled} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: style.bg, border: "none", color: style.text, fontWeight: "700", cursor: isConfirmDisabled ? "not-allowed" : "pointer", fontSize: "14px", transition: "all 0.2s", opacity: isConfirmDisabled ? 0.5 : 1, boxShadow: !isConfirmDisabled && type === "danger" ? "0 4px 12px rgba(220,38,38,0.25)" : (!isConfirmDisabled && type === "success" ? "0 4px 12px rgba(22,163,74,0.25)" : "none") }}>
             {confirmText}
           </button>
         </div>
-
       </div>
     </div>
   );

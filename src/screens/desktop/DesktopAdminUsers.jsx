@@ -11,7 +11,7 @@ export default function DesktopAdminUsers() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
-  const [confirmProps, setConfirmProps] = useState({ isOpen: false, title: "", message: "", type: "primary", onConfirm: null });
+  const [confirmProps, setConfirmProps] = useState({ isOpen: false, title: "", message: "", type: "primary", onConfirm: null, requireInput: false, inputPlaceholder: "" });
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "users"), (snap) => {
