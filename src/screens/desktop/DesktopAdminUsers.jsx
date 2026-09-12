@@ -97,7 +97,16 @@ export default function DesktopAdminUsers() {
   };
 
   return (
-    <RoleBasedWrapper title="User Approvals">
+    <>
+      <ConfirmModal 
+        isOpen={confirmProps.isOpen}
+        title={confirmProps.title}
+        message={confirmProps.message}
+        type={confirmProps.type}
+        onCancel={() => setConfirmProps({ isOpen: false })}
+        onConfirm={confirmProps.onConfirm}
+      />
+      <RoleBasedWrapper title="User Approvals">
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "32px" }}>
         
         {/* HEADER */}
@@ -222,5 +231,6 @@ export default function DesktopAdminUsers() {
         </div>
       </div>
     </RoleBasedWrapper>
+    </>
   );
 }

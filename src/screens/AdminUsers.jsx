@@ -251,7 +251,16 @@ export default function AdminUsers() {
   };
 
   return (
-    <div style={sh.page}>
+    <>
+      <ConfirmModal 
+        isOpen={confirmProps.isOpen}
+        title={confirmProps.title}
+        message={confirmProps.message}
+        type={confirmProps.type}
+        onCancel={() => setConfirmProps({ isOpen: false })}
+        onConfirm={confirmProps.onConfirm}
+      />
+      <div style={sh.page}>
 
       {/* TOPBAR */}
       <div style={sh.topbar}>
@@ -732,5 +741,6 @@ export default function AdminUsers() {
       )}
 
     </div>
+    </>
   );
 }
