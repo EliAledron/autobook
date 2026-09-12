@@ -1,23 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { Hourglass, Clock, CheckCircle, XCircle, Mail, RefreshCw } from "lucide-react";
+import { Hourglass, Clock, CheckCircle, XCircle, Mail, RefreshCw, LogOut, Send } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged, signOut, sendEmailVerification } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 
 const keyframes = `
-  @keyframes ab-drive  { 0%{transform:translateX(-120px)} 100%{transform:translateX(calc(100vw + 120px))} }
-  @keyframes ab-wheel  { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
-  @keyframes ab-road   { 0%{transform:translateX(0)} 100%{transform:translateX(-80px)} }
-  @keyframes ab-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
-  @keyframes ab-pulse  { 0%,100%{opacity:1} 50%{opacity:0.35} }
-  @keyframes ab-float  { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-8px)} }
+  @keyframes pulse-soft {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+  }
 `;
 
 export default function PendingApproval() {
   const navigate = useNavigate();
   const [status, setStatus] = useState("loading");
   const [name, setName] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   useEffect(() => {
     let docUnsub = null;
@@ -59,9 +58,17 @@ export default function PendingApproval() {
     };
   }, [navigate]);
 
-  
-  
-  const [resendCooldown, setResendCooldown] = useState(0);
+  const handleCheckVerification = async () => {
+    if (auth.currentUser) {
+      await auth.currentUser.reload();
+      if (auth.currentUser.emailVerified) {
+        setStatus("loading");
+        window.location.reload();
+      } else {
+        alert("Email not verified yet. Please check your inbox or spam folder.");
+      }
+    }
+  };
 
   const handleResendEmail = async () => {
     if (auth.currentUser && resendCooldown === 0) {
@@ -84,294 +91,202 @@ export default function PendingApproval() {
     }
   };
 
-  const handleCheckVerification = async () => {
-    if (auth.currentUser) {
-      await auth.currentUser.reload();
-      if (auth.currentUser.emailVerified) {
-        setStatus("loading");
-        window.location.reload();
-      } else {
-        alert("Email not verified yet. Please check your inbox or spam folder.");
-      }
-    }
-  };
-
   const handleLogout = async () => {
     await signOut(auth);
     navigate("/");
   };
 
   return (
-    <>
+    <div style={s.page}>
       <style>{keyframes}</style>
-
-      <div style={s.page}>
-        {/* ===== ANIMATION ===== */}
-        <div style={s.scene}>
-          <div style={s.carGroup}>
-            <div style={s.exhaust}>
-              <div style={{ ...s.puff, animationDelay: "0s" }} />
-              <div style={{ ...s.puff, width: 4, height: 4, animationDelay: "0.1s" }} />
-              <div style={{ ...s.puff, width: 3, height: 3, animationDelay: "0.2s" }} />
+      
+      <div style={s.card}>
+        {status === "loading" && (
+          <div style={s.stateContainer}>
+            <div style={{ ...s.iconWrap, background: "#f1f5f9", color: "#64748b", animation: "pulse-soft 2s infinite" }}>
+              <Hourglass size={40} />
             </div>
+            <h2 style={s.title}>Loading...</h2>
+          </div>
+        )}
 
-            <div style={s.carBody}>
-              <div style={s.carRoof}>
-                <div style={s.winFront} />
-                <div style={s.winRear} />
-              </div>
-              <div style={s.headlight} />
-              <div style={s.taillight} />
-
-              <div style={{ ...s.wheelWrap, right: 10, left: "auto" }}>
-                <div style={s.wheel}><div style={s.spoke} /></div>
-              </div>
-
-              <div style={{ ...s.wheelWrap, left: 10 }}>
-                <div style={s.wheel}><div style={s.spoke} /></div>
-              </div>
+        {status === "unverified" && (
+          <div style={s.stateContainer}>
+            <div style={{ ...s.iconWrap, background: "#e0f2fe", color: "#0ea5e9" }}>
+              <Mail size={40} />
             </div>
-          </div>
-        </div>
+            <h2 style={s.title}>Verify your email</h2>
+            <p style={s.subtitle}>
+              We sent a verification link to your email address. Please click the link to verify your account, then click the button below.
+            </p>
 
-        <div style={s.road}>
-          <div style={s.roadDashes}>
-            {Array.from({ length: 14 }).map((_, i) => (
-              <div key={i} style={s.dash} />
-            ))}
-          </div>
-        </div>
-
-        {/* ===== CONTENT ===== */}
-        <div style={s.content}>
-          
-          {status === "unverified" && (
-            <>
-              <div style={{ ...s.icon, animation: "ab-float 2s ease-in-out infinite" }}><Mail size={48} /></div>
-              <h2 style={s.title}>Verify your email</h2>
-              <p style={s.subtitle}>
-                We sent a verification link to your email address. Please click the link to verify your account, then click the button below.
-              </p>
-
-              <button style={{...s.logoutBtn, background: "rgba(70, 233, 255, 0.2)", color: "#46e9ff", width: "100%", marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"}} onClick={handleCheckVerification}>
+            <div style={s.actionGroup}>
+              <button style={s.primaryBtn} onClick={handleCheckVerification}>
                 <RefreshCw size={18} /> I have verified my email
               </button>
-
-              <button style={{...s.logoutBtn, background: "transparent", border: "1px solid rgba(70, 233, 255, 0.5)", color: "#46e9ff", width: "100%", marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "center"}} onClick={handleResendEmail} disabled={resendCooldown > 0}>
+              
+              <button 
+                style={{ ...s.secondaryBtn, opacity: resendCooldown > 0 ? 0.6 : 1 }} 
+                onClick={handleResendEmail} 
+                disabled={resendCooldown > 0}
+              >
+                <Send size={18} />
                 {resendCooldown > 0 ? `Resend available in ${resendCooldown}s` : 'Resend Verification Email'}
               </button>
-
               
-              <button style={{...s.logoutBtn, background: "transparent", color: "rgba(255,255,255,0.5)", width: "100%", marginTop: 0}} onClick={handleLogout}>
-                Sign out
+              <button style={s.ghostBtn} onClick={handleLogout}>
+                <LogOut size={18} /> Sign out
               </button>
-            </>
-          )}
+            </div>
+          </div>
+        )}
 
-          {status === "loading" && (
-            <>
-              <div style={s.icon}><Hourglass size={48} /></div>
-              <h2 style={s.title}>Loading...</h2>
-            </>
-          )}
+        {status === "pending" && (
+          <div style={s.stateContainer}>
+            <div style={{ ...s.iconWrap, background: "#fef3c7", color: "#d97706", animation: "pulse-soft 2s infinite" }}>
+              <Clock size={40} />
+            </div>
+            <h2 style={s.title}>Waiting for approval</h2>
+            <p style={s.subtitle}>
+              Hi {name}! Your account is under review. Please wait for an admin to approve your registration.
+            </p>
 
-          {status === "pending" && (
-            <>
-              <div style={{ ...s.icon, animation: "ab-float 2s ease-in-out infinite" }}><Clock size={48} /></div>
-              <h2 style={s.title}>Waiting for approval</h2>
-              <p style={s.subtitle}>
-                Hi {name}! Your account is under review. Please wait for admin approval.
-              </p>
-
-              <button style={s.logoutBtn} onClick={handleLogout}>
-                Sign out
+            <div style={s.actionGroup}>
+              <button style={s.ghostBtn} onClick={handleLogout}>
+                <LogOut size={18} /> Sign out
               </button>
-            </>
-          )}
+            </div>
+          </div>
+        )}
 
-          {status === "approved" && (
-            <>
-              <div style={{ ...s.icon, animation: "ab-float 1.5s ease-in-out infinite" }}><CheckCircle size={48} /></div>
-              <h2 style={s.title}>Approved!</h2>
-              <p style={s.subtitle}>Redirecting to dashboard...</p>
-            </>
-          )}
+        {status === "approved" && (
+          <div style={s.stateContainer}>
+            <div style={{ ...s.iconWrap, background: "#dcfce7", color: "#16a34a" }}>
+              <CheckCircle size={40} />
+            </div>
+            <h2 style={s.title}>Approved!</h2>
+            <p style={s.subtitle}>Redirecting to your dashboard...</p>
+          </div>
+        )}
 
-          {status === "rejected" && (
-            <>
-              <div style={s.icon}><XCircle size={48} /></div>
-              <h2 style={s.title}>Account rejected</h2>
-              <p style={s.subtitle}>
-                Your application was not approved. Please contact the admin.
-              </p>
+        {status === "rejected" && (
+          <div style={s.stateContainer}>
+            <div style={{ ...s.iconWrap, background: "#fee2e2", color: "#dc2626" }}>
+              <XCircle size={40} />
+            </div>
+            <h2 style={s.title}>Account Rejected</h2>
+            <p style={s.subtitle}>
+              Your application was not approved. Please contact the administrator for more information.
+            </p>
 
-              <button style={s.logoutBtn} onClick={handleLogout}>
-                Back to login
+            <div style={s.actionGroup}>
+              <button style={s.ghostBtn} onClick={handleLogout}>
+                <LogOut size={18} /> Back to login
               </button>
-            </>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 }
 
-/* ===== STYLES ===== */
 const s = {
   page: {
     minHeight: "100vh",
-    background: "#1a3a5c",
+    background: "#f4f7f9",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    fontFamily: "Segoe UI, sans-serif",
-    paddingBottom: "2rem",
+    justifyContent: "center",
+    fontFamily: "'Inter', 'Segoe UI', sans-serif",
+    padding: "20px",
   },
-
-  scene: {
-    width: "100vw",
-    height: "70px",
-    position: "relative",
-    overflow: "hidden",
-    marginTop: "3rem",
-  },
-
-  carGroup: {
-    position: "absolute",
-    bottom: "8px",
-    animation: "ab-drive 2s infinite, ab-bounce 0.4s infinite",
-  },
-
-  exhaust: {
-    position: "absolute",
-    left: "-16px",
-    top: "14px",
-    display: "flex",
-    gap: "3px",
-  },
-
-  puff: {
-    width: 6,
-    height: 6,
-    background: "rgba(255,255,255,0.12)",
-    borderRadius: "50%",
-    animation: "ab-pulse 0.3s infinite",
-  },
-
-  carBody: {
-    width: "80px",
-    height: "28px",
-    background: "#f97316",
-    borderRadius: "6px",
-    position: "relative",
-  },
-
-  carRoof: {
-    position: "absolute",
-    top: "-16px",
-    left: "12px",
-    width: "48px",
-    height: "18px",
-    background: "#ea6c0a",
-    borderRadius: "6px",
-  },
-
-  winFront: {
-    position: "absolute",
-    top: "3px",
-    left: "4px",
-    width: "18px",
-    height: "12px",
-    background: "rgba(70,233,255,0.45)",
-  },
-
-  winRear: {
-    position: "absolute",
-    top: "3px",
-    left: "25px",
-    width: "18px",
-    height: "12px",
-    background: "rgba(70,233,255,0.45)",
-  },
-
-  headlight: {
-    position: "absolute",
-    right: "-4px",
-    top: "9px",
-    width: "6px",
-    height: "6px",
-    background: "#fef08a",
-    borderRadius: "50%",
-  },
-
-  taillight: {
-    position: "absolute",
-    left: "-4px",
-    top: "9px",
-    width: "5px",
-    height: "5px",
-    background: "#ef4444",
-    borderRadius: "50%",
-    animation: "ab-pulse 0.4s infinite",
-  },
-
-  wheelWrap: {
-    position: "absolute",
-    bottom: "-8px",
-  },
-
-  wheel: {
-    width: "16px",
-    height: "16px",
-    background: "#1e293b",
-    borderRadius: "50%",
-    border: "3px solid #94a3b8",
-    animation: "ab-wheel 0.35s linear infinite",
-  },
-
-  spoke: {
-    width: "1.5px",
-    height: "7px",
-    background: "#94a3b8",
-  },
-
-  road: {
-    width: "100vw",
-    height: "6px",
-    background: "#2a5298",
-    overflow: "hidden",
-  },
-
-  roadDashes: {
-    display: "flex",
-    gap: "16px",
-    animation: "ab-road 0.5s linear infinite",
-  },
-
-  dash: {
-    width: "24px",
-    height: "2px",
-    background: "rgba(70,233,255,0.35)",
-  },
-
-  content: {
-    padding: "2rem",
-    maxWidth: "400px",
+  card: {
+    background: "#ffffff",
+    width: "100%",
+    maxWidth: "440px",
+    borderRadius: "24px",
+    boxShadow: "0 20px 40px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.05)",
+    padding: "48px 32px",
     textAlign: "center",
+  },
+  stateContainer: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+  },
+  iconWrap: {
+    width: "80px",
+    height: "80px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: "24px",
+  },
+  title: {
+    fontSize: "24px",
+    fontWeight: "800",
+    color: "#0f2640",
+    margin: "0 0 12px 0",
+  },
+  subtitle: {
+    fontSize: "15px",
+    color: "#64748b",
+    lineHeight: "1.6",
+    margin: "0 0 32px 0",
+  },
+  actionGroup: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+    width: "100%",
+  },
+  primaryBtn: {
+    background: "linear-gradient(135deg, #0f2640 0%, #2a5298 100%)",
     color: "#fff",
-  },
-
-  icon: { fontSize: "48px", marginBottom: "1rem" },
-
-  title: { fontSize: "20px", fontWeight: "700" },
-
-  subtitle: { fontSize: "14px", opacity: 0.7, marginTop: "10px" },
-
-  logoutBtn: {
-    marginTop: "20px",
-    padding: "12px",
-    borderRadius: "10px",
     border: "none",
+    padding: "16px",
+    borderRadius: "16px",
+    fontSize: "15px",
+    fontWeight: "700",
     cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    width: "100%",
+    boxShadow: "0 4px 12px rgba(15, 38, 64, 0.2)",
   },
+  secondaryBtn: {
+    background: "#fff",
+    color: "#334155",
+    border: "1.5px solid #e2e8f0",
+    padding: "16px",
+    borderRadius: "16px",
+    fontSize: "15px",
+    fontWeight: "700",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    width: "100%",
+  },
+  ghostBtn: {
+    background: "transparent",
+    color: "#64748b",
+    border: "none",
+    padding: "16px",
+    borderRadius: "16px",
+    fontSize: "15px",
+    fontWeight: "600",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    width: "100%",
+  }
 };
