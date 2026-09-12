@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { db, auth } from "../firebase";
 import { collection, getDocs, updateDoc, doc, getDoc, query, where, deleteDoc, addDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import { sh, colors, getInitials, EmptyState } from "./dashboardShared";
+import { sh, colors, getInitials, EmptyState, ConfirmModal } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
 import BackButton from "../components/BackButton";
