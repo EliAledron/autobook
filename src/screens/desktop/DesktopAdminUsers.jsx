@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { collection, onSnapshot, updateDoc, doc, deleteDoc } from "firebase/firestore";
 import { db } from "../../firebase";
-import { colors } from "../dashboardShared";
+import { colors, ConfirmModal } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
 import { Check, X, Ban, Trash2, Search, UserCheck } from "lucide-react";
 
@@ -11,6 +11,7 @@ export default function DesktopAdminUsers() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
+  const [confirmProps, setConfirmProps] = useState({ isOpen: false, title: "", message: "", type: "primary", onConfirm: null });
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "users"), (snap) => {
