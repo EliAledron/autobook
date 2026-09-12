@@ -24,30 +24,60 @@ export default function DesktopAdminUsers() {
   }, []);
 
   const handleStatusUpdate = async (id, status) => {
-    let msg = "";
-    if (status === "approved") msg = "Are you sure you want to approve this user?";
-    else if (status === "rejected") msg = "Are you sure you want to reject this user?";
-    else if (status === "restricted") msg = "Are you sure you want to restrict this user?";
-    if (msg && !window.confirm(msg)) return;
+    let title = "";
+    let message = "";
+    let type = "primary";
 
-    setActionLoading(id);
-    try {
-      await updateDoc(doc(db, "users", id), { status });
-    } catch (e) {
-      console.error("Failed to update status", e);
+    if (status === "approved") {
+      title = "Approve User";
+      message = "Are you sure you want to approve this user? They will gain access to the platform.";
+      type = "success";
+    } else if (status === "rejected") {
+      title = "Reject User";
+      message = "Are you sure you want to reject this user's application?";
+      type = "danger";
+    } else if (status === "restricted") {
+      title = "Restrict User";
+      message = "Are you sure you want to restrict this user? They will lose access immediately.";
+      type = "danger";
     }
-    setActionLoading(null);
+
+    if (title) {
+      setConfirmProps({
+        isOpen: true, title, message, type,
+        onConfirm: async () => {
+          setConfirmProps({ isOpen: false });
+          setActionLoading(id);
+          try {
+            await updateDoc(doc(db, "users", id), { status });
+          } catch (e) {
+            console.error("Failed to update status", e);
+          }
+          setActionLoading(null);
+        }
+      });
+      return;
+    }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to permanently delete this user?")) return;
-    setActionLoading(id);
-    try {
-      await deleteDoc(doc(db, "users", id));
-    } catch (e) {
-      console.error("Failed to delete", e);
-    }
-    setActionLoading(null);
+    setConfirmProps({
+      isOpen: true,
+      title: "Delete User",
+      message: "Are you sure you want to permanently delete this user? This cannot be undone.",
+      type: "danger",
+      onConfirm: async () => {
+        setConfirmProps({ isOpen: false });
+        setActionLoading(id);
+        try {
+          await deleteDoc(doc(db, "users", id));
+        } catch (e) {
+          console.error("Failed to delete", e);
+        }
+        setActionLoading(null);
+      }
+    });
+    return;
   };
 
   const filteredUsers = users.filter(u => {
