@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { collection, onSnapshot, updateDoc, doc, deleteDoc } from "firebase/firestore";
+import { collection, onSnapshot, updateDoc, doc, deleteDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebase";
 import { colors, ConfirmModal } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
@@ -57,7 +57,21 @@ export default function DesktopAdminUsers() {
             if (status === "rejected" && inputValue) {
               updates.rejectionReason = inputValue;
             }
+            
             await updateDoc(doc(db, "users", id), updates);
+
+            // Create In-App Notification
+            if (status === "approved" || status === "rejected") {
+              await addDoc(collection(db, "notifications"), {
+                userId: id,
+                title: status === "approved" ? "Account Approved 🎉" : "Application Update",
+                message: status === "approved" ? "Your account has been fully approved. Welcome to AutoBook!" : "Your application was not approved. Admin Note: " + (inputValue || "Please check your details."),
+                read: false,
+                createdAt: serverTimestamp(),
+                type: "system"
+              });
+            }
+
           } catch (e) {
             console.error("Failed to update status", e);
           }

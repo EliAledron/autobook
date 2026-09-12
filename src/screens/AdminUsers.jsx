@@ -211,7 +211,21 @@ export default function AdminUsers() {
         const newShopRef = await addDoc(collection(db, "shops"), shopData);
         updates.shopId = newShopRef.id;
       }
+      
       await updateDoc(doc(db, "users", id), updates);
+
+      // Create In-App Notification
+      if (status === "approved" || status === "rejected") {
+        await addDoc(collection(db, "notifications"), {
+          userId: id,
+          title: status === "approved" ? "Account Approved 🎉" : "Application Update",
+          message: status === "approved" ? "Your account has been fully approved. Welcome to AutoBook!" : "Your application was not approved. Admin Note: " + (inputValue || "Please check your details."),
+          read: false,
+          createdAt: serverTimestamp(),
+          type: "system"
+        });
+      }
+
     } catch (err) {
       console.error(err);
     }
