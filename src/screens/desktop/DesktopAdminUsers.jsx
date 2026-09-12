@@ -27,6 +27,8 @@ export default function DesktopAdminUsers() {
     let title = "";
     let message = "";
     let type = "primary";
+    let requireInput = false;
+    let inputPlaceholder = "";
 
     if (status === "approved") {
       title = "Approve User";
@@ -34,8 +36,10 @@ export default function DesktopAdminUsers() {
       type = "success";
     } else if (status === "rejected") {
       title = "Reject User";
-      message = "Are you sure you want to reject this user's application?";
+      message = "Are you sure you want to reject this user's application? Please provide a reason below.";
       type = "danger";
+      requireInput = true;
+      inputPlaceholder = "Reason for rejection (e.g. Invalid documents)...";
     } else if (status === "restricted") {
       title = "Restrict User";
       message = "Are you sure you want to restrict this user? They will lose access immediately.";
@@ -44,12 +48,16 @@ export default function DesktopAdminUsers() {
 
     if (title) {
       setConfirmProps({
-        isOpen: true, title, message, type,
-        onConfirm: async () => {
+        isOpen: true, title, message, type, requireInput, inputPlaceholder,
+        onConfirm: async (inputValue) => {
           setConfirmProps({ isOpen: false });
           setActionLoading(id);
           try {
-            await updateDoc(doc(db, "users", id), { status });
+            const updates = { status };
+            if (status === "rejected" && inputValue) {
+              updates.rejectionReason = inputValue;
+            }
+            await updateDoc(doc(db, "users", id), updates);
           } catch (e) {
             console.error("Failed to update status", e);
           }
