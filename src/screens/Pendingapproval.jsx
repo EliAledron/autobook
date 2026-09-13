@@ -33,24 +33,36 @@ export default function PendingApproval() {
         return;
       }
 
-      if (!user.emailVerified && !devBypass) {
-        setStatus("unverified");
-        return;
-      }
-
       const userRef = doc(db, "users", user.uid);
 
       docUnsub = onSnapshot(userRef, (snap) => {
         if (!snap.exists()) {
-          setStatus("pending");
+          if (!user.emailVerified && !devBypass) {
+            setStatus("unverified");
+          } else {
+            setStatus("pending");
+          }
           return;
         }
 
         const data = snap.data();
+        const currentStatus = data.status || "pending";
+        
         setName(data.displayName?.split(" ")[0] || "there");
         setReason(data.rejectionReason || "");
 
-        const currentStatus = data.status || "pending";
+        // If rejected, show the rejection screen immediately, bypassing email check
+        if (currentStatus === "rejected") {
+          setStatus("rejected");
+          return;
+        }
+
+        // For pending/approved, require email verification first
+        if (!user.emailVerified && !devBypass) {
+          setStatus("unverified");
+          return;
+        }
+
         setStatus(currentStatus);
 
         if (currentStatus === "approved") {
