@@ -138,6 +138,11 @@ export default function AdminBookings() {
   const [newCancelReason, setNewCancelReason] = useState("");
   const [archiveCancelReason, setArchiveCancelReason] = useState("");
 
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [receiptPayDate, setReceiptPayDate] = useState("");
+  const [receiptNote, setReceiptNote] = useState("");
+  const [sendingReceipt, setSendingReceipt] = useState(false);
+
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -583,6 +588,47 @@ export default function AdminBookings() {
       showToast(<><X size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Failed to archive booking.</>);
     }
     setDeleting(false);
+  };
+
+  const handleSendReceipt = async () => {
+    if (!selected) return;
+    if (!receiptPayDate.trim()) {
+      showToast(<><AlertTriangle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Please provide a date to pay.</>);
+      return;
+    }
+    
+    setSendingReceipt(true);
+    try {
+      await updateDoc(doc(db, "bookings", selected.id), { 
+        receiptSent: true,
+        receiptPayDate: receiptPayDate.trim(),
+        receiptNote: receiptNote.trim()
+      });
+      
+      if (selected.customerId) {
+        await addDoc(collection(db, "notifications"), {
+          userId: selected.customerId,
+          title: "Booking Receipt Received",
+          message: `You have received a receipt for your ${selected.serviceType || "service"} booking at ${selected.shopName || "the shop"}. Please check your booking details.`,
+          type: "status_update",
+          bookingId: selected.id,
+          read: false,
+          createdAt: serverTimestamp(),
+        });
+      }
+      
+      setBookings(prev => prev.map(b => b.id === selected.id ? { ...b, receiptSent: true, receiptPayDate: receiptPayDate.trim(), receiptNote: receiptNote.trim() } : b));
+      setSelected(prev => ({ ...prev, receiptSent: true, receiptPayDate: receiptPayDate.trim(), receiptNote: receiptNote.trim() }));
+      
+      setShowReceiptModal(false);
+      setReceiptPayDate("");
+      setReceiptNote("");
+      showToast(<><Check size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Receipt sent successfully.</>);
+    } catch(e) {
+      console.error("Failed to send receipt:", e);
+      showToast(<><X size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Failed to send receipt.</>);
+    }
+    setSendingReceipt(false);
   };
 
   const inputStyle = {
@@ -1346,6 +1392,23 @@ export default function AdminBookings() {
 
 
 
+            {selected.status === "Completed" && !selected.receiptSent && (
+              <>
+                <button 
+                  onClick={() => setShowReceiptModal(true)} 
+                  style={{ width: "100%", padding: "16px", background: colors.success, color: "#fff", border: "none", borderRadius: "16px", fontSize: "15px", fontWeight: "700", cursor: "pointer", marginBottom: "10px", boxShadow: `0 8px 20px ${colors.success}40` }}
+                >
+                  Create & Send Receipt
+                </button>
+              </>
+            )}
+            
+            {selected.receiptSent && (
+               <div style={{ padding: "12px", background: colors.successBg, borderRadius: "12px", border: `1px solid ${colors.success}40`, color: colors.success, fontWeight: "600", fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px" }}>
+                  <CheckCircle2 size={16} style={{ marginRight: "6px" }} /> Receipt sent for {selected.receiptPayDate}
+               </div>
+            )}
+
             {selected.status !== "Completed" && selected.status !== "Cancelled" && (
               <>
                 <button onClick={handleSave} disabled={saving || deleting} style={{ ...sh.primaryBtn, opacity: (saving || deleting) ? 0.7 : 1 }}>{saving ? "Saving..." : "Save Changes"}</button>
@@ -1395,6 +1458,50 @@ export default function AdminBookings() {
               <button onClick={() => setShowDeleteConfirm(false)} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.bg, border: `1px solid ${colors.border}`, color: colors.textSecondary, fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "14px" }}>Cancel</button>
               <button onClick={confirmDelete} disabled={deleting} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.danger, border: "none", color: "#fff", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "14px", opacity: deleting ? 0.7 : 1 }}>
                 {deleting ? "Archiving..." : "Yes, Archive"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* RECEIPT MODAL */}
+      {showReceiptModal && selected && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 120, display: "flex", alignItems: "center", justifyContent: "center", animation: "ab-fade-in 0.2s ease-out" }} onClick={() => setShowReceiptModal(false)}>
+          <div style={{ background: colors.white, borderRadius: "24px", width: "90%", maxWidth: "360px", padding: "24px", boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h3 style={{ margin: 0, fontSize: "18px", color: colors.textPrimary, fontWeight: "800" }}>Send Receipt</h3>
+              <button onClick={() => setShowReceiptModal(false)} style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", color: colors.textMuted }}>×</button>
+            </div>
+            
+            <p style={{ margin: "0 0 16px", fontSize: "13px", color: colors.textSecondary, lineHeight: "1.5" }}>
+              Send a receipt to <strong>{getCustomerName(selected)}</strong>.
+            </p>
+
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ display: "block", fontSize: "12px", color: colors.textMuted, fontWeight: "700", textTransform: "uppercase", marginBottom: "8px" }}>Exact Date to Pay *</label>
+              <input
+                type="date"
+                value={receiptPayDate}
+                onChange={(e) => setReceiptPayDate(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
+            
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{ display: "block", fontSize: "12px", color: colors.textMuted, fontWeight: "700", textTransform: "uppercase", marginBottom: "8px" }}>Note / Amount (Optional)</label>
+              <textarea
+                value={receiptNote}
+                onChange={(e) => setReceiptNote(e.target.value)}
+                placeholder="e.g. Total amount: ₱1,500. Please pay via GCash."
+                rows={3}
+                style={{ ...inputStyle, resize: "none" }}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: "12px" }}>
+              <button onClick={() => setShowReceiptModal(false)} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.bg, border: `1px solid ${colors.border}`, color: colors.textSecondary, fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "14px" }}>Cancel</button>
+              <button onClick={handleSendReceipt} disabled={sendingReceipt} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.success, border: "none", color: "#fff", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "14px", opacity: sendingReceipt ? 0.7 : 1 }}>
+                {sendingReceipt ? "Sending..." : "Send Receipt"}
               </button>
             </div>
           </div>

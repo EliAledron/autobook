@@ -558,6 +558,31 @@ export default function BookingHistory() {
 
             <BookingStepper status={selected.status} />
 
+            {selected.receiptSent && (
+              <div style={{ background: "#f0fdf4", border: "1.5px dashed #22c55e", borderRadius: "16px", padding: "20px", marginBottom: "24px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#16a34a", fontSize: "14px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>
+                  <CheckCircle2 size={18} /> Booking Receipt
+                </div>
+                <div style={{ fontSize: "15px", color: colors.textPrimary, marginBottom: "16px", lineHeight: "1.5" }}>
+                  Your service has been completed by <strong>{selected.shopName}</strong>.
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fff", padding: "12px", borderRadius: "12px", marginBottom: selected.receiptNote ? "12px" : "0", border: "1px solid rgba(34, 197, 94, 0.2)" }}>
+                  <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "600", textTransform: "uppercase" }}>Exact Date to Pay</div>
+                  <div style={{ fontSize: "15px", color: "#16a34a", fontWeight: "800" }}>{(() => {
+                    if (!selected.receiptPayDate) return "N/A";
+                    const [y, m, d] = selected.receiptPayDate.split("-");
+                    return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+                  })()}</div>
+                </div>
+                {selected.receiptNote && (
+                  <div style={{ fontSize: "14px", color: colors.textSecondary, background: "rgba(255,255,255,0.6)", padding: "12px", borderRadius: "12px", border: "1px solid rgba(34, 197, 94, 0.1)" }}>
+                    <div style={{ fontSize: "11px", fontWeight: "700", textTransform: "uppercase", marginBottom: "4px", color: "#16a34a" }}>Note / Amount</div>
+                    {selected.receiptNote}
+                  </div>
+                )}
+              </div>
+            )}
+
             {[
               ["Shop", selected.shopName],
               ["Service Type", selected.serviceType],
