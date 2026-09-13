@@ -7,11 +7,12 @@ import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { ErrorModal, SuccessModal } from "./dashboardShared";
 
 const keyframes = `
-  @keyframes ab-drive  { 0%{transform:translateX(-120px)} 100%{transform:translateX(calc(100vw + 120px))} }
   @keyframes ab-wheel  { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
-  @keyframes ab-road   { 0%{transform:translateX(0)} 100%{transform:translateX(-80px)} }
-  @keyframes ab-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
-  @keyframes ab-pulse  { 0%,100%{opacity:1} 50%{opacity:0.35} }
+  @keyframes ab-road   { 0%{transform:translateX(0)} 100%{transform:translateX(-94px)} }
+  @keyframes ab-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+  @keyframes ab-pulse  { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  @keyframes ab-puff   { 0%{opacity:0.5;transform:translateX(0) scale(1)} 100%{opacity:0;transform:translateX(-24px) scale(2)} }
+  @keyframes ab-streak { 0%{opacity:0;transform:translateX(-40px)} 60%{opacity:1} 100%{opacity:0;transform:translateX(280px)} }
   @keyframes ab-float  { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-8px)} }
 `;
 
@@ -126,39 +127,50 @@ export default function PendingApproval() {
       <style>{keyframes}</style>
 
       <div style={s.page}>
+        <div style={s.streak1} />
+        <div style={s.streak2} />
         {/* ===== ANIMATION ===== */}
         <div style={s.scene}>
-          <div style={s.carGroup}>
-            <div style={s.exhaust}>
-              <div style={{ ...s.puff, animationDelay: "0s" }} />
-              <div style={{ ...s.puff, width: 4, height: 4, animationDelay: "0.1s" }} />
-              <div style={{ ...s.puff, width: 3, height: 3, animationDelay: "0.2s" }} />
+          <div style={s.speedLines}>
+            {[0, 1, 2, 3].map(i => (
+              <div key={i} style={{ ...s.speedLine, width: `${28 + i * 14}px`, animationDelay: `${i * 0.12}s` }} />
+            ))}
+          </div>
+          <div style={s.road}>
+            <div style={s.roadDashes}>
+              {Array.from({ length: 24 }).map((_, i) => (
+                <div key={i} style={s.dash} />
+              ))}
             </div>
-
-            <div style={s.carBody}>
+          </div>
+          <div style={s.carWrap}>
+            <div style={s.exhaustWrap}>
+              <div style={{ ...s.puff, animationDelay: "0s" }} />
+              <div style={{ ...s.puff, width: 6, height: 6, animationDelay: "0.18s" }} />
+              <div style={{ ...s.puff, width: 5, height: 5, animationDelay: "0.36s" }} />
+            </div>
+            <div style={s.carOuter}>
               <div style={s.carRoof}>
                 <div style={s.winFront} />
                 <div style={s.winRear} />
               </div>
-              <div style={s.headlight} />
-              <div style={s.taillight} />
-
-              <div style={{ ...s.wheelWrap, right: 10, left: "auto" }}>
-                <div style={s.wheel}><div style={s.spoke} /></div>
+              <div style={s.carBody}>
+                <div style={s.headlight} />
+                <div style={s.headlightBeam} />
+                <div style={s.taillight} />
               </div>
-
-              <div style={{ ...s.wheelWrap, left: 10 }}>
-                <div style={s.wheel}><div style={s.spoke} /></div>
+              <div style={s.wheelsRow}>
+                <div style={s.wheelGap} />
+                <div style={s.wheelGroup}>
+                  <div style={s.wheel}><div style={s.spoke} /></div>
+                </div>
+                <div style={{ flex: 1 }} />
+                <div style={s.wheelGroup}>
+                  <div style={s.wheel}><div style={s.spoke} /></div>
+                </div>
+                <div style={s.wheelGap} />
               </div>
             </div>
-          </div>
-        </div>
-
-        <div style={s.road}>
-          <div style={s.roadDashes}>
-            {Array.from({ length: 14 }).map((_, i) => (
-              <div key={i} style={s.dash} />
-            ))}
           </div>
         </div>
 
@@ -265,130 +277,200 @@ const s = {
     paddingBottom: "2rem",
   },
 
+  streak1: {
+    position: "absolute", top: "20%", left: "-10%",
+    width: "120%", height: "1px",
+    background: "linear-gradient(90deg, transparent, rgba(70,233,255,0.08), transparent)",
+    transform: "rotate(-8deg)",
+  },
+  streak2: {
+    position: "absolute", top: "65%", left: "-10%",
+    width: "120%", height: "1px",
+    background: "linear-gradient(90deg, transparent, rgba(70,233,255,0.06), transparent)",
+    transform: "rotate(-8deg)",
+  },
+
+  // Scene container
   scene: {
-    width: "100vw",
-    height: "70px",
-    position: "relative",
-    overflow: "hidden",
-    marginTop: "3rem",
-  },
-
-  carGroup: {
-    position: "absolute",
-    bottom: "8px",
-    animation: "ab-drive 2s infinite, ab-bounce 0.4s infinite",
-  },
-
-  exhaust: {
-    position: "absolute",
-    left: "-16px",
-    top: "14px",
+    width: "280px",
     display: "flex",
-    gap: "3px",
-  },
-
-  puff: {
-    width: 6,
-    height: 6,
-    background: "rgba(255,255,255,0.12)",
-    borderRadius: "50%",
-    animation: "ab-pulse 0.3s infinite",
-  },
-
-  carBody: {
-    width: "80px",
-    height: "28px",
-    background: "#f97316",
-    borderRadius: "6px",
+    flexDirection: "column",
+    alignItems: "center",
     position: "relative",
+    marginBottom: "32px",
+    marginTop: "4rem",
   },
 
-  carRoof: {
+  // Speed streaks (horizontal lines behind car for motion feel)
+  speedLines: {
     position: "absolute",
-    top: "-16px",
-    left: "12px",
-    width: "48px",
-    height: "18px",
-    background: "#ea6c0a",
-    borderRadius: "6px",
+    left: "0px",
+    top: "50%",
+    transform: "translateY(-28px)",
+    display: "flex",
+    flexDirection: "column",
+    gap: "5px",
+  },
+  speedLine: {
+    height: "2px",
+    background: "linear-gradient(90deg, transparent, rgba(70,233,255,0.25))",
+    borderRadius: "1px",
+    animation: "ab-streak 0.8s ease-out infinite",
   },
 
-  winFront: {
-    position: "absolute",
-    top: "3px",
-    left: "4px",
-    width: "18px",
-    height: "12px",
-    background: "rgba(70,233,255,0.45)",
-  },
-
-  winRear: {
-    position: "absolute",
-    top: "3px",
-    left: "25px",
-    width: "18px",
-    height: "12px",
-    background: "rgba(70,233,255,0.45)",
-  },
-
-  headlight: {
-    position: "absolute",
-    right: "-4px",
-    top: "9px",
-    width: "6px",
-    height: "6px",
-    background: "#fef08a",
-    borderRadius: "50%",
-  },
-
-  taillight: {
-    position: "absolute",
-    left: "-4px",
-    top: "9px",
-    width: "5px",
-    height: "5px",
-    background: "#ef4444",
-    borderRadius: "50%",
-    animation: "ab-pulse 0.4s infinite",
-  },
-
-  wheelWrap: {
-    position: "absolute",
-    bottom: "-8px",
-  },
-
-  wheel: {
-    width: "16px",
-    height: "16px",
-    background: "#1e293b",
-    borderRadius: "50%",
-    border: "3px solid #94a3b8",
-    animation: "ab-wheel 0.35s linear infinite",
-  },
-
-  spoke: {
-    width: "1.5px",
-    height: "7px",
-    background: "#94a3b8",
-  },
-
+  // Road
   road: {
-    width: "100vw",
-    height: "6px",
-    background: "#2a5298",
+    width: "280px",
+    height: "10px",
+    background: "linear-gradient(180deg, #1e3a5f, #162d4a)",
+    borderRadius: "5px",
+    position: "relative",
     overflow: "hidden",
+    order: 2,
+    border: "1px solid rgba(70,233,255,0.1)",
   },
-
   roadDashes: {
+    position: "absolute",
+    top: "50%",
+    left: 0,
+    transform: "translateY(-50%)",
     display: "flex",
     gap: "16px",
-    animation: "ab-road 0.5s linear infinite",
+    animation: "ab-road 0.4s linear infinite",
   },
-
   dash: {
     width: "24px",
     height: "2px",
-    background: "rgba(70,233,255,0.35)",
+    background: "rgba(70,233,255,0.5)",
+    borderRadius: "1px",
+    flexShrink: 0,
+  },
+
+  // Car
+  carWrap: {
+    order: 1,
+    marginBottom: "3px",
+    animation: "ab-bounce 0.4s ease-in-out infinite",
+    position: "relative",
+    display: "flex",
+    alignItems: "flex-end",
+    justifyContent: "center",
+  },
+  exhaustWrap: {
+    position: "absolute",
+    left: "-8px",
+    bottom: "22px",
+    display: "flex",
+    flexDirection: "row-reverse",
+    gap: "3px",
+    alignItems: "center",
+  },
+  puff: {
+    width: 8,
+    height: 8,
+    background: "rgba(255,255,255,0.15)",
+    borderRadius: "50%",
+    animation: "ab-puff 0.7s ease-out infinite",
+  },
+  carOuter: {
+    width: "120px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "stretch",
+  },
+  carRoof: {
+    marginLeft: "20px",
+    marginRight: "12px",
+    height: "28px",
+    background: "linear-gradient(135deg, #ea6c0a, #f97316)",
+    borderRadius: "10px 10px 0 0",
+    position: "relative",
+    display: "flex",
+    alignItems: "flex-end",
+    padding: "0 5px",
+    boxShadow: "inset 0 -2px 6px rgba(0,0,0,0.2)",
+  },
+  winFront: {
+    width: "34px",
+    height: "20px",
+    background: "linear-gradient(135deg, rgba(70,233,255,0.55), rgba(70,233,255,0.25))",
+    borderRadius: "5px 5px 0 0",
+    marginRight: "4px",
+    border: "1px solid rgba(70,233,255,0.3)",
+  },
+  winRear: {
+    width: "26px",
+    height: "18px",
+    background: "linear-gradient(135deg, rgba(70,233,255,0.4), rgba(70,233,255,0.15))",
+    borderRadius: "5px 5px 0 0",
+    border: "1px solid rgba(70,233,255,0.2)",
+  },
+  carBody: {
+    height: "34px",
+    background: "linear-gradient(180deg, #f97316, #ea6c0a)",
+    borderRadius: "4px 8px 4px 4px",
+    position: "relative",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
+  },
+  headlight: {
+    position: "absolute",
+    right: "-5px",
+    top: "12px",
+    width: "7px",
+    height: "8px",
+    background: "#fef08a",
+    borderRadius: "0 3px 3px 0",
+    boxShadow: "0 0 6px rgba(254,240,138,0.8)",
+  },
+  headlightBeam: {
+    position: "absolute",
+    right: "-24px",
+    top: "13px",
+    width: "22px",
+    height: "6px",
+    background: "linear-gradient(90deg, rgba(254,240,138,0.4), transparent)",
+    borderRadius: "0 4px 4px 0",
+  },
+  taillight: {
+    position: "absolute",
+    left: "-5px",
+    top: "12px",
+    width: "5px",
+    height: "8px",
+    background: "#ef4444",
+    borderRadius: "3px 0 0 3px",
+    animation: "ab-pulse 0.5s ease-in-out infinite",
+    boxShadow: "0 0 6px rgba(239,68,68,0.6)",
+  },
+  wheelsRow: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginTop: "-8px",
+  },
+  wheelGap: { width: "10px" },
+  wheelGroup: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+  },
+  wheel: {
+    width: "22px",
+    height: "22px",
+    background: "#1e293b",
+    borderRadius: "50%",
+    border: "3px solid #64748b",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    animation: "ab-wheel 0.35s linear infinite",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+  },
+  spoke: {
+    width: "2px",
+    height: "10px",
+    background: "#94a3b8",
+    borderRadius: "1px",
   },
 
   content: {
@@ -405,10 +487,14 @@ const s = {
   subtitle: { fontSize: "14px", opacity: 0.7, marginTop: "10px" },
 
   logoutBtn: {
-    marginTop: "20px",
-    padding: "12px",
-    borderRadius: "10px",
-    border: "none",
+    marginTop: "24px",
+    padding: "12px 32px",
+    borderRadius: "24px",
+    border: "1px solid rgba(255, 255, 255, 0.2)",
+    background: "rgba(255, 255, 255, 0.1)",
+    color: "#fff",
     cursor: "pointer",
+    fontWeight: "600",
+    transition: "all 0.2s ease",
   },
 };

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
-import { colors, sh } from "../screens/dashboardShared";
+import { colors, sh, ErrorModal } from "../screens/dashboardShared";
 import { Star, X } from "lucide-react";
 
 export default function ReviewAppModal({ onClose, userProfile }) {
@@ -10,6 +10,7 @@ export default function ReviewAppModal({ onClose, userProfile }) {
   const [comment, setComment] = useState("");
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleSubmit = async () => {
     if (rating === 0) return;
@@ -35,13 +36,14 @@ export default function ReviewAppModal({ onClose, userProfile }) {
       setSuccess(true);
       setTimeout(() => onClose(), 2000);
     } catch (e) {
-      console.error(e);
-      alert("Failed to submit review. Try again later.");
+      setErrorMsg("Failed to submit review. Try again later.");
       setSaving(false);
     }
   };
 
   return (
+    <>
+    <ErrorModal error={errorMsg} onClose={() => setErrorMsg("")} />
     <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
       <div style={{ background: "#fff", width: "100%", maxWidth: "400px", borderRadius: "24px", padding: "24px", position: "relative" }}>
         
@@ -94,5 +96,6 @@ export default function ReviewAppModal({ onClose, userProfile }) {
         )}
       </div>
     </div>
+    </>
   );
 }

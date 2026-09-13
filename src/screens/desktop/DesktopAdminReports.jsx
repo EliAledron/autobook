@@ -8,18 +8,21 @@ import { BarChart3, Users, Wrench, Calendar, ClipboardList, TrendingUp } from "l
 export default function DesktopAdminReports() {
   const [users, setUsers] = useState([]);
   const [bookings, setBookings] = useState([]);
+  const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let usersList = [];
     let bookingsList = [];
+    let shopsList = [];
     let loaded = 0;
 
     const checkLoaded = () => {
       loaded++;
-      if (loaded === 2) {
+      if (loaded === 3) {
         setUsers(usersList);
         setBookings(bookingsList);
+        setShops(shopsList);
         setLoading(false);
       }
     };
@@ -34,20 +37,26 @@ export default function DesktopAdminReports() {
       checkLoaded();
     });
 
+    const unsubShops = onSnapshot(collection(db, "shops"), (snap) => {
+      shopsList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      checkLoaded();
+    });
+
     return () => {
       unsubUsers();
       unsubBookings();
+      unsubShops();
     };
   }, []);
 
   const totalUsers = users.length;
-  const totalOwners = users.filter(u => u.role?.toLowerCase() === "owner").length;
+  const totalOwners = shops.length;
   const totalCustomers = users.filter(u => !u.role || u.role?.toLowerCase() === "customer").length;
   
   const totalBookings = bookings.length;
-  const pendingBookings = bookings.filter(b => b.status === "pending" || b.status === "quoted").length;
-  const completedBookings = bookings.filter(b => b.status === "completed" || b.status === "paid").length;
-  const canceledBookings = bookings.filter(b => b.status === "cancelled" || b.status === "rejected").length;
+  const pendingBookings = bookings.filter(b => (b.status || "Pending").toLowerCase() === "pending" || (b.status || "").toLowerCase() === "quoted" || (b.status || "").toLowerCase() === "in progress").length;
+  const completedBookings = bookings.filter(b => (b.status || "").toLowerCase() === "completed" || (b.status || "").toLowerCase() === "paid").length;
+  const canceledBookings = bookings.filter(b => (b.status || "").toLowerCase() === "cancelled" || (b.status || "").toLowerCase() === "rejected" || (b.status || "").toLowerCase() === "canceled").length;
 
   // Monthly breakdown for current year
   const currentYear = new Date().getFullYear();

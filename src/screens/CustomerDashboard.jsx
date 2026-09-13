@@ -563,7 +563,12 @@ export default function CustomerDashboard() {
             />
           ) : (
             bookings.slice(0, 5).map((b, i) => (
-              <div key={b.id} className="customer-list-item" style={{ ...sh.rowItem, padding: "16px", borderBottom: i === Math.min(bookings.length, 5) - 1 ? "none" : `1px solid #f1f5f9` }}>
+              <div 
+                key={b.id} 
+                className="customer-list-item" 
+                onClick={() => b.shopId && navigate("/customer/shop-profile", { state: { shopId: b.shopId } })}
+                style={{ ...sh.rowItem, padding: "16px", borderBottom: i === Math.min(bookings.length, 5) - 1 ? "none" : `1px solid #f1f5f9`, cursor: b.shopId ? "pointer" : "default" }}
+              >
                 <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.info, flexShrink: 0 }}>
                   <Wrench size={24} />
                 </div>

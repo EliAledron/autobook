@@ -55,12 +55,12 @@ export default function AdminDashboard({ user }) {
         {/* STATS GRID */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "24px", marginBottom: "32px" }}>
           {[
-            { label: "Total Users", val: users.length, color: colors.navy, icon: <Users size={24} color={colors.navy} />, bg: "#eef2ff" },
-            { label: "Active Shops/Users", val: approvedUsers.length, color: colors.success, icon: <CheckCircle size={24} color={colors.success} />, bg: "#ecfdf5" },
-            { label: "Global Bookings", val: allBookings.length, color: colors.info, icon: <ClipboardList size={24} color={colors.info} />, bg: "#eff6ff" },
-            { label: "System Alerts", val: unreadAlerts, color: colors.danger, icon: <AlertTriangle size={24} color={colors.danger} />, bg: "#fef2f2" }
+            { label: "Total Users", val: users.length, color: colors.navy, icon: <Users size={24} color={colors.navy} />, bg: "#eef2ff", path: "/admin/users" },
+            { label: "Active Shops/Users", val: approvedUsers.length, color: colors.success, icon: <CheckCircle size={24} color={colors.success} />, bg: "#ecfdf5", path: "/admin/shops" },
+            { label: "Global Bookings", val: allBookings.length, color: colors.info, icon: <ClipboardList size={24} color={colors.info} />, bg: "#eff6ff", path: "/admin/reports" },
+            { label: "System Alerts", val: unreadAlerts, color: colors.danger, icon: <AlertTriangle size={24} color={colors.danger} />, bg: "#fef2f2", path: "/admin/alerts" }
           ].map((m, i) => (
-            <div key={i} style={{ background: "#fff", padding: "24px", borderRadius: "20px", boxShadow: "0 2px 8px rgba(0,0,0,0.02)", border: `1px solid ${colors.border}`, display: "flex", flexDirection: "column" }}>
+            <div key={i} onClick={() => navigate(m.path)} style={{ background: "#fff", padding: "24px", borderRadius: "20px", boxShadow: "0 2px 8px rgba(0,0,0,0.02)", border: `1px solid ${colors.border}`, display: "flex", flexDirection: "column", cursor: "pointer", transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"} onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}>
               <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: m.bg, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px" }}>
                 {m.icon}
               </div>
@@ -102,7 +102,7 @@ export default function AdminDashboard({ user }) {
           <div style={{ background: "#fff", borderRadius: "20px", border: `1px solid ${colors.border}`, boxShadow: "0 2px 8px rgba(0,0,0,0.02)", padding: "24px", overflow: "hidden" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
               <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: colors.textPrimary }}>Recent Bookings</h3>
-              <span onClick={() => navigate("/admin/bookings")} style={{ fontSize: "13px", fontWeight: "700", color: colors.blue, cursor: "pointer" }}>View All &rarr;</span>
+              <span onClick={() => navigate("/admin/reports")} style={{ fontSize: "13px", fontWeight: "700", color: colors.blue, cursor: "pointer" }}>View All &rarr;</span>
             </div>
             
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>

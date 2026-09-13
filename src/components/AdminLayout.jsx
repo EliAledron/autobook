@@ -6,7 +6,7 @@ import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { signOut } from "firebase/auth";
 import TopbarAvatar from "../screens/TopbarAvatar";
-import { Users, FileText, Wrench, AlertTriangle, MessageSquare, ShieldAlert, ClipboardList, LogOut, LayoutDashboard, Search, Bell } from "lucide-react";
+import { Users, FileText, Wrench, AlertTriangle, MessageSquare, ShieldAlert, ClipboardList, LogOut, LayoutDashboard, Search, Bell, Store } from "lucide-react";
 import { colors } from "../screens/dashboardShared";
 import { useUser } from "../UserContext";
 
@@ -50,6 +50,7 @@ export default function AdminLayout({ children }) {
   const SIDEBAR_LINKS = [
     { label: "Dashboard", icon: <LayoutDashboard size={20} />, path: "/dashboard" },
     { label: "User Approvals", icon: <Users size={20} />, path: "/admin/users", badge: pendingUsers },
+    { label: "Active Shops", icon: <Store size={20} />, path: "/admin/shops" },
     { label: "System Reports", icon: <FileText size={20} />, path: "/admin/reports" },
     { label: "Reported Shops", icon: <ShieldAlert size={20} />, path: "/admin/reported-shops" },
     { label: "Global Alerts", icon: <AlertTriangle size={20} />, path: "/admin/alerts", badge: unreadAlerts },

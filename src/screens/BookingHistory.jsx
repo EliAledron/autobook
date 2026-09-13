@@ -2,8 +2,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, query, where, getDocs, orderBy, updateDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
-import { sh, colors, EmptyState, getInitials, SharedSearchBar } from "./dashboardShared";
+import { collection, query, where, getDocs, getDoc, orderBy, updateDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
+import { sh, colors, EmptyState, getInitials, SharedSearchBar, ErrorModal, SuccessModal } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
 import { CheckCircle2, Wrench, XCircle, Clock, ClipboardList, Store, Calendar, Car, X, RefreshCw, Star } from "lucide-react";
@@ -139,9 +139,12 @@ export default function BookingHistory() {
   const [reviewText, setReviewText] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
 
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+
   const handleSubmitReview = async () => {
     if (!selected) return;
-    if (!reviewText.trim()) return alert("Please write a review.");
+    if (!reviewText.trim()) return setErrorMsg("Please write a review.");
     setSubmittingReview(true);
     try {
       await updateDoc(doc(db, "bookings", selected.id), {
@@ -167,7 +170,7 @@ export default function BookingHistory() {
       setReviewRating(5);
     } catch (e) {
       console.error(e);
-      alert("Failed to submit review.");
+      setErrorMsg("Failed to submit review.");
     }
     setSubmittingReview(false);
   };
@@ -201,6 +204,31 @@ export default function BookingHistory() {
     setShowCancelConfirm(false);
     setCancelling(true);
     try {
+      // Late cancellation logic
+      const createdTs = selected.createdAt?.seconds ? selected.createdAt.seconds * 1000 : Date.now();
+      const hoursSinceBooking = (Date.now() - createdTs) / (1000 * 60 * 60);
+      let strikes = 0;
+
+      if (hoursSinceBooking > 24) {
+        const userRef = doc(db, "users", uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          strikes = (userData.lateCancellations || 0) + 1;
+          const userUpdates = { lateCancellations: strikes };
+          
+          if (strikes === 2) {
+            const cooldown = new Date();
+            cooldown.setDate(cooldown.getDate() + 7);
+            userUpdates.cooldownUntil = cooldown.getTime();
+          } else if (strikes >= 3) {
+            userUpdates.status = "restricted";
+            userUpdates.restrictionReason = "Exceeded maximum allowed late cancellations.";
+          }
+          await updateDoc(userRef, userUpdates);
+        }
+      }
+
       await updateDoc(doc(db, "bookings", selected.id), { status: "Cancelled", cancelReason: cancelReason.trim() });
 
       // Notify customer
@@ -212,6 +240,23 @@ export default function BookingHistory() {
         read: false,
         createdAt: serverTimestamp(),
       });
+
+      if (strikes > 0) {
+        let warningMsg = `You cancelled a booking after the 24-hour grace period. You now have ${strikes}/3 strikes.`;
+        if (strikes === 2) {
+          warningMsg = `You now have 2/3 strikes for late cancellations. You are banned from booking new services for 7 days.`;
+        } else if (strikes >= 3) {
+          warningMsg = `You have reached 3 late cancellation strikes. Your account has been restricted.`;
+        }
+        await addDoc(collection(db, "notifications"), {
+          userId: uid,
+          title: strikes >= 3 ? "Account Restricted" : "Late Cancellation Warning",
+          message: warningMsg,
+          type: "system",
+          read: false,
+          createdAt: serverTimestamp(),
+        });
+      }
 
       // Notify Admin
       await addDoc(collection(db, "adminAlerts"), {
@@ -280,6 +325,8 @@ export default function BookingHistory() {
 
   return (
     <div style={sh.page}>
+      <SuccessModal message={successMsg} onClose={() => setSuccessMsg("")} />
+      <ErrorModal error={errorMsg} onClose={() => setErrorMsg("")} />
       <style>{keyframes}</style>
 
       {/* TOPBAR */}
@@ -524,6 +571,22 @@ export default function BookingHistory() {
                 <div style={{ fontSize: "15px", color: colors.textPrimary, fontWeight: "500" }}>{value}</div>
               </div>
             ))}
+
+            {/* View Profile option */}
+            <button
+              onClick={() => navigate("/customer/shop-profile", { state: { shopId: selected.shopId } })}
+              style={{
+                width: "100%", padding: "16px",
+                background: colors.white, color: colors.navy,
+                fontSize: "15px", fontWeight: "700",
+                border: `1.5px solid ${colors.navy}`, borderRadius: "16px",
+                cursor: "pointer", fontFamily: "inherit", marginBottom: "12px",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+              }}
+            >
+              <Store size={18} />
+              View Shop Profile
+            </button>
 
             {/* Cancel option - only for pending bookings */}
             {(selected.status || "Pending").toLowerCase() === "pending" && (

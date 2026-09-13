@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { updateProfile } from "firebase/auth";
 import { doc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase";
-import { colors } from "../dashboardShared";
+import { colors, ErrorModal } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
 import { useUser } from "../../UserContext";
 import { User, Mail, Camera, Save } from "lucide-react";
@@ -12,6 +12,7 @@ export default function DesktopAdminProfile() {
   const [name, setName] = useState(userProfile?.name || userProfile?.displayName || "");
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleSave = async () => {
     setSaving(true);
@@ -28,13 +29,15 @@ export default function DesktopAdminProfile() {
       setTimeout(() => setSuccess(false), 3000);
     } catch (e) {
       console.error(e);
-      alert("Failed to update profile");
+      setErrorMsg("Failed to update profile");
     }
     setSaving(false);
   };
 
   return (
-    <RoleBasedWrapper title="Admin Profile">
+    <>
+      <ErrorModal error={errorMsg} onClose={() => setErrorMsg("")} />
+      <RoleBasedWrapper title="Admin Profile">
       <div style={{ maxWidth: "800px", margin: "0 auto", padding: "32px" }}>
         
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
@@ -100,5 +103,6 @@ export default function DesktopAdminProfile() {
 
       </div>
     </RoleBasedWrapper>
+    </>
   );
 }

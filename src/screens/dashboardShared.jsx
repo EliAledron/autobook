@@ -315,6 +315,32 @@ export function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, conf
   );
 }
 
+export function SuccessModal({ message, title = "Success!", onClose }) {
+  if (!message) return null;
+  return (
+    <div style={{
+      position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      zIndex: 9999, backgroundColor: "rgba(0,0,0,0.35)", padding: "24px"
+    }} onClick={onClose}>
+      <div style={{
+        background: colors.white, borderRadius: "20px", padding: "28px 24px",
+        maxWidth: "320px", width: "100%",
+        boxShadow: "0 20px 60px rgba(0,0,0,0.2)", textAlign: "center"
+      }} onClick={e => e.stopPropagation()}>
+        <div style={{ width: "52px", height: "52px", borderRadius: "50%", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={colors.info} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <div style={{ fontSize: "16px", fontWeight: "700", color: colors.textPrimary, marginBottom: "8px" }}>{title}</div>
+        <div style={{ fontSize: "14px", color: colors.textSecondary, lineHeight: "1.5", marginBottom: "20px" }}>{message}</div>
+        <button onClick={onClose} style={{ background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", border: "none", borderRadius: "12px", padding: "12px 32px", fontSize: "14px", fontWeight: "700", cursor: "pointer", width: "100%", boxShadow: "0 4px 12px rgba(26,58,92,0.25)" }}>OK</button>
+      </div>
+    </div>
+  );
+}
+
 export function ErrorModal({ error, onClose }) {
   if (!error) return null;
   return (

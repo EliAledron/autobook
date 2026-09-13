@@ -58,6 +58,8 @@ export default function BookService() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  const [cooldownUntil, setCooldownUntil] = useState(null);
+
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const daysInMon = new Date(year, month + 1, 0).getDate();
@@ -74,10 +76,15 @@ export default function BookService() {
 
       try {
         const userSnap = await getDoc(doc(db, "users", u.uid));
-        const name = userSnap.exists()
-          ? userSnap.data().displayName || u.displayName || "Unknown"
-          : u.displayName || "Unknown";
-        setCustomerName(name);
+        if (userSnap.exists()) {
+          const ud = userSnap.data();
+          setCustomerName(ud.displayName || u.displayName || "Unknown");
+          if (ud.cooldownUntil && ud.cooldownUntil > Date.now()) {
+            setCooldownUntil(ud.cooldownUntil);
+          }
+        } else {
+          setCustomerName(u.displayName || "Unknown");
+        }
       } catch (e) {
         setCustomerName(u.displayName || "Unknown");
       }
@@ -200,6 +207,26 @@ export default function BookService() {
       <button onClick={() => navigate("/customer/history")} style={sh.outlineBtn}>View My Bookings</button>
     </div>
   );
+
+  if (cooldownUntil && cooldownUntil > Date.now()) {
+    return (
+      <div style={{ ...sh.page, justifyContent: "center", alignItems: "center", display: "flex", flexDirection: "column", padding: "2rem", textAlign: "center" }}>
+        <div style={{ width: "80px", height: "80px", borderRadius: "24px", background: colors.dangerBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.danger, marginBottom: "1.5rem" }}>
+          <Calendar size={40} />
+        </div>
+        <div style={{ fontSize: "20px", fontWeight: "800", color: colors.textPrimary, marginBottom: "12px" }}>Booking Cooldown Active</div>
+        <div style={{ fontSize: "14px", color: colors.textSecondary, lineHeight: "1.6", maxWidth: "300px", marginBottom: "2rem" }}>
+          Due to multiple late cancellations, you are temporarily restricted from booking new services. 
+          <br /><br />
+          You will be able to book again on:<br />
+          <strong>{new Date(cooldownUntil).toLocaleString()}</strong>
+        </div>
+        <button onClick={() => navigate("/customer/dashboard")} style={{ ...sh.primaryBtn, background: colors.navy }}>
+          Back to Dashboard
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={sh.page}>

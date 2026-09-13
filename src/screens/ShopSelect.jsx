@@ -123,12 +123,10 @@ export default function ShopSelect() {
           filteredShops.map((shop) => (
             <div
               key={shop.id}
-              onClick={() => navigate("/customer/book-service", { state: { shop, prefilledService: location.state?.prefilledService } })}
               style={{
                 background: colors.white,
                 borderRadius: "20px",
                 border: `1px solid ${colors.border}`,
-                cursor: "pointer",
                 borderLeft: `5px solid ${shop.accent || colors.info}`,
                 boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
                 padding: "20px",
@@ -155,17 +153,22 @@ export default function ShopSelect() {
                   </div>
                   <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>{shop.tagline || "Quality auto services"}</div>
                 </div>
-                <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.textSecondary, fontSize: "18px", fontWeight: "700" }}>›</div>
               </div>
 
               {/* CTA */}
-              <div style={{
-                marginTop: "1.25rem", padding: "14px",
-                background: colors.bg, border: `1px solid ${colors.border}`,
-                borderRadius: "14px", textAlign: "center",
-                fontSize: "14px", fontWeight: "800", color: colors.navy,
-              }}>
-                Book with {shop.shortName || "Shop"} →
+              <div style={{ display: "flex", gap: "10px", marginTop: "1.25rem" }}>
+                <button
+                  onClick={(e) => { e.stopPropagation(); navigate("/customer/shop-profile", { state: { shopId: shop.id } }); }}
+                  style={{ flex: 1, padding: "14px", background: colors.bg, border: `1px solid ${colors.border}`, borderRadius: "14px", fontSize: "14px", fontWeight: "700", color: colors.textSecondary, cursor: "pointer" }}
+                >
+                  View Profile
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); navigate("/customer/book-service", { state: { shop, prefilledService: location.state?.prefilledService } }); }}
+                  style={{ flex: 1, padding: "14px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, border: "none", borderRadius: "14px", fontSize: "14px", fontWeight: "800", color: "#fff", cursor: "pointer", boxShadow: "0 4px 12px rgba(26,58,92,0.2)" }}
+                >
+                  Book Now
+                </button>
               </div>
             </div>
           ))

@@ -24,6 +24,7 @@ import AdminReports from "./screens/AdminReports";
 import AdminAlerts from "./screens/AdminAlerts";
 import AdminCarParts from "./screens/AdminCarParts";
 import AdminReviews from "./screens/AdminReviews";
+import AdminShops from "./screens/AdminShops";
 import AutoShopProfile from "./screens/AutoShopProfile";
 
 // Customer screens
@@ -74,6 +75,7 @@ function App() {
           <Route path="/admin/alerts" element={<AdminAlerts />} />
           <Route path="/admin/carparts" element={<AdminCarParts />} />
           <Route path="/admin/reviews" element={<AdminReviews />} />
+          <Route path="/admin/shops" element={<AdminShops />} />
 
           {/* Owner's own job management */}
           <Route path="/mechanic/job-requests" element={<MechanicRequests />} />

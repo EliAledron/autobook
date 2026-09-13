@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { sh, colors, getInitials, ErrorModal } from "./dashboardShared";
+import { sh, colors, getInitials, ErrorModal, SuccessModal } from "./dashboardShared";
 import { doc, updateDoc, addDoc, setDoc, collection, serverTimestamp, getDocs, query, where, orderBy, getDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -279,7 +279,8 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
 export default function AutoShopProfile() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [shop, setShop] = useState(location.state?.shop);
+  const [shop, setShop] = useState(location.state?.shop || null);
+  const shopId = location.state?.shopId || location.state?.shop?.id;
   const prefilledService = location.state?.prefilledService;
   const isOwner = location.state?.isOwner;
 
@@ -299,6 +300,9 @@ export default function AutoShopProfile() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reporting, setReporting] = useState(false);
+  const [loadingShop, setLoadingShop] = useState(!location.state?.shop && !!shopId);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
   
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
@@ -312,12 +316,12 @@ export default function AutoShopProfile() {
   }, []);
 
   useEffect(() => {
-    if (!shop) return;
+    if (!shop && !shopId) return;
     const fetchShopDetailsAndPosts = async () => {
       try {
-        let sId = shop.id;
+        let sId = shop?.id || shopId;
         // Attempt to resolve shop ID if missing
-        if (!sId && shop.ownerId) {
+        if (!sId && shop?.ownerId) {
           const sSnap = await getDocs(query(collection(db, "shops"), where("ownerId", "==", shop.ownerId)));
           if (!sSnap.empty) {
             sId = sSnap.docs[0].id;
@@ -370,18 +374,23 @@ export default function AutoShopProfile() {
         setReviews(allReviews);
 
         // Update shop state with enriched information
-        setShop(prev => ({ ...prev, ...dbShop, rating: finalRating, reviews: finalReviews }));
+        if (dbShop.id) {
+          setShop(prev => ({ ...(prev || {}), ...dbShop, rating: finalRating, reviews: finalReviews }));
+        } else {
+          setShop(null);
+        }
 
         // Fetch Posts
         const snap = await getDocs(collection(db, "posts"));
         const allPosts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         const shopPosts = allPosts.filter(p => {
-          if (shop.ownerId && p.ownerId === shop.ownerId) return true;
+          if (dbShop.ownerId && p.ownerId === dbShop.ownerId) return true;
+          if (shop?.ownerId && p.ownerId === shop.ownerId) return true;
           if (sId && p.shopId === sId) return true;
-          if (p.shopName && p.shopName === (dbShop.name || shop.name)) return true;
-          if (p.shopName && p.shopName === (dbShop.shortName || shop.shortName)) return true;
+          if (p.shopName && p.shopName === (dbShop.name || shop?.name)) return true;
+          if (p.shopName && p.shopName === (dbShop.shortName || shop?.shortName)) return true;
           
-          const sName = (dbShop.name || shop.name || "").toUpperCase();
+          const sName = (dbShop.name || shop?.name || "").toUpperCase();
           const pName = (p.shopName || "").toUpperCase();
           if (sName.includes("JME") && (p.shopId === "JME" || pName.includes("JME"))) return true;
           if (sName.includes("GRHE") && (p.shopId === "GRHE" || pName.includes("GRHE"))) return true;
@@ -390,22 +399,22 @@ export default function AutoShopProfile() {
         
         const sorted = shopPosts.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
         setPosts(sorted);
+
+        const currentOwnerId = dbShop.ownerId || shop?.ownerId;
+        if (currentOwnerId) {
+          try {
+            const snapOwner = await getDoc(doc(db, "users", currentOwnerId));
+            if (snapOwner.exists()) setOwnerData(snapOwner.data());
+          } catch (e) {}
+        }
       } catch (e) {
         console.error("Error fetching shop details and posts:", e);
+      } finally {
+        setLoadingShop(false);
       }
     };
 
     fetchShopDetailsAndPosts();
-
-    if (shop.ownerId) {
-      const fetchOwner = async () => {
-        try {
-          const snap = await getDoc(doc(db, "users", shop.ownerId));
-          if (snap.exists()) setOwnerData(snap.data());
-        } catch (e) {}
-      };
-      fetchOwner();
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -433,7 +442,7 @@ export default function AutoShopProfile() {
   };
 
   const handleFlagShopClick = () => {
-    if (!uid) return alert("Please log in to flag a shop.");
+    if (!uid) return setErrorMsg("Please log in to flag a shop.");
     setShowReportModal(true);
   };
 
@@ -462,15 +471,26 @@ export default function AutoShopProfile() {
       }
       setShowReportModal(false);
       setReportReason("");
-      // Using a quick timeout to let the modal close before showing a success state (could also use a toast here)
-      setTimeout(() => alert("Shop reported successfully. Our team will review this shop."), 100);
+      setSuccessMsg("Shop reported successfully. Our team will review this shop.");
     } catch (e) {
-      alert("Failed to report shop: " + e.message);
+      setErrorMsg("Failed to report shop: " + e.message);
     }
     setReporting(false);
   };
 
 
+
+  if (loadingShop) {
+    return (
+      <div style={sh.page}>
+        <div style={sh.topbar}>
+          <BackButton />
+          <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
+        </div>
+        <div style={{ padding: "4rem 2rem", textAlign: "center", color: colors.textSecondary }}>Loading shop details...</div>
+      </div>
+    );
+  }
 
   if (!shop) {
     return (
@@ -492,6 +512,8 @@ export default function AutoShopProfile() {
 
   return (
     <div style={sh.page}>
+      <SuccessModal message={successMsg} onClose={() => setSuccessMsg("")} />
+      <ErrorModal error={errorMsg} onClose={() => setErrorMsg("")} />
       <style>
         {`
           @keyframes ab-fade-in { from { opacity: 0; } to { opacity: 1; } }
@@ -554,7 +576,7 @@ export default function AutoShopProfile() {
                   </button>
                   <button 
                     onClick={() => navigate("/customer/book-service", { state: { shop, prefilledService } })}
-                    style={{ padding: "12px 24px", background: colors.accent, color: colors.navy, border: "none", borderRadius: "14px", fontWeight: "800", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "14px", fontFamily: "inherit", boxShadow: "0 4px 16px rgba(70,233,255,0.3)", transition: "all 0.2s" }}
+                    style={{ padding: "12px 24px", background: "#fff", color: colors.navy, border: "none", borderRadius: "14px", fontWeight: "800", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "14px", fontFamily: "inherit", boxShadow: "0 4px 16px rgba(0,0,0,0.15)", transition: "all 0.2s" }}
                   >
                     <Calendar size={14} /> Book Now
                   </button>

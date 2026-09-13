@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { collection, onSnapshot, updateDoc, doc, getDoc, getDocs, query, where, deleteDoc } from "firebase/firestore";
 import { db } from "../../firebase";
-import { colors } from "../dashboardShared";
+import { colors, ErrorModal, SuccessModal, ConfirmModal } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
 import { ShieldAlert, CheckCircle, Search, Ban, Flag, Trash2 } from "lucide-react";
 
@@ -10,30 +10,46 @@ export default function DesktopAdminReportedShops() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [confirmAction, setConfirmAction] = useState(null);
 
   useEffect(() => {
-    // Fetch all shop_report alerts to aggregate reports by shop
     const unsub = onSnapshot(query(collection(db, "adminAlerts"), where("type", "==", "shop_report")), (snap) => {
-      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      setReports(list);
+      const arr = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setReports(arr.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0)));
       setLoading(false);
     });
     return () => unsub();
   }, []);
 
-  const dismissReport = async (id) => {
-    if (!window.confirm("Dismiss this report?")) return;
+  const dismissReport = (id) => {
+    setConfirmAction({
+      type: 'dismiss',
+      id,
+      title: 'Dismiss Report',
+      message: 'Dismiss this report?'
+    });
+  };
+
+  const executeDismiss = async (id) => {
     setActionLoading(id);
     try { await deleteDoc(doc(db, "adminAlerts", id)); } catch (e) {}
     setActionLoading(null);
   };
 
-  const banShopOwner = async (shopId) => {
-    if (!window.confirm("Are you sure you want to restrict the owner of this shop? They will lose access to the platform.")) return;
+  const banShopOwner = (shopId) => {
+    setConfirmAction({
+      type: 'ban',
+      shopId,
+      title: 'Restrict Shop Owner',
+      message: 'Are you sure you want to restrict the owner of this shop? They will lose access to the platform.'
+    });
+  };
+
+  const executeBan = async (shopId) => {
     setActionLoading(shopId);
     try {
-      // Find the user with this shopId and role 'owner'
       const q = query(collection(db, "users"), where("shopId", "==", shopId));
       const s = await getDocs(q);
       s.docs.forEach(async (d) => {
@@ -41,24 +57,41 @@ export default function DesktopAdminReportedShops() {
           await updateDoc(doc(db, "users", d.id), { status: "restricted" });
         }
       });
-      alert("Shop Owner has been restricted.");
+      setSuccessMsg("Shop Owner has been restricted.");
     } catch (e) {
       console.error(e);
-      alert("Failed to ban shop.");
+      setErrorMsg("Failed to ban shop.");
     }
     setActionLoading(null);
+  };
+
+  const handleConfirmAction = () => {
+    if (!confirmAction) return;
+    if (confirmAction.type === 'dismiss') executeDismiss(confirmAction.id);
+    if (confirmAction.type === 'ban') executeBan(confirmAction.shopId);
+    setConfirmAction(null);
   };
 
   const filteredReports = reports.filter(r => {
     const s = search.toLowerCase();
     return (r.shopName || "").toLowerCase().includes(s) || 
-           (r.reason || r.message || "").toLowerCase().includes(s) ||
-           (r.reporterName || "").toLowerCase().includes(s);
+           (r.reason || r.message || "").toLowerCase().includes(s);
   });
 
   return (
-    <RoleBasedWrapper title="Reported Shops">
-      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "32px" }}>
+    <>
+      <SuccessModal message={successMsg} onClose={() => setSuccessMsg("")} />
+      <ErrorModal error={errorMsg} onClose={() => setErrorMsg("")} />
+      <ConfirmModal 
+        isOpen={!!confirmAction} 
+        title={confirmAction?.title} 
+        message={confirmAction?.message} 
+        onConfirm={handleConfirmAction} 
+        onCancel={() => setConfirmAction(null)} 
+        type="danger" 
+      />
+      <RoleBasedWrapper title="Reported Shops">
+        <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "32px" }}>
         
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
           <div>
@@ -118,7 +151,7 @@ export default function DesktopAdminReportedShops() {
                       <div style={{ fontSize: "14px", color: colors.textPrimary, lineHeight: "1.5" }}>{r.reason || r.message || "No reason provided"}</div>
                     </td>
                     <td style={{ padding: "16px 24px", verticalAlign: "top" }}>
-                      <div style={{ fontSize: "14px", fontWeight: "600", color: colors.textPrimary }}>{r.reporterName || "Anonymous"}</div>
+                      <div style={{ fontSize: "14px", fontWeight: "600", color: colors.textSecondary }}>Hidden for Privacy</div>
                     </td>
                     <td style={{ padding: "16px 24px", verticalAlign: "top", fontSize: "14px", color: colors.textSecondary }}>
                       {r.createdAt?.seconds ? new Date(r.createdAt.seconds * 1000).toLocaleDateString() : "Unknown"}
@@ -141,5 +174,6 @@ export default function DesktopAdminReportedShops() {
         </div>
       </div>
     </RoleBasedWrapper>
+    </>
   );
 }

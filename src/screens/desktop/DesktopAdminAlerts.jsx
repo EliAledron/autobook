@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { collection, onSnapshot, updateDoc, doc, deleteDoc, query, where, writeBatch } from "firebase/firestore";
 import { db } from "../../firebase";
-import { colors } from "../dashboardShared";
+import { colors, ConfirmModal } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
 import { AlertTriangle, CheckCircle, Trash2, Search, Info, ShieldAlert, Star, CheckCheck } from "lucide-react";
 
@@ -10,6 +10,7 @@ export default function DesktopAdminAlerts() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("unread");
   const [loading, setLoading] = useState(true);
+  const [idToDelete, setIdToDelete] = useState(null);
 
   useEffect(() => {
     // Only fetch alerts meant for global platform admins
@@ -19,9 +20,8 @@ export default function DesktopAdminAlerts() {
     );
     
     const unsub = onSnapshot(q, (snap) => {
-      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      setAlerts(list);
+      const arr = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setAlerts(arr.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0)));
       setLoading(false);
     });
     return () => unsub();
@@ -46,9 +46,14 @@ export default function DesktopAdminAlerts() {
     try { await updateDoc(doc(db, "adminAlerts", id), { read: false }); } catch (e) {}
   };
 
-  const deleteAlert = async (id) => {
-    if (!window.confirm("Permanently delete this alert?")) return;
-    try { await deleteDoc(doc(db, "adminAlerts", id)); } catch (e) {}
+  const deleteAlert = (id) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDeleteAlert = async () => {
+    if (!idToDelete) return;
+    try { await deleteDoc(doc(db, "adminAlerts", idToDelete)); } catch (e) {}
+    setIdToDelete(null);
   };
 
   const getIcon = (type) => {
@@ -66,8 +71,18 @@ export default function DesktopAdminAlerts() {
   });
 
   return (
-    <RoleBasedWrapper title="Global Alerts">
-      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "32px" }}>
+    <>
+      <ConfirmModal 
+        isOpen={!!idToDelete} 
+        title="Delete Alert" 
+        message="Permanently delete this alert?" 
+        onConfirm={confirmDeleteAlert} 
+        onCancel={() => setIdToDelete(null)} 
+        type="danger" 
+        confirmText="Delete" 
+      />
+      <RoleBasedWrapper title="Alerts">
+        <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "32px" }}>
         
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
           <div>
@@ -176,5 +191,6 @@ export default function DesktopAdminAlerts() {
         </div>
       </div>
     </RoleBasedWrapper>
+    </>
   );
 }

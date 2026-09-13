@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { collection, onSnapshot, deleteDoc, doc } from "firebase/firestore";
 import { db } from "../../firebase";
-import { colors } from "../dashboardShared";
+import { colors, ConfirmModal } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
 import { Star, Trash2, Search, MessageSquare } from "lucide-react";
 
@@ -9,6 +9,7 @@ export default function DesktopAdminReviews() {
   const [reviews, setReviews] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [idToDelete, setIdToDelete] = useState(null);
 
   useEffect(() => {
     // Note: Assuming reviews are kept in a global 'reviews' collection, 
@@ -25,9 +26,14 @@ export default function DesktopAdminReviews() {
     return () => unsub();
   }, []);
 
-  const deleteReview = async (id) => {
-    if (!window.confirm("Permanently delete this review from the platform?")) return;
-    try { await deleteDoc(doc(db, "reviews", id)); } catch (e) {}
+  const deleteReview = (id) => {
+    setIdToDelete(id);
+  };
+
+  const confirmDeleteReview = async () => {
+    if (!idToDelete) return;
+    try { await deleteDoc(doc(db, "reviews", idToDelete)); } catch (e) {}
+    setIdToDelete(null);
   };
 
   const filteredReviews = reviews.filter(r => {
@@ -38,8 +44,18 @@ export default function DesktopAdminReviews() {
   });
 
   return (
-    <RoleBasedWrapper title="Platform Reviews">
-      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "32px" }}>
+    <>
+      <ConfirmModal 
+        isOpen={!!idToDelete} 
+        title="Delete Review" 
+        message="Permanently delete this review from the platform?" 
+        onConfirm={confirmDeleteReview} 
+        onCancel={() => setIdToDelete(null)} 
+        type="danger" 
+        confirmText="Delete" 
+      />
+      <RoleBasedWrapper title="Platform Reviews">
+        <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "32px" }}>
         
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
           <div>
@@ -121,5 +137,6 @@ export default function DesktopAdminReviews() {
         </div>
       </div>
     </RoleBasedWrapper>
+    </>
   );
 }
