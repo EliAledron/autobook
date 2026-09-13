@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged, signOut, sendEmailVerification } from "firebase/auth";
 import { doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { ErrorModal, SuccessModal } from "./dashboardShared";
 
 const keyframes = `
   @keyframes ab-drive  { 0%{transform:translateX(-120px)} 100%{transform:translateX(calc(100vw + 120px))} }
@@ -20,6 +21,7 @@ export default function PendingApproval() {
   const [name, setName] = useState("");
   const [reason, setReason] = useState("");
   const [reapplying, setReapplying] = useState(false);
+  const [devBypass, setDevBypass] = useState(false);
 
   useEffect(() => {
     let docUnsub = null;
@@ -30,7 +32,7 @@ export default function PendingApproval() {
         return;
       }
 
-      if (!user.emailVerified) {
+      if (!user.emailVerified && !devBypass) {
         setStatus("unverified");
         return;
       }
@@ -60,17 +62,19 @@ export default function PendingApproval() {
       authUnsub();
       if (docUnsub) docUnsub();
     };
-  }, [navigate]);
+  }, [navigate, devBypass]);
 
   
   
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   const handleResendEmail = async () => {
     if (auth.currentUser && resendCooldown === 0) {
       try {
         await sendEmailVerification(auth.currentUser);
-        alert("Verification email resent! Please check your inbox and spam folder.");
+        setSuccessMsg("Verification email resent! Please check your inbox and spam folder.");
         setResendCooldown(60);
         const interval = setInterval(() => {
           setResendCooldown((prev) => {
@@ -82,7 +86,7 @@ export default function PendingApproval() {
           });
         }, 1000);
       } catch (err) {
-        alert("Error resending email: " + err.message);
+        setErrorMsg("Error resending email: " + err.message);
       }
     }
   };
@@ -94,7 +98,7 @@ export default function PendingApproval() {
         setStatus("loading");
         window.location.reload();
       } else {
-        alert("Email not verified yet. Please check your inbox or spam folder.");
+        setErrorMsg("Email not verified yet. Please check your inbox or spam folder.");
       }
     }
   };
@@ -117,6 +121,8 @@ export default function PendingApproval() {
 
   return (
     <>
+      <SuccessModal message={successMsg} onClose={() => setSuccessMsg("")} />
+      <ErrorModal error={errorMsg} onClose={() => setErrorMsg("")} />
       <style>{keyframes}</style>
 
       <div style={s.page}>
@@ -179,6 +185,12 @@ export default function PendingApproval() {
               <button style={{...s.logoutBtn, background: "transparent", color: "rgba(255,255,255,0.5)", width: "100%", marginTop: 0}} onClick={handleLogout}>
                 Sign out
               </button>
+
+              {import.meta.env.DEV && (
+                <button style={{...s.logoutBtn, background: "transparent", border: "1px dashed rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.5)", width: "100%", marginTop: "12px", fontSize: "12px"}} onClick={() => setDevBypass(true)}>
+                  Bypass Verification (Dev)
+                </button>
+              )}
             </>
           )}
 
