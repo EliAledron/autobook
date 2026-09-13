@@ -127,11 +127,15 @@ async function uploadToCloudinary(file) {
 async function checkStatusAndNavigate(uid, navigate, setError) {
   const snap = await getDoc(doc(db, "users", uid));
   if (!snap.exists()) { navigate("/dashboard"); return; }
-  const { status, role = "" } = snap.data();
+  const { status, role = "", rejectionReason } = snap.data();
   const r = role.toLowerCase();
   if (r === "admin") { navigate("/dashboard"); return; }
   if (status === "approved") { navigate("/dashboard"); return; }
-  if (status === "rejected") { setError("Your account has been rejected. Contact support."); return; }
+  if (status === "rejected") { 
+    const reasonText = rejectionReason ? ` Reason: ${rejectionReason}` : " Contact support.";
+    setError(`Your account has been rejected.${reasonText}`); 
+    return; 
+  }
   navigate("/pending");
 }
 
