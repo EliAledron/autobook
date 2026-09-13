@@ -38,12 +38,6 @@ async function checkStatusAndNavigate(uid, navigate, setError) {
     return;
   }
 
-  if (status === "rejected") {
-    const reasonText = data.rejectionReason ? ` Reason: ${data.rejectionReason}` : " Please contact support.";
-    setError(`Your account has been rejected.${reasonText}`);
-    return;
-  }
-
   navigate("/pending");
 }
 

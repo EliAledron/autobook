@@ -250,12 +250,16 @@ export default function PendingApproval() {
                 </div>
               )}
 
-              <button style={{ ...s.logoutBtn, background: "#3b82f6", color: "#fff", border: "none", marginBottom: "12px" }} onClick={handleReapply} disabled={reapplying}>
-                {reapplying ? "Submitting..." : "Fix & Re-apply"}
+              <button style={{ ...s.logoutBtn, background: "#3b82f6", color: "#fff", border: "none", marginBottom: "12px", width: "100%" }} onClick={handleReapply} disabled={reapplying}>
+                {reapplying ? "Submitting..." : "Re-apply for Review"}
               </button>
 
-              <button style={s.logoutBtn} onClick={handleLogout}>
-                Back to login
+              <button style={{ ...s.logoutBtn, background: "transparent", border: "1px solid rgba(255,255,255,0.3)", color: "#fff", marginBottom: "12px", width: "100%" }} onClick={() => window.location.href = "mailto:support@autobook.com"}>
+                Contact Support
+              </button>
+
+              <button style={{ ...s.logoutBtn, background: "transparent", border: "none", color: "rgba(255,255,255,0.5)", width: "100%", padding: 0 }} onClick={handleLogout}>
+                Sign out
               </button>
             </>
           )}

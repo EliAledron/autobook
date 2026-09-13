@@ -131,11 +131,6 @@ async function checkStatusAndNavigate(uid, navigate, setError) {
   const r = role.toLowerCase();
   if (r === "admin") { navigate("/dashboard"); return; }
   if (status === "approved") { navigate("/dashboard"); return; }
-  if (status === "rejected") { 
-    const reasonText = rejectionReason ? ` Reason: ${rejectionReason}` : " Contact support.";
-    setError(`Your account has been rejected.${reasonText}`); 
-    return; 
-  }
   navigate("/pending");
 }
 
