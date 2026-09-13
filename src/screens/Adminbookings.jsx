@@ -1301,7 +1301,7 @@ export default function AdminBookings() {
                   <div style={{ fontSize: "13px", color: selected.status === "Completed" ? colors.success : colors.danger, fontWeight: "600", padding: "10px", background: selected.status === "Completed" ? colors.successBg : colors.dangerBg, borderRadius: "10px", border: `1px solid ${selected.status === "Completed" ? "rgba(22,163,74,0.3)" : "rgba(220,38,38,0.3)"}` }}>
                     {selected.status === "Completed" ? <><CheckCircle2 size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> This booking is completed.</> : <><XCircle size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> This booking was cancelled.</>}
                   </div>
-                  {(selected.status === "Cancelled" || selected.status === "Completed") && (
+                  {selected.status === "Cancelled" && (
                     <button
                       onClick={async () => {
                         setSaving(true);
@@ -1396,7 +1396,7 @@ export default function AdminBookings() {
               <>
                 <button 
                   onClick={() => setShowReceiptModal(true)} 
-                  style={{ width: "100%", padding: "16px", background: colors.success, color: "#fff", border: "none", borderRadius: "16px", fontSize: "15px", fontWeight: "700", cursor: "pointer", marginBottom: "10px", boxShadow: `0 8px 20px ${colors.success}40` }}
+                  style={{ width: "100%", padding: "16px", background: colors.blue, color: "#fff", border: "none", borderRadius: "16px", fontSize: "15px", fontWeight: "700", cursor: "pointer", marginBottom: "10px", boxShadow: `0 8px 20px rgba(37,99,235,0.25)` }}
                 >
                   Create & Send Receipt
                 </button>
@@ -1417,7 +1417,7 @@ export default function AdminBookings() {
             )}
             <button onClick={handleDelete} disabled={saving || deleting} style={{
               width: "100%", padding: "16px",
-              background: colors.dangerBg, color: colors.danger,
+              background: "transparent", color: colors.danger,
               fontSize: "15px", fontWeight: "700",
               border: `1.5px solid rgba(220,38,38,0.3)`, borderRadius: "16px",
               cursor: "pointer", fontFamily: "inherit", marginBottom: "10px",
