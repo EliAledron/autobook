@@ -1492,7 +1492,7 @@ export default function AdminBookings() {
               <textarea
                 value={receiptNote}
                 onChange={(e) => setReceiptNote(e.target.value)}
-                placeholder="e.g. Total amount: ₱1,500. Please pay via GCash."
+                placeholder="e.g. Total amount: ₱1,500. Please pay at the shop."
                 rows={3}
                 style={{ ...inputStyle, resize: "none" }}
               />

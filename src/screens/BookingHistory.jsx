@@ -580,6 +580,9 @@ export default function BookingHistory() {
                     {selected.receiptNote}
                   </div>
                 )}
+                <div style={{ fontSize: "12px", color: colors.textMuted, marginTop: "12px", textAlign: "center", fontStyle: "italic" }}>
+                  * Payments are made face-to-face at the shop.
+                </div>
               </div>
             )}
 
