@@ -497,7 +497,11 @@ export default function BookingHistory() {
                 onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.05)"; }}
                 onClick={() => setSelected(b)}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <span style={{ ...statusStyle(b.status), padding: "4px 10px", borderRadius: "8px", fontSize: "11px", display: "inline-block" }}>{b.status || "Pending"}</span>
+                    <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                      <span style={{ ...statusStyle(b.status), padding: "4px 10px", borderRadius: "8px", fontSize: "11px", display: "inline-block" }}>{b.status || "Pending"}</span>
+                      {b.receiptSent && !b.isPaid && <span style={{ background: "#dbeafe", color: "#2563eb", padding: "4px 8px", borderRadius: "8px", fontSize: "11px", fontWeight: "700", display: "flex", alignItems: "center", gap: "4px" }}><ClipboardList size={12} /> Receipt</span>}
+                      {b.isPaid && <span style={{ background: "#dcfce7", color: "#16a34a", padding: "4px 8px", borderRadius: "8px", fontSize: "11px", fontWeight: "700", display: "flex", alignItems: "center", gap: "4px" }}><CheckCircle2 size={12} /> Paid</span>}
+                    </div>
                   </div>
 
                   <div>

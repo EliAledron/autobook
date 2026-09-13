@@ -715,6 +715,12 @@ export default function AdminBookings() {
           {showOverdue && (
             <span style={{ fontSize: "10px", fontWeight: "800", background: colors.warning, color: "#fff", padding: "3px 6px", borderRadius: "6px", letterSpacing: "0.5px", boxShadow: "0 2px 4px rgba(217,119,6,0.3)" }}>UNREAD</span>
           )}
+          {b.receiptSent && !b.isPaid && (
+            <span style={{ fontSize: "10px", fontWeight: "800", background: "#dbeafe", color: "#2563eb", padding: "3px 6px", borderRadius: "6px", letterSpacing: "0.5px" }}>RECEIPT SENT</span>
+          )}
+          {b.isPaid && (
+            <span style={{ fontSize: "10px", fontWeight: "800", background: "#dcfce7", color: "#16a34a", padding: "3px 6px", borderRadius: "6px", letterSpacing: "0.5px" }}>PAID</span>
+          )}
         </div>
 
       </div>
