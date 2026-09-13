@@ -567,12 +567,16 @@ export default function BookingHistory() {
                   Your service has been completed by <strong>{selected.shopName}</strong>.
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fff", padding: "12px", borderRadius: "12px", marginBottom: selected.receiptNote ? "12px" : "0", border: "1px solid rgba(34, 197, 94, 0.2)" }}>
-                  <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "600", textTransform: "uppercase" }}>Exact Date to Pay</div>
-                  <div style={{ fontSize: "15px", color: "#16a34a", fontWeight: "800" }}>{(() => {
-                    if (!selected.receiptPayDate) return "N/A";
-                    const [y, m, d] = selected.receiptPayDate.split("-");
-                    return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-                  })()}</div>
+                  <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "600", textTransform: "uppercase" }}>{selected.isPaid ? "Payment Status" : "Exact Date to Pay"}</div>
+                  <div style={{ fontSize: "15px", color: "#16a34a", fontWeight: "800" }}>
+                    {selected.isPaid ? (
+                      <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><CheckCircle2 size={16} /> FULLY PAID</span>
+                    ) : (() => {
+                      if (!selected.receiptPayDate) return "N/A";
+                      const [y, m, d] = selected.receiptPayDate.split("-");
+                      return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+                    })()}
+                  </div>
                 </div>
                 {selected.receiptNote && (
                   <div style={{ fontSize: "14px", color: colors.textSecondary, background: "rgba(255,255,255,0.6)", padding: "12px", borderRadius: "12px", border: "1px solid rgba(34, 197, 94, 0.1)" }}>

@@ -631,6 +631,34 @@ export default function AdminBookings() {
     setSendingReceipt(false);
   };
 
+  const handleMarkAsPaid = async () => {
+    if (!selected) return;
+    setSaving(true);
+    try {
+      await updateDoc(doc(db, "bookings", selected.id), { isPaid: true });
+      
+      if (selected.customerId) {
+        await addDoc(collection(db, "notifications"), {
+          userId: selected.customerId,
+          title: "Payment Received",
+          message: `Your payment for ${selected.serviceType || "service"} at ${selected.shopName || "the shop"} has been marked as received. Thank you!`,
+          type: "status_update",
+          bookingId: selected.id,
+          read: false,
+          createdAt: serverTimestamp(),
+        });
+      }
+      
+      setBookings(prev => prev.map(b => b.id === selected.id ? { ...b, isPaid: true } : b));
+      setSelected(prev => ({ ...prev, isPaid: true }));
+      showToast(<><Check size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Marked as paid.</>);
+    } catch(e) {
+      console.error(e);
+      showToast(<><X size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> Failed to mark as paid.</>);
+    }
+    setSaving(false);
+  };
+
   const inputStyle = {
     width: "100%", padding: "14px 16px", borderRadius: "14px",
     border: `1.5px solid ${colors.border}`, fontSize: "14px",
@@ -1403,9 +1431,24 @@ export default function AdminBookings() {
               </>
             )}
             
-            {selected.receiptSent && (
-               <div style={{ padding: "12px", background: colors.successBg, borderRadius: "12px", border: `1px solid ${colors.success}40`, color: colors.success, fontWeight: "600", fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px" }}>
-                  <CheckCircle2 size={16} style={{ marginRight: "6px" }} /> Receipt sent for {selected.receiptPayDate}
+            {selected.receiptSent && !selected.isPaid && (
+               <>
+                 <div style={{ padding: "12px", background: colors.successBg, borderRadius: "12px", border: `1px solid ${colors.success}40`, color: colors.success, fontWeight: "600", fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px" }}>
+                    <CheckCircle2 size={16} style={{ marginRight: "6px" }} /> Receipt sent for {selected.receiptPayDate}
+                 </div>
+                 <button 
+                   onClick={handleMarkAsPaid} 
+                   disabled={saving}
+                   style={{ width: "100%", padding: "16px", background: colors.success, color: "#fff", border: "none", borderRadius: "16px", fontSize: "15px", fontWeight: "700", cursor: "pointer", marginBottom: "16px", boxShadow: `0 8px 20px ${colors.success}40`, opacity: saving ? 0.7 : 1 }}
+                 >
+                   {saving ? "Updating..." : "Mark as Paid"}
+                 </button>
+               </>
+            )}
+            
+            {selected.isPaid && (
+               <div style={{ padding: "12px", background: "#f0fdf4", borderRadius: "12px", border: `1.5px dashed #22c55e`, color: "#16a34a", fontWeight: "800", fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  <CheckCircle2 size={18} style={{ marginRight: "6px" }} /> Fully Paid
                </div>
             )}
 
