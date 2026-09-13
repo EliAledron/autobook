@@ -196,6 +196,10 @@ export default function AdminUsers() {
       if (status === "rejected" && inputValue) {
         updates.rejectionReason = inputValue;
       }
+      if (status === "approved") {
+        updates.lateCancellations = 0;
+        updates.cooldownUntil = null;
+      }
       if (status === "approved" && selected && (selected.role || "").toLowerCase() === "owner" && !selected.shopId) {
         const shopData = {
           name: selected.shopName || "Auto Shop",
@@ -606,6 +610,41 @@ export default function AdminUsers() {
                         </div>
                     )}
 
+                    {/* Verification Documents */}
+                    {(selected.businessPermitUrl || selected.dtiUrl || selected.licenseUrl) && (
+                        <div style={{ marginBottom: "1.25rem" }}>
+                            <div style={{ fontSize: "11px", color: colors.textMuted, fontWeight: "600", textTransform: "uppercase", marginBottom: "8px" }}>
+                                Verification Documents
+                            </div>
+                            <div style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "4px" }}>
+                                {selected.businessPermitUrl && (
+                                    <div style={{ flexShrink: 0 }}>
+                                        <div style={{ fontSize: "12px", color: colors.textSecondary, marginBottom: "4px", fontWeight: "600" }}>Business Permit</div>
+                                        <a href={selected.businessPermitUrl} target="_blank" rel="noreferrer">
+                                            <img src={selected.businessPermitUrl} alt="Permit" style={{ height: "100px", borderRadius: "8px", objectFit: "cover", border: `1px solid ${colors.border}` }} />
+                                        </a>
+                                    </div>
+                                )}
+                                {selected.dtiUrl && (
+                                    <div style={{ flexShrink: 0 }}>
+                                        <div style={{ fontSize: "12px", color: colors.textSecondary, marginBottom: "4px", fontWeight: "600" }}>DTI Registration</div>
+                                        <a href={selected.dtiUrl} target="_blank" rel="noreferrer">
+                                            <img src={selected.dtiUrl} alt="DTI" style={{ height: "100px", borderRadius: "8px", objectFit: "cover", border: `1px solid ${colors.border}` }} />
+                                        </a>
+                                    </div>
+                                )}
+                                {selected.licenseUrl && (
+                                    <div style={{ flexShrink: 0 }}>
+                                        <div style={{ fontSize: "12px", color: colors.textSecondary, marginBottom: "4px", fontWeight: "600" }}>License/ID</div>
+                                        <a href={selected.licenseUrl} target="_blank" rel="noreferrer">
+                                            <img src={selected.licenseUrl} alt="License" style={{ height: "100px", borderRadius: "8px", objectFit: "cover", border: `1px solid ${colors.border}` }} />
+                                        </a>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Owner Shop Details */}
                     {(selected.role || "").toLowerCase() === "owner" && selectedUserShop && (
                         <div style={{ marginBottom: "1.25rem" }}>
@@ -709,6 +748,25 @@ export default function AdminUsers() {
                     {saving ? "Saving..." : <><X size={16} /> Reject User</>}
                   </button>
                 </>
+              )}
+
+              {(selected.status === "restricted" || selected.status === "rejected") && (
+                <button
+                  onClick={() => updateStatus(selected.id, "approved")}
+                  disabled={saving}
+                  style={{
+                    width: "100%", padding: "14px",
+                    background: colors.success,
+                    color: "#fff", fontSize: "14px", fontWeight: "700",
+                    border: "none", borderRadius: "14px",
+                    boxShadow: "0 4px 12px rgba(16,185,129,0.25)",
+                    cursor: "pointer", fontFamily: "inherit",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                    marginBottom: "12px"
+                  }}
+                >
+                  {saving ? "Saving..." : <><Check size={16} /> {selected.status === "restricted" ? "Restore Access" : "Approve User"}</>}
+                </button>
               )}
 
               <button

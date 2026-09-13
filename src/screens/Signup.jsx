@@ -5,6 +5,7 @@ import BackButton from "../components/BackButton";
 import { AlertTriangle, Car, Store, Wrench, Paperclip, FileText, CreditCard, Camera } from "lucide-react";
 import {
   createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   sendEmailVerification,
   GoogleAuthProvider,
   signInWithPopup,
@@ -161,9 +162,18 @@ export default function Signup() {
       let dName = [firstName.trim(), middleName.trim(), lastName.trim()].filter(Boolean).join(" ");
       let user = createdUser;
       if (!user) {
-        const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
-        await sendEmailVerification(newUser);
-        user = newUser;
+        try {
+          const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
+          await sendEmailVerification(newUser);
+          user = newUser;
+        } catch (authErr) {
+          if (authErr.code === "auth/email-already-in-use") {
+            const { user: existingUser } = await signInWithEmailAndPassword(auth, email, password);
+            user = existingUser;
+          } else {
+            throw authErr;
+          }
+        }
         await updateProfile(user, { displayName: dName });
       }
       await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() }, permitUrl, shopNameStr, {}, dtiUrl);
@@ -222,9 +232,18 @@ export default function Signup() {
     try {
       let user = createdUser;
       if (!user) {
-        const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
-        await sendEmailVerification(newUser);
-        user = newUser;
+        try {
+          const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
+          await sendEmailVerification(newUser);
+          user = newUser;
+        } catch (authErr) {
+          if (authErr.code === "auth/email-already-in-use") {
+            const { user: existingUser } = await signInWithEmailAndPassword(auth, email, password);
+            user = existingUser;
+          } else {
+            throw authErr;
+          }
+        }
         const dName = [firstName.trim(), middleName.trim(), lastName.trim()].filter(Boolean).join(" ");
         await updateProfile(user, { displayName: dName });
       }
@@ -271,9 +290,18 @@ export default function Signup() {
       let user = createdUser;
       // If user was not created via Google, create them now with email/password
       if (!user) {
-        const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
-        await sendEmailVerification(newUser);
-        user = newUser;
+        try {
+          const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
+          await sendEmailVerification(newUser);
+          user = newUser;
+        } catch (authErr) {
+          if (authErr.code === "auth/email-already-in-use") {
+            const { user: existingUser } = await signInWithEmailAndPassword(auth, email, password);
+            user = existingUser;
+          } else {
+            throw authErr;
+          }
+        }
         const dName = [firstName.trim(), middleName.trim(), lastName.trim()].filter(Boolean).join(" ");
         await updateProfile(user, { displayName: dName });
       }

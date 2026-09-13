@@ -174,7 +174,7 @@ const saveUser = async (user, resolvedRole, namesObj, permitUrl = "", shopNameSt
 
     await addDoc(collection(db, "adminAlerts"), {
       type: "new_user",
-      title: <><User size={16} /> New User Registration</>,
+      title: "New User Registration",
       message: `${dName} just registered as a ${finalRole} and is waiting for approval.`,
       read: false,
       createdAt: serverTimestamp(),
@@ -402,8 +402,17 @@ function SignupForm({ goBack, navigate }) {
     try {
       let user = createdUser;
       if (!user) {
-        const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
-        user = newUser;
+        try {
+          const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
+          user = newUser;
+        } catch (authErr) {
+          if (authErr.code === "auth/email-already-in-use") {
+            const { user: existingUser } = await signInWithEmailAndPassword(auth, email, password);
+            user = existingUser;
+          } else {
+            throw authErr;
+          }
+        }
         const dName = [firstName.trim(), middleName.trim(), lastName.trim()].filter(Boolean).join(" ");
         await updateProfile(user, { displayName: dName });
       }
@@ -429,8 +438,17 @@ function SignupForm({ goBack, navigate }) {
     try {
       let user = createdUser;
       if (!user) {
-        const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
-        user = newUser;
+        try {
+          const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
+          user = newUser;
+        } catch (authErr) {
+          if (authErr.code === "auth/email-already-in-use") {
+            const { user: existingUser } = await signInWithEmailAndPassword(auth, email, password);
+            user = existingUser;
+          } else {
+            throw authErr;
+          }
+        }
         const dName = [firstName.trim(), middleName.trim(), lastName.trim()].filter(Boolean).join(" ");
         await updateProfile(user, { displayName: dName });
       }
@@ -475,8 +493,17 @@ function SignupForm({ goBack, navigate }) {
     try {
       let user = createdUser;
       if (!user) {
-        const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
-        user = newUser;
+        try {
+          const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
+          user = newUser;
+        } catch (authErr) {
+          if (authErr.code === "auth/email-already-in-use") {
+            const { user: existingUser } = await signInWithEmailAndPassword(auth, email, password);
+            user = existingUser;
+          } else {
+            throw authErr;
+          }
+        }
         const dName = [firstName.trim(), middleName.trim(), lastName.trim()].filter(Boolean).join(" ");
         await updateProfile(user, { displayName: dName });
       }
