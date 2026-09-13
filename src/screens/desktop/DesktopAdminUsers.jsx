@@ -34,7 +34,7 @@ export default function DesktopAdminUsers() {
     if (status === "approved") {
       title = "Approve User";
       message = "Are you sure you want to approve this user? They will gain access to the platform.";
-      type = "success";
+      type = "blueGradient";
     } else if (status === "rejected") {
       title = "Reject User";
       message = "Are you sure you want to reject this user's application? Please provide a reason below.";

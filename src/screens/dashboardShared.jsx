@@ -251,7 +251,8 @@ export function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, conf
   const typeColors = {
     primary: { bg: colors.navy, text: "#fff", iconBg: "rgba(15, 38, 64, 0.1)", iconColor: colors.navy },
     danger: { bg: colors.danger, text: "#fff", iconBg: colors.dangerBg, iconColor: colors.danger },
-    success: { bg: colors.success, text: "#fff", iconBg: colors.successBg, iconColor: colors.success }
+    success: { bg: colors.success, text: "#fff", iconBg: colors.successBg, iconColor: colors.success },
+    blueGradient: { bg: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, text: "#fff", iconBg: colors.infoBg, iconColor: colors.info }
   };
 
   const style = typeColors[type] || typeColors.primary;
@@ -278,34 +279,25 @@ export function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, conf
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
             </svg>
           )}
-          {type === "success" && (
+          {(type === "success" || type === "blueGradient") && (
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={style.iconColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
             </svg>
           )}
-          {type === "primary" && (
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={style.iconColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-          )}
         </div>
 
-        <div style={{ fontSize: "18px", fontWeight: "800", color: colors.textPrimary, marginBottom: "8px" }}>{title}</div>
-        <div style={{ fontSize: "14px", color: colors.textSecondary, lineHeight: "1.5", marginBottom: "24px" }}>{message}</div>
-        
+        <div style={{ marginBottom: "24px" }}>
+          <h3 style={{ fontSize: "20px", fontWeight: "800", color: colors.textPrimary, margin: "0 0 8px 0" }}>{title}</h3>
+          <p style={{ fontSize: "14px", color: colors.textSecondary, fontWeight: "500", margin: 0, lineHeight: 1.5 }}>{message}</p>
+        </div>
+
         {requireInput && (
-          <div style={{ marginBottom: "24px" }}>
+          <div style={{ marginBottom: "24px", textAlign: "left" }}>
             <textarea 
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
+              onChange={e => setInputValue(e.target.value)}
               placeholder={inputPlaceholder}
-              style={{
-                width: "100%", padding: "14px", borderRadius: "12px", border: `1px solid ${colors.border}`,
-                fontSize: "14px", color: colors.textPrimary, fontFamily: "inherit", boxSizing: "border-box",
-                outline: "none", resize: "none", minHeight: "80px", backgroundColor: "#f8fafc"
-              }}
-              onFocus={(e) => e.target.style.border = `1px solid ${style.iconColor}`}
-              onBlur={(e) => e.target.style.border = `1px solid ${colors.border}`}
+              style={{ width: "100%", padding: "14px 16px", borderRadius: "12px", border: `1px solid ${colors.border}`, fontSize: "14px", fontFamily: "inherit", boxSizing: "border-box", minHeight: "80px", outline: "none", resize: "vertical", background: "#f9fafb" }}
             />
           </div>
         )}
@@ -314,7 +306,7 @@ export function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, conf
           <button onClick={onCancel} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.bg, border: `1px solid ${colors.border}`, color: colors.textSecondary, fontWeight: "700", cursor: "pointer", fontSize: "14px", transition: "all 0.2s" }}>
             {cancelText}
           </button>
-          <button onClick={() => isConfirmDisabled ? null : onConfirm(inputValue)} disabled={isConfirmDisabled} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: style.bg, border: "none", color: style.text, fontWeight: "700", cursor: isConfirmDisabled ? "not-allowed" : "pointer", fontSize: "14px", transition: "all 0.2s", opacity: isConfirmDisabled ? 0.5 : 1, boxShadow: !isConfirmDisabled && type === "danger" ? "0 4px 12px rgba(220,38,38,0.25)" : (!isConfirmDisabled && type === "success" ? "0 4px 12px rgba(22,163,74,0.25)" : "none") }}>
+          <button onClick={() => isConfirmDisabled ? null : onConfirm(inputValue)} disabled={isConfirmDisabled} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: style.bg, border: "none", color: style.text, fontWeight: "700", cursor: isConfirmDisabled ? "not-allowed" : "pointer", fontSize: "14px", transition: "all 0.2s", opacity: isConfirmDisabled ? 0.5 : 1, boxShadow: !isConfirmDisabled && type === "danger" ? "0 4px 12px rgba(220,38,38,0.25)" : (!isConfirmDisabled && type === "success" ? "0 4px 12px rgba(22,163,74,0.25)" : (!isConfirmDisabled && type === "blueGradient" ? "0 4px 12px rgba(37,99,235,0.25)" : "none")) }}>
             {confirmText}
           </button>
         </div>
