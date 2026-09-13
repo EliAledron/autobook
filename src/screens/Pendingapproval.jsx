@@ -21,7 +21,6 @@ export default function PendingApproval() {
   const [status, setStatus] = useState("loading");
   const [name, setName] = useState("");
   const [reason, setReason] = useState("");
-  const [reapplying, setReapplying] = useState(false);
   const [devBypass, setDevBypass] = useState(false);
 
   useEffect(() => {
@@ -116,16 +115,6 @@ export default function PendingApproval() {
     }
   };
 
-  const handleReapply = async () => {
-    if (!auth.currentUser) return;
-    setReapplying(true);
-    try {
-      await updateDoc(doc(db, "users", auth.currentUser.uid), { status: "pending", rejectionReason: null });
-    } catch (e) {
-      console.error(e);
-    }
-    setReapplying(false);
-  };
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -261,10 +250,6 @@ export default function PendingApproval() {
                   <div style={{ fontSize: "14px", color: "#fff", lineHeight: "1.5" }}>{reason}</div>
                 </div>
               )}
-
-              <button style={{ ...s.logoutBtn, background: "#3b82f6", color: "#fff", border: "none", marginBottom: "12px", width: "100%" }} onClick={handleReapply} disabled={reapplying}>
-                {reapplying ? "Submitting..." : "Re-apply for Review"}
-              </button>
 
               <button style={{ ...s.logoutBtn, background: "transparent", border: "1px solid rgba(255,255,255,0.3)", color: "#fff", marginBottom: "12px", width: "100%" }} onClick={() => window.location.href = "mailto:support@autobook.com"}>
                 Contact Support
