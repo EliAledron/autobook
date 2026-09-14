@@ -22,17 +22,31 @@ export default function DesktopAdminShops() {
     return () => unsub();
   }, []);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (shop) => {
     setConfirmProps({
       isOpen: true,
       title: "Delete Shop",
-      message: "Are you sure you want to permanently delete this shop? This cannot be undone.",
+      message: "Are you sure you want to permanently delete this shop? Please provide a reason below. This cannot be undone.",
       type: "danger",
-      onConfirm: async () => {
+      requireInput: true,
+      inputPlaceholder: "Reason for deletion (e.g. Terms violation)...",
+      onConfirm: async (inputValue) => {
         setConfirmProps({ isOpen: false });
-        setActionLoading(id);
+        setActionLoading(shop.id);
         try {
-          await deleteDoc(doc(db, "shops", id));
+          if (shop.ownerId) {
+            import("firebase/firestore").then(({ addDoc, collection, serverTimestamp }) => {
+              addDoc(collection(db, "notifications"), {
+                userId: shop.ownerId,
+                title: "Shop Deleted",
+                message: `Your shop "${shop.name || 'Auto Shop'}" has been removed from AutoBook. Reason: ${inputValue || 'Violation of platform policies.'}`,
+                read: false,
+                createdAt: serverTimestamp(),
+                type: "system"
+              }).catch(err => console.error("Notification failed", err));
+            });
+          }
+          await deleteDoc(doc(db, "shops", shop.id));
         } catch (e) {
           console.error("Failed to delete", e);
         }
@@ -55,6 +69,8 @@ export default function DesktopAdminShops() {
           title={confirmProps.title}
           message={confirmProps.message}
           type={confirmProps.type}
+          requireInput={confirmProps.requireInput}
+          inputPlaceholder={confirmProps.inputPlaceholder}
         onCancel={() => setConfirmProps({ isOpen: false })}
         onConfirm={confirmProps.onConfirm}
       />
@@ -142,7 +158,7 @@ export default function DesktopAdminShops() {
                         {s.createdAt?.seconds ? new Date(s.createdAt.seconds * 1000).toLocaleDateString() : "Unknown"}
                       </td>
                       <td style={{ padding: "16px 24px", textAlign: "right" }}>
-                        <button disabled={actionLoading === s.id} onClick={() => handleDelete(s.id)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#fef2f2", color: colors.danger, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }} title="Delete Shop">
+                        <button disabled={actionLoading === s.id} onClick={() => handleDelete(s)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#fef2f2", color: colors.danger, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }} title="Delete Shop">
                           <Trash2 size={18} />
                         </button>
                       </td>
