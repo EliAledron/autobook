@@ -58,7 +58,7 @@ export default function Alerts() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
-      if (!u) { navigate("/login"); return; }
+      if (!u) { navigate("/"); return; }
       setUid(u.uid);
       await loadNotifications(u.uid);
       setLoading(false);

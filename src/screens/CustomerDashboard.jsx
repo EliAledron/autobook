@@ -127,7 +127,7 @@ export default function CustomerDashboard() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!firebaseUser) { navigate("/login"); return; }
+      if (!firebaseUser) { navigate("/"); return; }
       
       let userData = {};
       const snap = await getDoc(doc(db, "users", firebaseUser.uid));

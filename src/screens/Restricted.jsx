@@ -11,7 +11,7 @@ export default function Restricted() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      navigate("/login");
+      navigate("/");
     } catch (e) {
       console.error(e);
     }

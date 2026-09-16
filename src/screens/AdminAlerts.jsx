@@ -87,7 +87,7 @@ export default function AdminAlerts() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!firebaseUser) { navigate("/login"); return; }
+      if (!firebaseUser) { navigate("/"); return; }
       const snap = await getDoc(doc(db, "users", firebaseUser.uid));
       let userObj = { id: firebaseUser.uid };
       if (snap.exists()) userObj = { ...userObj, ...snap.data() };

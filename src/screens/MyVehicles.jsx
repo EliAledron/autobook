@@ -29,7 +29,7 @@ export default function MyVehicles() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
-      if (!u) { navigate("/login"); return; }
+      if (!u) { navigate("/"); return; }
       setUid(u.uid);
       await loadVehicles(u.uid);
       setLoading(false);

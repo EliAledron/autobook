@@ -82,7 +82,7 @@ export default function ShopFeed() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
-      if (!u) { navigate("/login"); return; }
+      if (!u) { navigate("/"); return; }
       setUid(u.uid);
       try {
         // We now rely on userProfile from UserContext for user data

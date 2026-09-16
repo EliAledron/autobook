@@ -190,7 +190,7 @@ export default function BookingHistory() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
-      if (!u) { navigate("/login"); return; }
+      if (!u) { navigate("/"); return; }
       setUid(u.uid);
       await loadBookings(u.uid);
       setLoading(false);

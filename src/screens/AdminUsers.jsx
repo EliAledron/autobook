@@ -68,7 +68,7 @@ export default function AdminUsers() {
         setCurrentUser(userObj);
         await fetchUsers(userObj.shopId);
       } else {
-        navigate("/login");
+        navigate("/");
       }
     });
     return () => unsub();

@@ -71,7 +71,7 @@ export default function AdminReports() {
         setCurrentUser(userObj);
         await fetchAll(userObj);
       } else {
-        navigate("/login");
+        navigate("/");
       }
     });
     return () => unsub();

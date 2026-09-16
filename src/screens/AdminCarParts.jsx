@@ -118,7 +118,7 @@ export default function AdminCarParts() {
         }
         await fetchParts(shopId, isAdmin);
       } else {
-        navigate("/login");
+        navigate("/");
       }
     });
     return () => unsub();

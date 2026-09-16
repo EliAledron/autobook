@@ -499,7 +499,7 @@ export default function AdminMechanics() {
         setCurrentUser(userObj);
         await fetchAll(userObj);
       } else {
-        navigate("/login");
+        navigate("/");
       }
     });
     return () => unsub();

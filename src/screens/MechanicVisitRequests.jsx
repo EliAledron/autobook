@@ -60,7 +60,7 @@ export default function MechanicVisitRequests() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
-      if (!u) { navigate("/login"); return; }
+      if (!u) { navigate("/"); return; }
       setUid(u.uid);
       await loadRequests(u.uid);
       setLoading(false);

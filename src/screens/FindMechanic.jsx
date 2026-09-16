@@ -61,7 +61,7 @@ export default function FindMechanic() {
     fetchShops();
 
     const unsub = onAuthStateChanged(auth, (u) => {
-      if (!u) { navigate("/login"); return; }
+      if (!u) { navigate("/"); return; }
       setUid(u.uid);
       setCustomerName(u.displayName || u.email || "Customer");
     });

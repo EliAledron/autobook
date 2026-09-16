@@ -71,7 +71,7 @@ export default function AdminReviews() {
         }
         await fetchReviews(shopId);
       } else {
-        navigate("/login");
+        navigate("/");
       }
     });
     return () => unsub();

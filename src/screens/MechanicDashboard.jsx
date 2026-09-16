@@ -64,7 +64,7 @@ export default function MechanicDashboard() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!firebaseUser) { navigate("/login"); return; }
+      if (!firebaseUser) { navigate("/"); return; }
 
       try {
         const snap = await getDoc(doc(db, "users", firebaseUser.uid));

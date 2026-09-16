@@ -34,7 +34,7 @@ export default function CustomerReviews() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
-      if (!u) { navigate("/login"); return; }
+      if (!u) { navigate("/"); return; }
       try {
         const q = query(collection(db, "bookings"), where("customerId", "==", u.uid));
         const snap = await getDocs(q);

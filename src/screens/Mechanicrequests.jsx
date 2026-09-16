@@ -129,7 +129,7 @@ export default function MechanicRequests() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
-      if (!u) { navigate("/login"); return; }
+      if (!u) { navigate("/"); return; }
       setUid(u.uid);
       
       const userSnap = await getDoc(doc(db, "users", u.uid));

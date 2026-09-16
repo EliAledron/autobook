@@ -70,7 +70,7 @@ export default function BookService() {
   useEffect(() => {
     if (!shop) { navigate("/customer/shop-select"); return; }
     const unsub = onAuthStateChanged(auth, async (u) => {
-      if (!u) { navigate("/login"); return; }
+      if (!u) { navigate("/"); return; }
       setUid(u.uid);
       setCustomerName(u.displayName || u.email || "Customer");
 
