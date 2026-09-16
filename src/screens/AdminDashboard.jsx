@@ -15,6 +15,7 @@ export default function AdminDashboard({ user }) {
   const [approvedUsers, setApprovedUsers] = useState([]);
   const [unreadAlerts, setUnreadAlerts] = useState(0);
   const [allBookings, setAllBookings] = useState([]);
+  const [shopsCount, setShopsCount] = useState("...");
 
   useEffect(() => {
     const unsubscribers = [];
@@ -28,6 +29,10 @@ export default function AdminDashboard({ user }) {
 
     unsubscribers.push(onSnapshot(collection(db, "bookings"), (snap) => {
       setAllBookings(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }));
+
+    unsubscribers.push(onSnapshot(collection(db, "shops"), (snap) => {
+      setShopsCount(snap.docs.length);
     }));
 
     const qAlerts = query(
@@ -56,8 +61,8 @@ export default function AdminDashboard({ user }) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "24px", marginBottom: "32px" }}>
           {[
             { label: "Total Users", val: users.length, color: colors.navy, icon: <Users size={24} color={colors.navy} />, bg: "#eef2ff", path: "/admin/users" },
-            { label: "Active Shops/Users", val: approvedUsers.length, color: colors.success, icon: <CheckCircle size={24} color={colors.success} />, bg: "#ecfdf5", path: "/admin/shops" },
-            { label: "Global Bookings", val: allBookings.length, color: colors.info, icon: <ClipboardList size={24} color={colors.info} />, bg: "#eff6ff", path: "/admin/reports" },
+            { label: "Active Shops", val: shopsCount, color: colors.success, icon: <CheckCircle size={24} color={colors.success} />, bg: "#ecfdf5", path: "/admin/shops" },
+            { label: "Overall Bookings", val: allBookings.length, color: colors.info, icon: <ClipboardList size={24} color={colors.info} />, bg: "#eff6ff", path: "/admin/reports" },
             { label: "System Alerts", val: unreadAlerts, color: colors.danger, icon: <AlertTriangle size={24} color={colors.danger} />, bg: "#fef2f2", path: "/admin/alerts" }
           ].map((m, i) => (
             <div key={i} onClick={() => navigate(m.path)} style={{ background: "#fff", padding: "24px", borderRadius: "20px", boxShadow: "0 2px 8px rgba(0,0,0,0.02)", border: `1px solid ${colors.border}`, display: "flex", flexDirection: "column", cursor: "pointer", transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"} onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}>

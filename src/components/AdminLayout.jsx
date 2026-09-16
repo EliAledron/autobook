@@ -53,7 +53,7 @@ export default function AdminLayout({ children }) {
     { label: "Active Shops", icon: <Store size={20} />, path: "/admin/shops" },
     { label: "System Reports", icon: <FileText size={20} />, path: "/admin/reports" },
     { label: "Reported Shops", icon: <ShieldAlert size={20} />, path: "/admin/reported-shops" },
-    { label: "Global Alerts", icon: <AlertTriangle size={20} />, path: "/admin/alerts", badge: unreadAlerts },
+    { label: "System Alerts", icon: <AlertTriangle size={20} />, path: "/admin/alerts", badge: unreadAlerts },
     { label: "Platform Reviews", icon: <MessageSquare size={20} />, path: "/admin/reviews" }
   ];
 
