@@ -21,7 +21,7 @@ const IcoStar    = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="n
 
 const QUICK_ACTIONS = [
   { id: "book",     Icon: IcoBook,    label: "Book a Service",   sub: "Schedule a repair",  path: "/customer/shop-select", iconColor: "#2a5298", iconBg: "#dbeafe" },
-  { id: "checkup",  Icon: IcoDiag,    label: "Diagnostic Check", sub: "Analyze symptoms", path: "/customer/checkup", iconColor: "#0d9488", iconBg: "#ccfbf1" },
+  // { id: "checkup",  Icon: IcoDiag,    label: "Diagnostic Check", sub: "Analyze symptoms", path: "/customer/checkup", iconColor: "#0d9488", iconBg: "#ccfbf1" },
   { id: "reviews",  Icon: IcoStar,    label: "My Reviews",       sub: "Shops I've rated",   path: "/customer/reviews",     iconColor: "#7c3aed", iconBg: "#ede9fe" },
   { id: "feed",     Icon: IcoFeed,    label: "Shop Feed",        sub: "News & promos",      path: "/customer/feed",        iconColor: "#d97706", iconBg: "#fef3c7" },
   { id: "mechanic", Icon: IcoSearch,  label: "Find Mechanic",    sub: "Browse available",   path: "/customer/mechanics",   iconColor: "#059669", iconBg: "#d1fae5" },

@@ -1279,6 +1279,54 @@ export default function AdminBookings() {
                 } else {
                   return (
                     <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "240px", overflowY: "auto", padding: "2px" }}>
+                      
+                      {/* DSS: Smart Mechanic Assigner */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                        <span style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "600" }}>Available Mechanics</span>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const availableMechs = relevantMechanics.filter(m => m.available);
+                            if (availableMechs.length === 0) {
+                              showToast(<><AlertTriangle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> No available mechanics to recommend.</>);
+                              return;
+                            }
+                            
+                            const allActive = bookings.filter(b => (b.status || "Pending").toLowerCase() !== "completed" && (b.status || "Pending").toLowerCase() !== "cancelled");
+                            const jobCounts = {};
+                            availableMechs.forEach(m => jobCounts[m.id] = 0);
+                            allActive.forEach(ab => {
+                               if (ab.mechanicId && jobCounts[ab.mechanicId] !== undefined) {
+                                   jobCounts[ab.mechanicId]++;
+                               }
+                            });
+                            
+                            let bestMech = availableMechs[0];
+                            let minJobs = jobCounts[bestMech.id];
+                            
+                            availableMechs.forEach(m => {
+                               if (jobCounts[m.id] < minJobs) {
+                                   bestMech = m;
+                                   minJobs = jobCounts[m.id];
+                               }
+                            });
+                            
+                            setNewMechanic(bestMech.id);
+                            if (newStatus === "Pending") setNewStatus("In Progress");
+                            showToast(<><Check size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> DSS Recommendation: Assigned to {bestMech.displayName} (Lowest workload: {minJobs} jobs)</>);
+                          }}
+                          style={{
+                            background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`,
+                            color: "#fff", border: "none", borderRadius: "8px", padding: "6px 12px",
+                            fontSize: "11px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px",
+                            boxShadow: "0 2px 8px rgba(42,82,152,0.2)"
+                          }}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                          DSS Auto-Assign Best Mechanic
+                        </button>
+                      </div>
+
                       <div 
                         onClick={() => {
                           setNewMechanic("");

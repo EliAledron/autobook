@@ -89,7 +89,7 @@ function App() {
           <Route path="/customer/history" element={<BookingHistory />} />
           <Route path="/customer/alerts" element={<Alerts />} />
           <Route path="/customer/feed" element={<ShopFeed />} />
-          <Route path="/customer/checkup" element={<StrategicCheckup />} />
+          {/* <Route path="/customer/checkup" element={<StrategicCheckup />} /> */}
           <Route path="/customer/reviews" element={<CustomerReviews />} />
           <Route path="/customer/shop-profile" element={<AutoShopProfile />} />
 
