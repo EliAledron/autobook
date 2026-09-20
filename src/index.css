@@ -68,3 +68,4 @@ code {
 .stagger-slide-up > *:nth-child(8) { animation-delay: 0.40s; }
 .stagger-slide-up > *:nth-child(9) { animation-delay: 0.45s; }
 .stagger-slide-up > *:nth-child(10) { animation-delay: 0.50s; }
+@media (min-width: 768px) { .mobile-topbar { display: none !important; } }  

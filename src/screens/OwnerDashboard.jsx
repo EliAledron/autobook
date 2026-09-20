@@ -264,6 +264,8 @@ export default function OwnerDashboard({ user }) {
   }, [allBookings.length, users.length]);
   const [allCarParts, setAllCarParts] = useState([]);
   const [mechanicRequests, setMechanicRequests] = useState([]);
+  const [hoveredWeek, setHoveredWeek] = useState(null);
+  const [hoveredMonth, setHoveredMonth] = useState(null);
 
   // Post modal state
   const [showPostModal, setShowPostModal] = useState(false);
@@ -576,6 +578,34 @@ export default function OwnerDashboard({ user }) {
   });
   const maxWeekCount = Math.max(...weekCounts, 1);
 
+  const monthLabels = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const monthCounts = new Array(12).fill(0);
+  const monthServices = Array.from({ length: 12 }, () => ({}));
+  
+  allBookings.forEach(b => {
+    const d = toDate(b.createdAt || b.date);
+    if (!d) return;
+    if (d.getFullYear() !== selYear) return;
+    const m = d.getMonth();
+    monthCounts[m]++;
+    
+    if ((b.status || "").toLowerCase() === "completed") {
+      const svc = b.serviceType || "Other";
+      monthServices[m][svc] = (monthServices[m][svc] || 0) + 1;
+    }
+  });
+  
+  const getTopServiceForMonth = (mIdx) => {
+    const svcs = monthServices[mIdx];
+    let top = null;
+    let max = 0;
+    Object.entries(svcs).forEach(([name, count]) => {
+      if (count > max) { max = count; top = { name, count }; }
+    });
+    return top;
+  };
+  const maxMonthCount = Math.max(...monthCounts, 1);
+
   const roleStyle = (r) => {
     if (r === "Owner" || r === "Admin") return sh.badge(colors.dangerBg, colors.danger);
     return sh.badge(colors.infoBg, colors.info);
@@ -641,51 +671,83 @@ export default function OwnerDashboard({ user }) {
 
       <div style={{ ...sh.content, paddingTop: "2rem", position: "relative", zIndex: 2 }} className="stagger-slide-up">
 
-        <div style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "4px", marginBottom: "1.25rem", scrollbarWidth: "none" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", marginBottom: "1.5rem" }}>
           {isAdmin ? (
             <>
-              <div style={{ background: colors.white, borderRadius: "16px", padding: "12px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", minWidth: "76px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}`, flexShrink: 0 }}>
-                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "20px", height: "20px" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.navy} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.87"/></svg></span>
-                <span style={{ fontSize: "20px", fontWeight: "800", color: colors.navy }}>{users.length}</span>
-                <span style={{ fontSize: "10px", fontWeight: "600", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.3px" }}>Total Users</span>
+              <div style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", alignItems: "center", gap: "14px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
+                <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: colors.navy }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.87"/></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: "22px", fontWeight: "800", color: colors.navy, lineHeight: 1 }}>{users.length}</div>
+                  <div style={{ fontSize: "12px", fontWeight: "600", color: colors.textSecondary, marginTop: "4px" }}>Total Users</div>
+                </div>
               </div>
-              <div style={{ background: colors.white, borderRadius: "16px", padding: "12px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", minWidth: "76px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}`, flexShrink: 0 }}>
-                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "20px", height: "20px" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.warning} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>
-                <span style={{ fontSize: "20px", fontWeight: "800", color: colors.warning }}>{pendingUsers.length}</span>
-                <span style={{ fontSize: "10px", fontWeight: "600", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.3px" }}>Pending</span>
+              <div style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", alignItems: "center", gap: "14px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
+                <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.warning }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: "22px", fontWeight: "800", color: colors.warning, lineHeight: 1 }}>{pendingUsers.length}</div>
+                  <div style={{ fontSize: "12px", fontWeight: "600", color: colors.textSecondary, marginTop: "4px" }}>Pending</div>
+                </div>
               </div>
-              <div style={{ background: colors.white, borderRadius: "16px", padding: "12px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", minWidth: "76px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}`, flexShrink: 0 }}>
-                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "20px", height: "20px" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.success} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></span>
-                <span style={{ fontSize: "20px", fontWeight: "800", color: colors.success }}>{approvedUsers.length}</span>
-                <span style={{ fontSize: "10px", fontWeight: "600", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.3px" }}>Active</span>
+              <div style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", alignItems: "center", gap: "14px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
+                <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.successBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.success }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: "22px", fontWeight: "800", color: colors.success, lineHeight: 1 }}>{approvedUsers.length}</div>
+                  <div style={{ fontSize: "12px", fontWeight: "600", color: colors.textSecondary, marginTop: "4px" }}>Active Users</div>
+                </div>
               </div>
-              <div style={{ background: colors.white, borderRadius: "16px", padding: "12px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", minWidth: "76px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}`, flexShrink: 0 }}>
-                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "20px", height: "20px" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.danger} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg></span>
-                <span style={{ fontSize: "20px", fontWeight: "800", color: colors.danger }}>{unreadAlerts}</span>
-                <span style={{ fontSize: "10px", fontWeight: "600", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.3px" }}>Alerts</span>
+              <div style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", alignItems: "center", gap: "14px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
+                <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.dangerBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.danger }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: "22px", fontWeight: "800", color: colors.danger, lineHeight: 1 }}>{unreadAlerts}</div>
+                  <div style={{ fontSize: "12px", fontWeight: "600", color: colors.textSecondary, marginTop: "4px" }}>Alerts</div>
+                </div>
               </div>
             </>
           ) : (
             <>
-              <div style={{ background: colors.white, borderRadius: "16px", padding: "12px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", minWidth: "76px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}`, flexShrink: 0 }}>
-                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "20px", height: "20px" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.navy} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg></span>
-                <span style={{ fontSize: "20px", fontWeight: "800", color: colors.navy }}>{allBookings.length}</span>
-                <span style={{ fontSize: "10px", fontWeight: "600", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.3px" }}>All Bookings</span>
+              <div style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", alignItems: "center", gap: "14px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
+                <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: colors.navy }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: "22px", fontWeight: "800", color: colors.navy, lineHeight: 1 }}>{allBookings.length}</div>
+                  <div style={{ fontSize: "12px", fontWeight: "600", color: colors.textSecondary, marginTop: "4px" }}>All Bookings</div>
+                </div>
               </div>
-              <div style={{ background: colors.white, borderRadius: "16px", padding: "12px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", minWidth: "76px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}`, flexShrink: 0 }}>
-                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "20px", height: "20px" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.warning} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>
-                <span style={{ fontSize: "20px", fontWeight: "800", color: colors.warning }}>{pendingBookings}</span>
-                <span style={{ fontSize: "10px", fontWeight: "600", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.3px" }}>Pending</span>
+              <div style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", alignItems: "center", gap: "14px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
+                <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.warning }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: "22px", fontWeight: "800", color: colors.warning, lineHeight: 1 }}>{pendingBookings}</div>
+                  <div style={{ fontSize: "12px", fontWeight: "600", color: colors.textSecondary, marginTop: "4px" }}>Pending</div>
+                </div>
               </div>
-              <div style={{ background: colors.white, borderRadius: "16px", padding: "12px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", minWidth: "76px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}`, flexShrink: 0 }}>
-                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "20px", height: "20px" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.success} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></span>
-                <span style={{ fontSize: "20px", fontWeight: "800", color: colors.success }}>{totalCompletedThisMonth}</span>
-                <span style={{ fontSize: "10px", fontWeight: "600", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.3px" }}>This Month</span>
+              <div style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", alignItems: "center", gap: "14px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
+                <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.successBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.success }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: "22px", fontWeight: "800", color: colors.success, lineHeight: 1 }}>{totalCompletedThisMonth}</div>
+                  <div style={{ fontSize: "12px", fontWeight: "600", color: colors.textSecondary, marginTop: "4px" }}>This Month</div>
+                </div>
               </div>
-              <div style={{ background: colors.white, borderRadius: "16px", padding: "12px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", minWidth: "76px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}`, flexShrink: 0 }}>
-                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "20px", height: "20px" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.info} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg></span>
-                <span style={{ fontSize: "20px", fontWeight: "800", color: colors.info }}>{mechanics.length}</span>
-                <span style={{ fontSize: "10px", fontWeight: "600", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.3px" }}>Mechanics</span>
+              <div style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", alignItems: "center", gap: "14px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
+                <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.info }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: "22px", fontWeight: "800", color: colors.info, lineHeight: 1 }}>{mechanics.length}</div>
+                  <div style={{ fontSize: "12px", fontWeight: "600", color: colors.textSecondary, marginTop: "4px" }}>Mechanics</div>
+                </div>
               </div>
             </>
           )}
@@ -827,16 +889,93 @@ export default function OwnerDashboard({ user }) {
                 ) : (
                   <div style={{ display: "flex", alignItems: "flex-end", gap: "8px", height: "80px" }}>
                     {weekCounts.map((count, i) => (
-                      <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", height: "100%" }}>
-                        <div style={{ flex: 1, display: "flex", alignItems: "flex-end", width: "100%", justifyContent: "center" }}>
-                          <div style={{ width: "100%", height: `${(count / maxWeekCount) * 100}%`, minHeight: "4px", background: `linear-gradient(to top, ${colors.navy}, ${colors.blue})`, borderRadius: "4px 4px 0 0", transition: "height 0.4s ease" }}></div>
+                      <div 
+                        key={i} 
+                        style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", height: "100%", position: "relative" }}
+                        onMouseEnter={() => setHoveredWeek(i)}
+                        onMouseLeave={() => setHoveredWeek(null)}
+                        onClick={() => setHoveredWeek(hoveredWeek === i ? null : i)}
+                      >
+                        <div style={{ flex: 1, display: "flex", alignItems: "flex-end", width: "100%", justifyContent: "center", cursor: "pointer" }}>
+                          <div style={{ 
+                            width: "100%", 
+                            height: `${(count / maxWeekCount) * 100}%`, 
+                            minHeight: count > 0 ? "4px" : "0", 
+                            background: hoveredWeek === i ? colors.blue : `linear-gradient(to top, ${colors.navy}, ${colors.blue})`, 
+                            borderRadius: "4px 4px 0 0", 
+                            transition: "all 0.2s ease",
+                            opacity: hoveredWeek !== null && hoveredWeek !== i ? 0.5 : 1
+                          }}></div>
                         </div>
-                        <div style={{ fontSize: "11px", fontWeight: "800", color: colors.textPrimary }}>{count}</div>
-                        <div style={{ fontSize: "10px", color: colors.textMuted, fontWeight: "600" }}>{weekLabels[i]}</div>
+                        <div style={{ fontSize: "11px", fontWeight: "800", color: hoveredWeek === i ? colors.blue : colors.textPrimary, transition: "color 0.2s ease" }}>{count > 0 ? count : ""}</div>
+                        <div style={{ fontSize: "10px", color: hoveredWeek === i ? colors.blue : colors.textMuted, fontWeight: "600", transition: "color 0.2s ease" }}>{weekLabels[i]}</div>
+                        
+                        {hoveredWeek === i && (
+                          <div style={{ position: "absolute", bottom: "100%", left: "50%", transform: "translate(-50%, -10px)", background: "#1e293b", color: "#fff", padding: "8px 12px", borderRadius: "8px", fontSize: "12px", whiteSpace: "nowrap", zIndex: 10, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", pointerEvents: "none" }}>
+                            <div style={{ fontWeight: "700", marginBottom: "2px", color: "#94a3b8", fontSize: "11px" }}>{weekLabels[i]}</div>
+                            <div style={{ display: "flex", gap: "12px", justifyContent: "space-between", alignItems: "center" }}>
+                              <span>Total Bookings:</span>
+                              <span style={{ fontWeight: "800" }}>{count}</span>
+                            </div>
+                            <div style={{ position: "absolute", bottom: "-4px", left: "50%", transform: "translateX(-50%) rotate(45deg)", width: "8px", height: "8px", background: "#1e293b" }} />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
                 )}
+              </div>
+              
+              <div style={{ ...sh.card, marginBottom: 0 }}>
+                <div style={{ fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>Monthly Trends ({selYear})</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "flex-end", gap: "6px", height: "100px", paddingTop: "20px" }}>
+                  {monthCounts.map((count, i) => (
+                    <div 
+                      key={i} 
+                      style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", height: "100%", position: "relative" }}
+                      onMouseEnter={() => setHoveredMonth(i)}
+                      onMouseLeave={() => setHoveredMonth(null)}
+                      onClick={() => setHoveredMonth(hoveredMonth === i ? null : i)}
+                    >
+                      <div style={{ flex: 1, display: "flex", alignItems: "flex-end", width: "100%", justifyContent: "center", cursor: "pointer" }}>
+                        <div style={{ 
+                          width: "100%", 
+                          height: `${(count / maxMonthCount) * 100}%`, 
+                          minHeight: count > 0 ? "4px" : "0", 
+                          background: hoveredMonth === i ? colors.blue : `linear-gradient(to top, ${colors.navy}, ${colors.blue})`, 
+                          borderRadius: "4px 4px 0 0", 
+                          transition: "all 0.2s ease",
+                          opacity: hoveredMonth !== null && hoveredMonth !== i ? 0.5 : 1
+                        }}></div>
+                      </div>
+                      <div style={{ fontSize: "9px", color: hoveredMonth === i ? colors.blue : colors.textMuted, fontWeight: "700", transition: "color 0.2s ease" }}>
+                        {monthLabels[i]}
+                      </div>
+                      
+                      {hoveredMonth === i && (
+                        <div style={{ position: "absolute", bottom: "100%", left: "50%", transform: "translate(-50%, -10px)", background: "#1e293b", color: "#fff", padding: "10px 14px", borderRadius: "8px", fontSize: "12px", whiteSpace: "nowrap", zIndex: 10, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", pointerEvents: "none" }}>
+                          <div style={{ fontWeight: "700", marginBottom: "4px", color: "#94a3b8", fontSize: "11px" }}>{monthLabels[i]} {selYear}</div>
+                          <div style={{ display: "flex", gap: "16px", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                            <span>Total Bookings:</span>
+                            <span style={{ fontWeight: "800" }}>{count}</span>
+                          </div>
+                          <div style={{ display: "flex", gap: "16px", justifyContent: "space-between", alignItems: "center" }}>
+                            <span>Top Service:</span>
+                            <span style={{ fontWeight: "800", color: "#60a5fa" }}>
+                              {(() => {
+                                const topSvc = getTopServiceForMonth(i);
+                                return topSvc ? `${topSvc.name} (${topSvc.count})` : "None";
+                              })()}
+                            </span>
+                          </div>
+                          <div style={{ position: "absolute", bottom: "-4px", left: "50%", transform: "translateX(-50%) rotate(45deg)", width: "8px", height: "8px", background: "#1e293b" }} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </>

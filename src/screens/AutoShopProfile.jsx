@@ -5,7 +5,7 @@ import { doc, updateDoc, addDoc, setDoc, collection, serverTimestamp, getDocs, q
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import BackButton from "../components/BackButton";
-import { Store, AlertTriangle, FileText, Check, Star, Edit, Flag, Calendar, Heart } from "lucide-react";
+import { Store, AlertTriangle, FileText, Check, Star, Edit, Flag, Calendar, Heart, Phone, MapPin } from "lucide-react";
 
 function timeAgo(timestamp) {
   if (!timestamp) return "Just now";
@@ -51,6 +51,8 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
   const [name, setName] = useState(shop?.name || "");
   const [shortName, setShortName] = useState(shop?.shortName || "");
   const [tagline, setTagline] = useState(shop?.tagline || "");
+  const [phone, setPhone] = useState(shop?.phone || "");
+  const [address, setAddress] = useState(shop?.address || "");
   const [icon, setIcon] = useState(shop?.icon || "store");
   const [bg, setBg] = useState(shop?.bg || colors.infoBg);
   const [accent, setAccent] = useState(shop?.accent || colors.info);
@@ -91,6 +93,8 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
         name: name.trim(),
         shortName: shortName.trim(),
         tagline: tagline.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
         icon: icon.trim() || "store",
         bg,
         accent,
@@ -221,6 +225,14 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
         <div style={{ marginBottom: "1.25rem" }}>
           <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Tagline / About</div>
           <textarea style={{ ...inputStyle, minHeight: "80px", resize: "vertical" }} value={tagline} onChange={e => setTagline(e.target.value)} />
+        </div>
+        <div style={{ marginBottom: "1.25rem" }}>
+          <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Phone Number</div>
+          <input type="text" style={inputStyle} placeholder="e.g. 0912 345 6789" value={phone} onChange={e => setPhone(e.target.value)} />
+        </div>
+        <div style={{ marginBottom: "1.25rem" }}>
+          <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Shop Address</div>
+          <textarea style={{ ...inputStyle, minHeight: "60px", resize: "vertical" }} placeholder="e.g. 123 Main St, City" value={address} onChange={e => setAddress(e.target.value)} />
         </div>
         
         <div style={{ marginBottom: "1.25rem" }}>
@@ -483,7 +495,7 @@ export default function AutoShopProfile() {
   if (loadingShop) {
     return (
       <div style={sh.page}>
-        <div style={sh.topbar}>
+        <div style={sh.topbar} className="mobile-topbar">
           <BackButton />
           <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
         </div>
@@ -495,7 +507,7 @@ export default function AutoShopProfile() {
   if (!shop) {
     return (
       <div style={sh.page}>
-        <div style={sh.topbar}>
+        <div style={sh.topbar} className="mobile-topbar">
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <BackButton />
             <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
@@ -522,7 +534,7 @@ export default function AutoShopProfile() {
       </style>
 
       {/* TOPBAR */}
-      <div style={sh.topbar}>
+      <div style={sh.topbar} className="mobile-topbar">
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <BackButton />
           <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
@@ -530,9 +542,9 @@ export default function AutoShopProfile() {
       </div>
 
       {/* MODERN SHOP HEADER */}
-      <div style={{ padding: "16px" }}>
+      <div style={{ padding: "16px", maxWidth: "1200px", margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
         <div style={{
-          position: "relative", width: "100%", height: "260px",
+          position: "relative", width: "100%", minHeight: "260px",
           borderRadius: "24px", overflow: "hidden",
           background: shop.coverURL ? `url(${shop.coverURL}) center/cover` : `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`,
           boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
@@ -546,8 +558,22 @@ export default function AutoShopProfile() {
             </div>
             
             <div style={{ flex: 1, minWidth: "200px" }}>
-              <h1 style={{ margin: "0 0 4px 0", fontSize: "28px", fontWeight: "800", color: "#fff", letterSpacing: "-0.5px", textShadow: "0 2px 4px rgba(0,0,0,0.3)" }}>{shop.name}</h1>
+              <h1 style={{ margin: "0 0 4px 0", fontSize: "28px", fontWeight: "800", color: "#fff", letterSpacing: "-0.5px", textShadow: "0 2px 4px rgba(0,0,0,0.3)", lineHeight: 1.1, wordBreak: "break-word" }}>{shop.name}</h1>
               <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.85)", marginBottom: "8px", fontWeight: "500" }}>{shop.tagline || "Quality auto services"}</div>
+              
+              {shop.phone && (
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+                  <Phone size={14} color="rgba(255,255,255,0.85)" />
+                  <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.9)", fontWeight: "600" }}>{shop.phone}</span>
+                </div>
+              )}
+              
+              {shop.address && (
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+                  <MapPin size={14} color="rgba(255,255,255,0.85)" />
+                  <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.9)", fontWeight: "600" }}>{shop.address}</span>
+                </div>
+              )}
               
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <Star fill="currentColor" size={16} style={{ color: "#f59e0b" }} />
@@ -588,7 +614,7 @@ export default function AutoShopProfile() {
       </div>
 
       {/* Tabs */}
-      <div style={{ padding: "0 16px 16px", display: "flex", gap: "8px", justifyContent: "flex-start", maxWidth: "800px", margin: "0 auto", width: "100%", boxSizing: "border-box", overflowX: "auto" }}>
+      <div style={{ padding: "0 16px 16px", display: "flex", gap: "8px", justifyContent: "flex-start", maxWidth: "1200px", margin: "0 auto", width: "100%", boxSizing: "border-box", overflowX: "auto" }}>
         {["Posts", "About", "Reviews"].map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} style={{
             padding: "10px 24px", borderRadius: "20px", fontSize: "14px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit",
@@ -604,7 +630,7 @@ export default function AutoShopProfile() {
       </div>
 
       {/* CONTENT AREA */}
-      <div style={{ maxWidth: "800px", margin: "0 auto", padding: "0 16px 16px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", gap: "16px" }}>
+      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 16px 16px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", gap: "16px" }}>
         {activeTab === "Posts" && (
           <>
             {/* Intro Card */}

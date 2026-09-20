@@ -3,7 +3,8 @@ import { collection, onSnapshot, deleteDoc, doc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { colors, ConfirmModal } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
-import { Search, Store, Trash2, MapPin, Star } from "lucide-react";
+import { Search, Store, Trash2, MapPin, Star, Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function DesktopAdminShops() {
   const [shops, setShops] = useState([]);
@@ -11,6 +12,7 @@ export default function DesktopAdminShops() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [confirmProps, setConfirmProps] = useState({ isOpen: false, title: "", message: "", type: "primary", onConfirm: null });
+  const navigate = useNavigate();
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "shops"), (snap) => {
@@ -158,9 +160,14 @@ export default function DesktopAdminShops() {
                         {s.createdAt?.seconds ? new Date(s.createdAt.seconds * 1000).toLocaleDateString() : "Unknown"}
                       </td>
                       <td style={{ padding: "16px 24px", textAlign: "right" }}>
-                        <button disabled={actionLoading === s.id} onClick={() => handleDelete(s)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#fef2f2", color: colors.danger, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }} title="Delete Shop">
-                          <Trash2 size={18} />
-                        </button>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px" }}>
+                          <button onClick={() => navigate("/customer/shop-profile", { state: { shopId: s.id } })} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.infoBg, color: colors.info, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }} title="View Shop Profile">
+                            <Eye size={18} />
+                          </button>
+                          <button disabled={actionLoading === s.id} onClick={() => handleDelete(s)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#fef2f2", color: colors.danger, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }} title="Delete Shop">
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))

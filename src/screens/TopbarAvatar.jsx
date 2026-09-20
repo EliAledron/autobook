@@ -12,7 +12,7 @@ import { getInitials, colors, sh } from "./dashboardShared";
  *   <TopbarAvatar onClick={() => navigate("/profile")} />
  */
 export default function TopbarAvatar({ onClick, size = 34 }) {
-  const { userProfile, unreadAlertsCount } = useUser();
+  const { userProfile } = useUser();
   const photo = userProfile?.photoURL;
   const name = userProfile?.displayName || "";
 
@@ -62,29 +62,6 @@ export default function TopbarAvatar({ onClick, size = 34 }) {
         )}
       </div>
     </div>
-      {unreadAlertsCount > 0 && (
-        <div style={{
-          position: "absolute",
-          top: "-4px",
-          right: "-4px",
-          background: colors.danger,
-          color: "#fff",
-          fontSize: "9px",
-          fontWeight: "800",
-          height: "16px",
-          minWidth: "16px",
-          borderRadius: "10px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          border: `2px solid ${colors.navy}`,
-          padding: "0 3px",
-          boxSizing: "border-box",
-          pointerEvents: "none"
-        }}>
-          {unreadAlertsCount > 99 ? "99+" : unreadAlertsCount}
-        </div>
-      )}
     </div>
   );
 }

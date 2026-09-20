@@ -3,7 +3,8 @@ import { collection, onSnapshot, updateDoc, doc, getDoc, getDocs, query, where, 
 import { db } from "../../firebase";
 import { colors, ErrorModal, SuccessModal, ConfirmModal } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
-import { ShieldAlert, CheckCircle, Search, Ban, Flag, Trash2 } from "lucide-react";
+import { ShieldAlert, CheckCircle, Search, Ban, Flag, Trash2, Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function DesktopAdminReportedShops() {
   const [reports, setReports] = useState([]);
@@ -13,6 +14,7 @@ export default function DesktopAdminReportedShops() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [confirmAction, setConfirmAction] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const unsub = onSnapshot(query(collection(db, "adminAlerts"), where("type", "==", "shop_report")), (snap) => {
@@ -158,6 +160,9 @@ export default function DesktopAdminReportedShops() {
                     </td>
                     <td style={{ padding: "16px 24px", textAlign: "right", verticalAlign: "top" }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px" }}>
+                        <button onClick={() => navigate("/customer/shop-profile", { state: { shopId: r.shopId } })} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.infoBg, color: colors.info, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="View Shop Profile">
+                          <Eye size={18} />
+                        </button>
                         <button disabled={actionLoading === r.id} onClick={() => dismissReport(r.id)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.successBg, color: colors.success, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Dismiss Report">
                           <CheckCircle size={18} />
                         </button>
