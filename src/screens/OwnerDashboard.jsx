@@ -1025,13 +1025,9 @@ export default function OwnerDashboard({ user }) {
         {!isAdmin && (
           <>
             <SectionTitle title="Stock Reorder Advisor" />
-            <div style={{ background: colors.white, borderRadius: "20px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)", overflow: "hidden", marginBottom: "1.5rem" }}>
-              <div style={{ padding: "16px 20px", borderBottom: `1px solid ${colors.border}`, background: "#f8fafc" }}>
-                <div style={{ fontSize: "14px", fontWeight: "700", color: colors.textPrimary }}>30-Day Restock Recommendations</div>
-                <div style={{ fontSize: "12px", color: colors.textSecondary, marginTop: "2px" }}>Based on historical run-rates from the last month</div>
-              </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "1.5rem" }}>
               {restockSuggestions.length === 0 ? (
-                <div style={{ padding: "32px 20px", textAlign: "center" }}>
+                <div style={{ background: colors.white, borderRadius: "20px", border: `1px solid ${colors.border}`, padding: "32px 20px", textAlign: "center", boxShadow: "0 4px 16px rgba(0,0,0,0.03)" }}>
                   <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", color: colors.textMuted }}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                   </div>
@@ -1039,23 +1035,28 @@ export default function OwnerDashboard({ user }) {
                   <div style={{ fontSize: "13px", color: colors.textSecondary }}>Order parts to generate restock recommendations.</div>
                 </div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  {restockSuggestions.slice(0, 5).map((item, i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: i === Math.min(restockSuggestions.length, 5) - 1 ? "none" : `1px solid #f1f5f9` }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: item.priority === "High" ? colors.danger : item.priority === "Medium" ? colors.warning : colors.success }} />
-                        <div>
-                          <div style={{ fontSize: "14px", fontWeight: "700", color: colors.textPrimary, marginBottom: "2px" }}>{item.name}</div>
-                          <div style={{ fontSize: "12px", color: colors.textSecondary }}>Used {item.count} in last 30 days</div>
-                        </div>
+                restockSuggestions.slice(0, 5).map((item, i) => (
+                  <div key={i} style={{
+                    background: colors.white, borderRadius: "18px", padding: "16px 20px",
+                    border: `1px solid ${colors.border}`,
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                    display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px"
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+                      <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: item.priority === "High" ? colors.dangerBg : item.priority === "Medium" ? colors.warningBg : colors.successBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <div style={{ width: "12px", height: "12px", borderRadius: "50%", background: item.priority === "High" ? colors.danger : item.priority === "Medium" ? colors.warning : colors.success }} />
                       </div>
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: "11px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "2px" }}>Order at least</div>
-                        <div style={{ fontSize: "16px", fontWeight: "800", color: colors.blue }}>{item.suggestedStock} units</div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: "15px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</div>
+                        <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Used {item.count} in last 30 days</div>
                       </div>
                     </div>
-                  ))}
-                </div>
+                    <div style={{ textAlign: "right", flexShrink: 0 }}>
+                      <div style={{ fontSize: "11px", fontWeight: "800", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "2px" }}>Order at least</div>
+                      <div style={{ fontSize: "16px", fontWeight: "800", color: colors.blue }}>{item.suggestedStock} units</div>
+                    </div>
+                  </div>
+                ))
               )}
             </div>
           </>
@@ -1159,9 +1160,9 @@ export default function OwnerDashboard({ user }) {
         {isAdmin && (
           <>
             <SectionTitle title="Pending Approvals" badge={pendingUsers.length} />
-            <div style={{ background: colors.white, borderRadius: "24px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 24px rgba(0,0,0,0.04)", overflow: "hidden", marginBottom: "1.5rem" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "1.5rem" }}>
               {pendingUsers.length === 0 ? (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "28px 24px", gap: "12px" }}>
+                <div style={{ background: colors.white, borderRadius: "24px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.03)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "28px 24px", gap: "12px" }}>
                   <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: colors.successBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={colors.success} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M20 6L9 17l-5-5" />
@@ -1179,20 +1180,25 @@ export default function OwnerDashboard({ user }) {
                   </button>
                 </div>
               ) : (
-                pendingUsers.map((u, i) => (
+                pendingUsers.map((u) => (
                   <div
                     key={u.id}
-                    className="owner-list-item"
                     onClick={() => navigate("/admin/users", { state: { openUserId: u.id } })}
-                    style={{ ...sh.rowItem, padding: "16px", borderBottom: i === pendingUsers.length - 1 ? "none" : `1px solid #f1f5f9`, cursor: "pointer" }}
+                    style={{
+                      background: colors.white, borderRadius: "18px", padding: "16px 20px",
+                      border: `1px solid ${colors.border}`,
+                      boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                      display: "flex", alignItems: "center", gap: "16px",
+                      cursor: "pointer"
+                    }}
                   >
-                    <div style={{ width: "42px", height: "42px", borderRadius: "14px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: "800", color: colors.warning, flexShrink: 0, marginRight: "12px" }}>{getInitials(u.displayName || u.email || "U")}</div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: "800", fontSize: "15px", color: colors.textPrimary, marginBottom: "2px" }}>{u.displayName || u.email?.split("@")[0] || "No name"}</div>
-                      <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>{u.email}</div>
+                    <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: "800", color: colors.warning, flexShrink: 0 }}>{getInitials(u.displayName || u.email || "U")}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: "800", fontSize: "15px", color: colors.textPrimary, marginBottom: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.displayName || u.email?.split("@")[0] || "No name"}</div>
+                      <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.email}</div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ ...roleStyle(u.role), padding: "4px 10px", borderRadius: "8px", fontSize: "12px" }}>{u.role || "User"}</span>
+                      <span style={{ ...roleStyle(u.role), padding: "4px 10px", borderRadius: "8px", fontSize: "12px", fontWeight: "800" }}>{u.role || "User"}</span>
                       <span style={{ color: colors.textMuted, fontSize: "20px", lineHeight: 1 }}>›</span>
                     </div>
                   </div>
@@ -1215,13 +1221,13 @@ export default function OwnerDashboard({ user }) {
                   placeholder="Search active users..."
                   value={userSearch}
                   onChange={e => setUserSearch(e.target.value)}
-                  style={{ width: "100%", background: colors.white, borderRadius: "16px", fontSize: "14px", padding: "10px 14px 10px 38px", border: `1px solid ${colors.border}`, outline: "none", boxSizing: "border-box", color: colors.textPrimary, fontFamily: "inherit" }}
+                  style={{ width: "100%", background: colors.white, borderRadius: "16px", fontSize: "14px", padding: "12px 14px 12px 42px", border: `1px solid ${colors.border}`, outline: "none", boxSizing: "border-box", color: colors.textPrimary, fontFamily: "inherit", boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}
                 />
               </div>
             )}
-            <div style={{ background: colors.white, borderRadius: "24px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 24px rgba(0,0,0,0.04)", overflow: "hidden", marginBottom: "1.5rem" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "1.5rem" }}>
               {approvedUsers.length === 0 ? (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "28px 24px", gap: "12px" }}>
+                <div style={{ background: colors.white, borderRadius: "24px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.03)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "28px 24px", gap: "12px" }}>
                   <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={colors.info} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/>
@@ -1240,21 +1246,29 @@ export default function OwnerDashboard({ user }) {
                   );
                   if (filteredUsers.length === 0) {
                     return (
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "28px 24px", gap: "12px" }}>
+                      <div style={{ background: colors.white, borderRadius: "24px", border: `1px solid ${colors.border}`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "28px 24px", gap: "12px" }}>
                         <div style={{ textAlign: "center" }}>
                           <div style={{ fontWeight: "800", fontSize: "15px", color: colors.textPrimary, marginBottom: "4px" }}>No users match your search.</div>
                         </div>
                       </div>
                     );
                   }
-                  return filteredUsers.map((u, i) => (
-                    <div key={u.id} className="owner-list-item" style={{ ...sh.rowItem, padding: "16px", borderBottom: i === filteredUsers.length - 1 ? "none" : `1px solid #f1f5f9` }}>
-                      <div style={{ width: "42px", height: "42px", borderRadius: "14px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: "800", color: colors.info, flexShrink: 0, marginRight: "12px" }}>{getInitials(u.displayName || u.email || "U")}</div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: "800", fontSize: "15px", color: colors.textPrimary, marginBottom: "2px" }}>{u.displayName || u.email?.split("@")[0] || "No name"}</div>
-                        <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>{u.email}</div>
+                  return filteredUsers.map((u) => (
+                    <div
+                      key={u.id}
+                      style={{
+                        background: colors.white, borderRadius: "18px", padding: "16px 20px",
+                        border: `1px solid ${colors.border}`,
+                        boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                        display: "flex", alignItems: "center", gap: "16px",
+                      }}
+                    >
+                      <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: "800", color: colors.info, flexShrink: 0 }}>{getInitials(u.displayName || u.email || "U")}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: "800", fontSize: "15px", color: colors.textPrimary, marginBottom: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.displayName || u.email?.split("@")[0] || "No name"}</div>
+                        <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.email}</div>
                       </div>
-                      <span style={{ ...roleStyle(u.role), padding: "4px 10px", borderRadius: "8px", fontSize: "12px" }}>{u.role || "User"}</span>
+                      <span style={{ ...roleStyle(u.role), padding: "4px 10px", borderRadius: "8px", fontSize: "12px", fontWeight: "800" }}>{u.role || "User"}</span>
                     </div>
                   ));
               })()}

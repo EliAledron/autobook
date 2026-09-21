@@ -435,54 +435,58 @@ export default function AdminUsers() {
         <div style={sh.sectionLabel}>
           {capitalize(filter)} users ({filteredUsers.length})
         </div>
-        <div style={sh.card}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           {loading ? (
             <SkeletonLoader count={3} type="card" />
           ) : filteredUsers.length === 0 ? (
-            <EmptyState
-              icon={<Users size={48} />}
-              title={`No ${filter} users`}
-              subtitle={`There are currently no users registered as ${filter}.`}
-            />
+            <div style={sh.card}>
+              <EmptyState
+                icon={<Users size={48} />}
+                title={`No ${filter} users`}
+                subtitle={`There are currently no users registered as ${filter}.`}
+              />
+            </div>
           ) : (
-            filteredUsers.map((u, i) => (
+            filteredUsers.map((u) => (
               <div
                 key={u.id}
                 style={{
-                  ...sh.rowItem,
-                  borderBottom: i === filteredUsers.length - 1 ? "none" : `1px solid ${colors.border}`,
-                  cursor: "pointer",
+                  background: colors.white, borderRadius: "18px", padding: "16px 20px",
+                  border: `1px solid ${colors.border}`,
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                  display: "flex", alignItems: "center", gap: "16px",
+                  cursor: "pointer"
                 }}
                 onClick={() => setSelected(u)}
               >
                 <div
                   style={{
-                    width: "40px", height: "40px", borderRadius: "50%",
-                    background: colors.infoBg, display: "flex",
-                    alignItems: "center", justifyContent: "center",
-                    fontSize: "13px", fontWeight: "700",
+                    width: "48px", height: "48px", borderRadius: "14px",
+                    background: `linear-gradient(135deg, ${colors.infoBg}, #e0f2fe)`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "16px", fontWeight: "800",
                     color: colors.info, flexShrink: 0,
                   }}
                 >
                   {getInitials(u.displayName || "U")}
                 </div>
 
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: "600", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px" }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: "700", fontSize: "15px", display: "flex", alignItems: "center", gap: "8px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {u.displayName || "No name"}
                     {isNew(u.createdAt) && (
                       <span style={{ fontSize: "9px", fontWeight: "800", background: colors.danger, color: "#fff", padding: "2px 5px", borderRadius: "6px", letterSpacing: "0.5px", boxShadow: "0 2px 4px rgba(220,38,38,0.3)" }}>NEW</span>
                     )}
                   </div>
-                  <div style={{ fontSize: "12px", color: colors.textSecondary }}>
+                  <div style={{ fontSize: "12px", color: colors.textSecondary, marginTop: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {u.email}
                   </div>
-                  <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "2px" }}>
+                  <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "4px", fontWeight: "600" }}>
                     Role: {u.role || "User"}
                   </div>
                 </div>
 
-                <span style={statusStyle(u.status || "pending")}>
+                <span style={{ ...statusStyle(u.status || "pending"), padding: "4px 10px", borderRadius: "8px", fontWeight: "800", fontSize: "11px" }}>
                   {capitalize(u.status || "pending")}
                 </span>
               </div>
