@@ -149,10 +149,10 @@ export default function AdminCarParts() {
   const groupKeys = Object.keys(grouped).sort((a, b) => (a < b ? 1 : -1));
 
   const pillStyle = (active) => ({
-    padding: "6px 14px",
+    padding: "8px 16px",
     borderRadius: "20px",
     fontSize: "12px",
-    fontWeight: "600",
+    fontWeight: "700",
     border: active ? "none" : `1px solid ${colors.border}`,
     background: active
       ? `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`
@@ -162,7 +162,8 @@ export default function AdminCarParts() {
     fontFamily: "inherit",
     whiteSpace: "nowrap",
     flexShrink: 0,
-    boxShadow: active ? "0 2px 8px rgba(26,58,92,0.25)" : "none",
+    boxShadow: active ? "0 4px 12px rgba(26,58,92,0.25)" : "0 2px 4px rgba(0,0,0,0.02)",
+    transition: "all 0.2s ease"
   });
 
   return (
@@ -175,18 +176,18 @@ export default function AdminCarParts() {
           <span style={sh.roleText}>Car Parts</span>
         </div>
         <div style={sh.heroGreeting}>Car Parts Orders</div>
-        <div style={sh.heroSub}>Track all parts ordered by mechanics.</div>
+        <div style={sh.heroSub}>Track all parts logged for inventory.</div>
 
         {/* Summary stats inside hero */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "1rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "1.5rem" }}>
           {[
             { label: "Total orders", value: parts.length, sub: "All time" },
             { label: "Today's orders", value: parts.filter((p) => getDateKey(p.createdAt) === todayStr).length, sub: "Today" },
           ].map((s, i) => (
-            <div key={i} style={{ background: "rgba(255,255,255,0.12)", borderRadius: "12px", padding: "10px", textAlign: "center", border: "0.5px solid rgba(255,255,255,0.15)" }}>
-              <div style={{ fontSize: "20px", fontWeight: "800", color: "#fff", lineHeight: 1.2 }}>{s.value}</div>
-              <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.7)", fontWeight: "600", marginTop: "2px" }}>{s.label}</div>
-              <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.45)", marginTop: "1px" }}>{s.sub}</div>
+            <div key={i} style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(8px)", borderRadius: "16px", padding: "16px", textAlign: "center", border: "1px solid rgba(255,255,255,0.12)" }}>
+              <div style={{ fontSize: "24px", fontWeight: "800", color: "#fff", lineHeight: 1.2 }}>{s.value}</div>
+              <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.8)", fontWeight: "600", marginTop: "4px" }}>{s.label}</div>
+              <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.5)", marginTop: "2px" }}>{s.sub}</div>
             </div>
           ))}
         </div>
@@ -257,60 +258,61 @@ export default function AdminCarParts() {
             })();
 
             return (
-              <div key={dateKey} style={{ marginBottom: "1.25rem" }}>
+              <div key={dateKey} style={{ marginBottom: "1.5rem" }}>
                 {/* Date group header */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", paddingLeft: "4px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <span style={{
-                      fontSize: "11px", fontWeight: "700",
+                      fontSize: "12px", fontWeight: "800",
                       color: isToday ? colors.info : colors.textMuted,
-                      textTransform: "uppercase", letterSpacing: "0.6px",
+                      textTransform: "uppercase", letterSpacing: "0.8px",
                     }}>
                       {labelDate}
                     </span>
                     {isToday && (
-                      <span style={{ background: colors.infoBg, color: colors.info, fontSize: "10px", fontWeight: "700", borderRadius: "8px", padding: "2px 7px" }}>
+                      <span style={{ background: colors.infoBg, color: colors.info, fontSize: "10px", fontWeight: "800", borderRadius: "8px", padding: "4px 8px" }}>
                         LIVE
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div style={sh.card}>
-                  {groupParts.map((p, i) => {
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {groupParts.map((p) => {
                     return (
                       <div
                         key={p.id}
                         style={{
-                          display: "flex", alignItems: "flex-start", gap: "12px",
-                          padding: "12px 0",
-                          borderBottom: i < groupParts.length - 1 ? `1px solid ${colors.border}` : "none",
+                          background: colors.white, borderRadius: "18px", padding: "16px 20px",
+                          border: `1px solid ${colors.border}`,
+                          boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                          display: "flex", alignItems: "center", gap: "16px",
                         }}
                       >
-                        <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", flexShrink: 0, color: colors.warning }}>
-                          <Wrench size={20} />
+                        <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0, color: colors.warning }}>
+                          <Wrench size={24} />
                         </div>
 
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: "13px", fontWeight: "700", color: colors.textPrimary }}>
+                          <div style={{ fontSize: "15px", fontWeight: "700", color: colors.textPrimary, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                             {p.partName || "Unknown Part"}
                           </div>
-                          <div style={{ fontSize: "11px", color: colors.textSecondary, marginTop: "2px" }}>
+                          <div style={{ fontSize: "12px", color: colors.textSecondary, marginTop: "2px", fontWeight: "600" }}>
                             Qty: {p.quantity || 1}
                           </div>
                           {p.notes && (
-                            <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "2px", fontStyle: "italic" }}>
+                            <div style={{ fontSize: "12px", color: colors.textMuted, marginTop: "4px", fontStyle: "italic", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                               "{p.notes}"
                             </div>
                           )}
-                          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "6px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "8px" }}>
                             <div style={{ width: "20px", height: "20px", borderRadius: "50%", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", fontWeight: "700", color: colors.info, flexShrink: 0 }}>
-                              {getInitials(p.mechanicName || "M")}
+                              {getInitials(p.mechanicName || "S")}
                             </div>
-                            <span style={{ fontSize: "11px", color: colors.textSecondary, fontWeight: "600" }}>
-                              {p.mechanicName || "Unknown Mechanic"}
+                            <span style={{ fontSize: "11px", color: colors.textSecondary, fontWeight: "700" }}>
+                              {p.mechanicName || "Staff"}
                             </span>
-                            <span style={{ fontSize: "10px", color: colors.textMuted }}>
+                            <span style={{ fontSize: "10px", color: colors.textMuted, fontWeight: "600" }}>
                               · {formatTime(p.createdAt)}
                             </span>
                           </div>
