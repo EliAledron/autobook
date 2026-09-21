@@ -182,7 +182,7 @@ function CarPartsModal({ user, onClose, onSaved, shopId }) {
               <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500", marginTop: "4px" }}>Record parts for inventory</div>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: colors.bg, border: "none", width: "36px", height: "36px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", cursor: "pointer", color: colors.textSecondary, transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "#e2e8f0"} onMouseLeave={e => e.currentTarget.style.background = colors.bg}>✕</button>
+          <button onClick={onClose} style={{ background: colors.bg, border: "none", width: "36px", height: "36px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", cursor: "pointer", color: colors.textSecondary, transition: "all 0.2s" }}>✕</button>
         </div>
         
         <ErrorModal error={error} onClose={() => setError("")} />

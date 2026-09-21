@@ -151,7 +151,7 @@ function MechanicFormModal({ existing, onClose, onSaved, ownerId, shopId }) {
               <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500", marginTop: "4px" }}>Manage your shop's team</div>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: colors.bg, border: "none", width: "36px", height: "36px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", cursor: "pointer", color: colors.textSecondary, transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "#e2e8f0"} onMouseLeave={e => e.currentTarget.style.background = colors.bg}>✕</button>
+          <button onClick={onClose} style={{ background: colors.bg, border: "none", width: "36px", height: "36px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", cursor: "pointer", color: colors.textSecondary, transition: "all 0.2s" }}>✕</button>
         </div>
         <ErrorModal error={error} onClose={() => setError("")} />
         {[
@@ -176,7 +176,7 @@ function MechanicFormModal({ existing, onClose, onSaved, ownerId, shopId }) {
             {specializations.map(s => (
               <div key={s} style={{ background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", padding: "6px 12px", borderRadius: "10px", fontSize: "13px", fontWeight: "600", display: "flex", alignItems: "center", gap: "6px", boxShadow: "0 2px 6px rgba(42,82,152,0.2)" }}>
                 {s}
-                <button onClick={() => setSpecializations(specializations.filter(x => x !== s))} style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: "16px", padding: 0, display: "flex", alignItems: "center", opacity: 0.8, transition: "opacity 0.2s" }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.8}>×</button>
+                <button onClick={() => setSpecializations(specializations.filter(x => x !== s))} style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: "16px", padding: 0, display: "flex", alignItems: "center", transition: "opacity 0.2s" }}>×</button>
               </div>
             ))}
             <input
@@ -208,7 +208,7 @@ function MechanicFormModal({ existing, onClose, onSaved, ownerId, shopId }) {
               <div style={{ fontSize: "11px", color: colors.textMuted, fontWeight: "600", marginBottom: "8px" }}>Suggested:</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
                 {STANDARD_SPECIALTIES.filter(s => !specializations.includes(s)).map(s => (
-                  <button key={s} onClick={(e) => { e.preventDefault(); setSpecializations([...specializations, s]); }} style={{ background: colors.white, border: `1px solid ${colors.border}`, padding: "6px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: "600", color: colors.textSecondary, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s ease", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }} onMouseEnter={e => { e.currentTarget.style.borderColor = colors.blue; e.currentTarget.style.color = colors.blue; }} onMouseLeave={e => { e.currentTarget.style.borderColor = colors.border; e.currentTarget.style.color = colors.textSecondary; }}>
+                  <button key={s} onClick={(e) => { e.preventDefault(); setSpecializations([...specializations, s]); }} style={{ background: colors.white, border: `1px solid ${colors.border}`, padding: "6px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: "600", color: colors.textSecondary, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s ease", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
                     + {s}
                   </button>
                 ))}
@@ -223,14 +223,14 @@ function MechanicFormModal({ existing, onClose, onSaved, ownerId, shopId }) {
             <div key={idx} style={{ background: "#f8fafc", border: `1px solid ${colors.border}`, borderRadius: "16px", padding: "16px", marginBottom: "12px" }}>
               <input style={{ ...inputStyle, marginBottom: "12px" }} placeholder="Certificate name (e.g. TESDA NC II)" value={cert.name} onChange={(e) => updateCert(idx, "name", e.target.value)} onFocus={e => e.currentTarget.style.borderColor = colors.info} onBlur={e => e.currentTarget.style.borderColor = colors.border} />
               <input style={{ ...inputStyle, marginBottom: "12px" }} placeholder="Issuing body (e.g. TESDA)" value={cert.issuingBody} onChange={(e) => updateCert(idx, "issuingBody", e.target.value)} onFocus={e => e.currentTarget.style.borderColor = colors.info} onBlur={e => e.currentTarget.style.borderColor = colors.border} />
-              <div onClick={() => document.getElementById(`certPhoto_${idx}`)?.click()} style={{ width: "100%", height: cert.localPreview || cert.photoURL ? "auto" : "80px", background: colors.white, borderRadius: "12px", border: `1.5px dashed ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "600", color: colors.textMuted, cursor: "pointer", overflow: "hidden", marginBottom: "12px", boxSizing: "border-box", transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.borderColor = colors.blue} onMouseLeave={e => e.currentTarget.style.borderColor = colors.border}>
+              <div onClick={() => document.getElementById(`certPhoto_${idx}`)?.click()} style={{ width: "100%", height: cert.localPreview || cert.photoURL ? "auto" : "80px", background: colors.white, borderRadius: "12px", border: `1.5px dashed ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "600", color: colors.textMuted, cursor: "pointer", overflow: "hidden", marginBottom: "12px", boxSizing: "border-box", transition: "all 0.2s" }}>
                 {cert.localPreview || cert.photoURL ? <img src={cert.localPreview || cert.photoURL} alt="cert" style={{ width: "100%", objectFit: "cover", borderRadius: "10px" }} /> : <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Upload Photo</span>}
               </div>
               <input id={`certPhoto_${idx}`} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleCertPhotoChange(e, idx)} />
               <button onClick={() => removeCert(idx)} style={{ background: "none", border: "none", color: colors.danger, fontSize: "13px", fontWeight: "700", cursor: "pointer", padding: 0 }}>Remove</button>
             </div>
           ))}
-          <button onClick={addCert} style={{ width: "100%", padding: "14px", background: colors.white, border: `1.5px dashed ${colors.blue}`, color: colors.blue, fontSize: "14px", fontWeight: "700", borderRadius: "16px", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s", boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }} onMouseEnter={e => e.currentTarget.style.background = "#f0f9ff"} onMouseLeave={e => e.currentTarget.style.background = colors.white}>+ Add Certification</button>
+          <button onClick={addCert} style={{ width: "100%", padding: "14px", background: colors.white, border: `1.5px dashed ${colors.blue}`, color: colors.blue, fontSize: "14px", fontWeight: "700", borderRadius: "16px", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s", boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>+ Add Certification</button>
         </div>
         
         <div style={{ marginBottom: "2rem" }}>
@@ -808,8 +808,6 @@ export default function AdminMechanics() {
                     cursor: "pointer", transition: "all 0.2s ease"
                   }}
                   onClick={() => setSelected(m)}
-                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.08)"; e.currentTarget.style.borderColor = "#cbd5e1"; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.03)"; e.currentTarget.style.borderColor = colors.border; }}
                 >
                   <div style={{
                     width: "48px", height: "48px", borderRadius: "14px",
