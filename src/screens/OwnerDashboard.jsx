@@ -661,16 +661,6 @@ export default function OwnerDashboard({ user }) {
         <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.8)" }}>
           Manage your shop, mechanic, bookings &amp; more.
         </div>
-        {/* Live indicator */}
-        <div style={{
-          position: "absolute", top: "16px", right: "16px",
-          display: "flex", alignItems: "center", gap: "6px",
-          background: "rgba(0,0,0,0.3)", backdropFilter: "blur(4px)",
-          padding: "5px 10px", borderRadius: "20px",
-        }}>
-          <PulseDot color="#ef4444" size={8} />
-          <span style={{ fontSize: "11px", fontWeight: "700", color: "#fff", letterSpacing: "0.5px" }}>Live</span>
-        </div>
       </div>
 
       <div style={{ ...sh.content, paddingTop: "2rem", position: "relative", zIndex: 2 }} className="stagger-slide-up">
