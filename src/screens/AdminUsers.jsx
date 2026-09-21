@@ -27,15 +27,32 @@ const statusStyle = (s) => {
   return sh.badge(colors.warningBg, colors.warning);
 };
 
-function isNew(timestamp) {
-  if (!timestamp) return false;
-  let ts;
-  if (timestamp.toDate) ts = timestamp.toDate().getTime();
-  else if (timestamp.seconds) ts = timestamp.seconds * 1000;
-  else if (typeof timestamp === 'number') ts = timestamp;
-  else ts = new Date(timestamp).getTime();
-  const diff = Date.now() - ts;
-  return diff < 24 * 60 * 60 * 1000; // Less than 24 hours
+function isNew(createdAt) {
+  if (!createdAt) return false;
+  const d = createdAt?.seconds
+    ? new Date(createdAt.seconds * 1000)
+    : new Date(createdAt);
+  const diffDays = (new Date() - d) / (1000 * 60 * 60 * 24);
+  return diffDays <= 2;
+}
+
+function getUserActivityStatus(lastActiveAt) {
+  if (!lastActiveAt) return { text: "No data", color: colors.textMuted, dot: colors.border };
+  
+  const d = lastActiveAt?.seconds ? new Date(lastActiveAt.seconds * 1000) : new Date(lastActiveAt);
+  if (isNaN(d.getTime())) return { text: "No data", color: colors.textMuted, dot: colors.border };
+
+  const now = new Date();
+  const diffMs = now - d;
+  const diffMins = diffMs / (1000 * 60);
+  const diffHours = diffMs / (1000 * 60 * 60);
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+  if (diffMins < 15) return { text: "Online now", color: colors.success, dot: colors.success };
+  if (diffHours < 24) return { text: "Active today", color: colors.info, dot: colors.info };
+  if (diffDays < 7) return { text: `Active ${Math.floor(diffDays)}d ago`, color: colors.textSecondary, dot: colors.warning };
+  
+  return { text: "Inactive", color: colors.textMuted, dot: colors.danger };
 }
 
 const keyframes = `
@@ -481,8 +498,13 @@ export default function AdminUsers() {
                   <div style={{ fontSize: "12px", color: colors.textSecondary, marginTop: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {u.email}
                   </div>
-                  <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "4px", fontWeight: "600" }}>
-                    Role: {u.role || "User"}
+                  <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "4px", fontWeight: "600", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span>Role: {u.role || "User"}</span>
+                    <span style={{ color: colors.border }}>|</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: "4px", color: getUserActivityStatus(u.lastActiveAt).color }}>
+                      <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: getUserActivityStatus(u.lastActiveAt).dot }} />
+                      {getUserActivityStatus(u.lastActiveAt).text}
+                    </span>
                   </div>
                 </div>
 
@@ -548,8 +570,9 @@ export default function AdminUsers() {
               ["Phone", selected.phone || "N/A"],
               ["Address", selected.address || "N/A"],
               ["Joined", selected.createdAt
-                ? new Date(selected.createdAt?.seconds * 1000).toLocaleDateString()
+                ? (selected.createdAt?.seconds ? new Date(selected.createdAt.seconds * 1000) : new Date(selected.createdAt)).toLocaleDateString()
                 : "N/A"],
+              ["Last Active", getUserActivityStatus(selected.lastActiveAt).text]
             ].map(([label, value]) => {
               if (!value && (label === "Shop Name" || label === "Address" || label === "Phone")) return null;
               return (
@@ -562,6 +585,8 @@ export default function AdminUsers() {
                     ? <span style={roleStyle(value)}>{value}</span>
                     : label === "Status"
                     ? <span style={statusStyle(value)}>{capitalize(value)}</span>
+                    : label === "Last Active"
+                    ? <span style={{ fontSize: "14px", fontWeight: "700", color: getUserActivityStatus(selected.lastActiveAt).color }}>{value}</span>
                     : <span style={{ fontSize: "14px", color: colors.textPrimary }}>{value}</span>
                   }
                 </div>

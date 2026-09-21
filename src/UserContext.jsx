@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, getDocs, collection, query, where, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, getDocs, collection, query, where, onSnapshot, updateDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
 const UserContext = createContext(null);
@@ -137,6 +137,40 @@ export function UserProvider({ children }) {
       console.error("refreshUserProfile error:", e);
     }
   };
+
+  // Activity Tracker
+  useEffect(() => {
+    if (!userProfile?.uid) return;
+
+    let lastUpdate = 0;
+    
+    const handleActivity = () => {
+      const now = Date.now();
+      // Throttle database writes to once every 10 minutes (600000 ms)
+      if (now - lastUpdate > 600000) {
+        lastUpdate = now;
+        try {
+          updateDoc(doc(db, "users", userProfile.uid), {
+            lastActiveAt: new Date()
+          }).catch(() => {});
+        } catch (e) {}
+      }
+    };
+
+    // Trigger an update on load
+    handleActivity();
+
+    // Listen to generic interactions
+    window.addEventListener("click", handleActivity);
+    window.addEventListener("touchstart", handleActivity, { passive: true });
+    window.addEventListener("scroll", handleActivity, { passive: true });
+
+    return () => {
+      window.removeEventListener("click", handleActivity);
+      window.removeEventListener("touchstart", handleActivity);
+      window.removeEventListener("scroll", handleActivity);
+    };
+  }, [userProfile?.uid]);
 
   return (
     <UserContext.Provider value={{ userProfile, loadingUser, refreshUserProfile, setUserProfile, unreadAlertsCount, pendingBookingsCount, assignedJobsCount }}>
