@@ -5,7 +5,25 @@ import { colors, ConfirmModal } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
 import { Check, X, Ban, Trash2, Search, UserCheck } from "lucide-react";
 
-import { sendEmailNotification } from "../../utils/notifications";
+const getUserActivityStatus = (lastActiveAt) => {
+  if (!lastActiveAt) return { text: "No data", color: colors.textMuted, dot: colors.border };
+  
+  const d = lastActiveAt?.seconds ? new Date(lastActiveAt.seconds * 1000) : new Date(lastActiveAt);
+  if (isNaN(d.getTime())) return { text: "No data", color: colors.textMuted, dot: colors.border };
+
+  const now = new Date();
+  const diffMs = now - d;
+  const diffMins = diffMs / (1000 * 60);
+  const diffHours = diffMs / (1000 * 60 * 60);
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+  if (diffMins < 15) return { text: "Online now", color: colors.success, dot: colors.success };
+  if (diffHours < 24) return { text: "Active today", color: colors.info, dot: colors.info };
+  if (diffDays < 7) return { text: `Active ${Math.floor(diffDays)}d ago`, color: colors.textSecondary, dot: colors.warning };
+  
+  return { text: "Inactive", color: colors.textMuted, dot: colors.danger };
+};
+
 export default function DesktopAdminUsers() {
   const [users, setUsers] = useState([]);
   const [filter, setFilter] = useState("pending");
@@ -205,6 +223,7 @@ export default function DesktopAdminUsers() {
               <tr style={{ background: "#f8fafc", borderBottom: `1px solid ${colors.border}` }}>
                 <th style={{ padding: "16px 24px", fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px" }}>User</th>
                 <th style={{ padding: "16px 24px", fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px" }}>Role</th>
+                <th style={{ padding: "16px 24px", fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px" }}>Status</th>
                 <th style={{ padding: "16px 24px", fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px" }}>Shop Affiliation</th>
                 <th style={{ padding: "16px 24px", fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px" }}>Documents</th>
                 <th style={{ padding: "16px 24px", fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px" }}>Date Joined</th>
@@ -213,9 +232,9 @@ export default function DesktopAdminUsers() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="6" style={{ padding: "48px", textAlign: "center", color: colors.textMuted }}>Loading users...</td></tr>
+                <tr><td colSpan="7" style={{ padding: "48px", textAlign: "center", color: colors.textMuted }}>Loading users...</td></tr>
               ) : filteredUsers.length === 0 ? (
-                <tr><td colSpan="6" style={{ padding: "48px", textAlign: "center", color: colors.textMuted }}>No users found for this filter.</td></tr>
+                <tr><td colSpan="7" style={{ padding: "48px", textAlign: "center", color: colors.textMuted }}>No users found for this filter.</td></tr>
               ) : (
                 filteredUsers.map(u => (
                   <tr key={u.id} style={{ borderBottom: `1px solid ${colors.border}` }}>
@@ -234,6 +253,14 @@ export default function DesktopAdminUsers() {
                       <span style={{ background: u.role?.toLowerCase() === 'owner' ? colors.warningBg : colors.infoBg, color: u.role?.toLowerCase() === 'owner' ? colors.warning : colors.info, padding: "4px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "700", textTransform: "capitalize" }}>
                         {u.role || "Customer"}
                       </span>
+                    </td>
+                    <td style={{ padding: "16px 24px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: getUserActivityStatus(u.lastActiveAt).dot }} />
+                        <span style={{ fontSize: "13px", fontWeight: "600", color: getUserActivityStatus(u.lastActiveAt).color }}>
+                          {getUserActivityStatus(u.lastActiveAt).text}
+                        </span>
+                      </div>
                     </td>
                     <td style={{ padding: "16px 24px" }}>
                       <div style={{ fontSize: "14px", fontWeight: "600", color: colors.textPrimary }}>{u.shopName || "N/A"}</div>
