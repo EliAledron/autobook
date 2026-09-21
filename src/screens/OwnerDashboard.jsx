@@ -128,20 +128,19 @@ const SectionTitle = ({ title, badge, action }) => (
 );
 
 // ─── Car Parts Modal ──────────────────────────────────────────────────────────
-function CarPartsModal({ user, mechanics, onClose, onSaved, shopId }) {
+function CarPartsModal({ user, onClose, onSaved, shopId }) {
   const [partName, setPartName] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [notes, setNotes] = useState("");
-  const [assignedMechanicId, setAssignedMechanicId] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const inputStyle = {
     width: "100%", padding: "16px", borderRadius: "16px",
-    border: `1.5px solid ${colors.border}`, fontSize: "14px", fontWeight: "500",
-    background: "#f8fafc", color: colors.textPrimary,
+    border: `1.5px solid ${colors.border}`, fontSize: "14px", fontWeight: "600",
+    background: "#fff", color: colors.textPrimary,
     fontFamily: "inherit", boxSizing: "border-box", outline: "none",
-    transition: "all 0.2s ease",
+    transition: "all 0.2s ease", boxShadow: "0 2px 10px rgba(0,0,0,0.02)"
   };
 
   const handleSubmit = async () => {
@@ -150,18 +149,17 @@ function CarPartsModal({ user, mechanics, onClose, onSaved, shopId }) {
     setError("");
     setSaving(true);
     try {
-      const assignedMechanic = mechanics.find(m => m.id === assignedMechanicId);
       const partData = {
         partName: partName.trim(), quantity: Number(quantity),
-        notes: notes.trim(), mechanicId: assignedMechanicId || null,
-        mechanicName: assignedMechanic?.name || user?.name || user?.role || "Owner",
+        notes: notes.trim(), mechanicId: null,
+        mechanicName: user?.name || user?.role || "Owner",
         ownerId: user.uid || user.id, shopId, createdAt: serverTimestamp(),
       };
       await addDoc(collection(db, "carParts"), partData);
       await addDoc(collection(db, "adminAlerts"), {
         type: "car_part_ordered", title: "Car Part Ordered",
         message: `${user?.name || user?.role || "Owner"} ordered ${Number(quantity)}x ${partName.trim()}.`,
-        mechanicName: assignedMechanic?.name || user?.name || user?.role || "Owner",
+        mechanicName: user?.name || user?.role || "Owner",
         partName: partName.trim(), quantity: Number(quantity),
         read: false, createdAt: serverTimestamp(),
       });
@@ -172,63 +170,45 @@ function CarPartsModal({ user, mechanics, onClose, onSaved, shopId }) {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 100, display: "flex", alignItems: "flex-end", animation: "ab-fade-in 0.2s ease-out" }} onClick={onClose}>
-      <div style={{ background: colors.white, borderRadius: "32px 32px 0 0", width: "100%", padding: "2rem 1.5rem", maxHeight: "90vh", overflowY: "auto", animation: "ab-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards", boxShadow: "0 -4px 24px rgba(0,0,0,0.15)" }} onClick={e => e.stopPropagation()}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={colors.navy} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", animation: "ab-fade-in 0.2s ease-out", padding: "20px" }} onClick={onClose}>
+      <div style={{ background: colors.white, borderRadius: "28px", width: "100%", maxWidth: "400px", padding: "2rem", maxHeight: "90vh", overflowY: "auto", animation: "ab-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards", boxShadow: "0 24px 48px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem" }}>
+          <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+            <div style={{ width: "56px", height: "56px", borderRadius: "18px", background: `linear-gradient(135deg, ${colors.infoBg}, #e0f2fe)`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 16px rgba(14,165,233,0.15)" }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={colors.info} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             </div>
             <div>
-              <div style={{ fontWeight: "800", fontSize: "18px", color: colors.textPrimary }}>Order Car Part</div>
-              <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "500", marginTop: "2px" }}>Record parts needed for repair</div>
+              <div style={{ fontWeight: "800", fontSize: "20px", color: colors.textPrimary, letterSpacing: "-0.5px" }}>Order Car Part</div>
+              <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500", marginTop: "4px" }}>Record parts for inventory</div>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: colors.bg, border: "none", width: "36px", height: "36px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", cursor: "pointer", color: colors.textSecondary }}>×</button>
+          <button onClick={onClose} style={{ background: colors.bg, border: "none", width: "36px", height: "36px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", cursor: "pointer", color: colors.textSecondary, transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "#e2e8f0"} onMouseLeave={e => e.currentTarget.style.background = colors.bg}>✕</button>
         </div>
-        <ErrorModal error={error} onClose={() => setError("")} />
         
-        {mechanics.length > 0 && (
-          <div style={{ marginBottom: "1.25rem" }}>
-            <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Assign to Mechanic (optional)</div>
-            <div style={{ position: "relative" }}>
-              <span style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", display: "flex", color: colors.textMuted, zIndex: 10 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-              </span>
-              <CustomDropdown
-                value={assignedMechanicId}
-                onChange={setAssignedMechanicId}
-                options={[
-                  { value: "", label: "— No specific mechanic —" },
-                  ...mechanics.map(m => ({ value: m.id, label: m.name || m.displayName }))
-                ]}
-                style={{ padding: "14px 36px 14px 42px", borderRadius: "14px", border: `1.5px solid ${colors.border}`, fontSize: "14px", fontWeight: "600", backgroundColor: colors.white }}
-                placeholder="— No specific mechanic —"
-              />
-            </div>
-          </div>
-        )}
+        <ErrorModal error={error} onClose={() => setError("")} />
 
         <div style={{ marginBottom: "1.25rem" }}>
-          <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Part Name *</div>
-          <input type="text" style={inputStyle} placeholder="e.g. Brake Pad, Air Filter..." value={partName} onChange={e => setPartName(e.target.value.replace(/[^a-zA-Z\s]/g, ''))} />
+          <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+            Part Name <span style={{ color: colors.danger }}>*</span>
+          </div>
+          <input type="text" style={inputStyle} placeholder="e.g. Brake Pad, Air Filter..." value={partName} onChange={e => setPartName(e.target.value.replace(/[^a-zA-Z\s0-9-]/g, ''))} onFocus={e => e.currentTarget.style.borderColor = colors.info} onBlur={e => e.currentTarget.style.borderColor = colors.border} />
         </div>
 
         <div style={{ marginBottom: "1.5rem" }}>
-          <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Quantity *</div>
-          <input type="number" style={inputStyle} placeholder="1" value={quantity} onChange={e => setQuantity(e.target.value.replace(/[^0-9]/g, ''))} min="1" />
+          <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+            Quantity <span style={{ color: colors.danger }}>*</span>
+          </div>
+          <input type="number" style={{...inputStyle, width: "120px", textAlign: "center"}} placeholder="1" value={quantity} onChange={e => setQuantity(e.target.value.replace(/[^0-9]/g, ''))} min="1" onFocus={e => e.currentTarget.style.borderColor = colors.info} onBlur={e => e.currentTarget.style.borderColor = colors.border} />
         </div>
 
-        <div style={{ marginBottom: "1.5rem" }}>
+        <div style={{ marginBottom: "2rem" }}>
           <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Notes (optional)</div>
-          <textarea style={{ ...inputStyle, minHeight: "80px", resize: "vertical" }} placeholder="e.g. For Toyota Vios, needed for brake job..." value={notes} onChange={e => setNotes(e.target.value)} />
+          <textarea style={{ ...inputStyle, minHeight: "100px", resize: "vertical" }} placeholder="e.g. For Toyota Vios, needed for upcoming brake job..." value={notes} onChange={e => setNotes(e.target.value)} onFocus={e => e.currentTarget.style.borderColor = colors.info} onBlur={e => e.currentTarget.style.borderColor = colors.border} />
         </div>
 
-        <button onClick={handleSubmit} disabled={saving} style={{ width: "100%", padding: "16px", background: colors.blue, color: "#fff", border: "none", borderRadius: "16px", fontSize: "16px", fontWeight: "800", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", boxShadow: "0 8px 20px rgba(42, 82, 152, 0.25)", transition: "all 0.2s" }}>
-          {saving ? "Saving..." : "✓ Submit Part Order"}
+        <button onClick={handleSubmit} disabled={saving} style={{ width: "100%", padding: "18px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", border: "none", borderRadius: "18px", fontSize: "16px", fontWeight: "800", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", boxShadow: "0 10px 24px rgba(42, 82, 152, 0.3)", transition: "all 0.2s transform", transform: saving ? "scale(0.98)" : "scale(1)" }}>
+          {saving ? "Saving..." : "Submit Part Order"}
         </button>
-        <div style={{ height: "12px" }} />
-        <button onClick={onClose} style={{ width: "100%", padding: "16px", borderRadius: "16px", fontSize: "15px", border: "none", background: "transparent", color: colors.textSecondary, fontWeight: "700", cursor: "pointer" }}>Cancel</button>
       </div>
     </div>
   );
@@ -610,6 +590,30 @@ export default function OwnerDashboard({ user }) {
     if (r === "Owner" || r === "Admin") return sh.badge(colors.dangerBg, colors.danger);
     return sh.badge(colors.infoBg, colors.info);
   };
+  // ─── DSS: Stock Reorder Advisor ───────────────────────────
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  
+  const partUsage = {};
+  allCarParts.forEach(p => {
+    if (!p.createdAt) return;
+    const d = p.createdAt.seconds ? new Date(p.createdAt.seconds * 1000) : new Date(p.createdAt);
+    if (d >= thirtyDaysAgo) {
+      const name = (p.partName || "Unknown Part").toUpperCase().trim();
+      partUsage[name] = (partUsage[name] || 0) + (Number(p.quantity) || 1);
+    }
+  });
+
+  const restockSuggestions = Object.entries(partUsage)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, count]) => {
+      let priority = "Low";
+      if (count >= 10) priority = "High";
+      else if (count >= 4) priority = "Medium";
+      
+      const suggestedStock = Math.ceil(count * 1.5);
+      return { name, count, priority, suggestedStock };
+    });
 
   return (
     <div style={sh.page}>
@@ -1018,6 +1022,44 @@ export default function OwnerDashboard({ user }) {
           })}
         </div>
 
+        {!isAdmin && (
+          <>
+            <SectionTitle title="Stock Reorder Advisor" />
+            <div style={{ background: colors.white, borderRadius: "20px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)", overflow: "hidden", marginBottom: "1.5rem" }}>
+              <div style={{ padding: "16px 20px", borderBottom: `1px solid ${colors.border}`, background: "#f8fafc" }}>
+                <div style={{ fontSize: "14px", fontWeight: "700", color: colors.textPrimary }}>30-Day Restock Recommendations</div>
+                <div style={{ fontSize: "12px", color: colors.textSecondary, marginTop: "2px" }}>Based on historical run-rates from the last month</div>
+              </div>
+              {restockSuggestions.length === 0 ? (
+                <div style={{ padding: "32px 20px", textAlign: "center" }}>
+                  <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", color: colors.textMuted }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                  </div>
+                  <div style={{ fontSize: "14px", fontWeight: "700", color: colors.textPrimary, marginBottom: "4px" }}>No Parts Data Found</div>
+                  <div style={{ fontSize: "13px", color: colors.textSecondary }}>Order parts to generate restock recommendations.</div>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  {restockSuggestions.slice(0, 5).map((item, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: i === Math.min(restockSuggestions.length, 5) - 1 ? "none" : `1px solid #f1f5f9` }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: item.priority === "High" ? colors.danger : item.priority === "Medium" ? colors.warning : colors.success }} />
+                        <div>
+                          <div style={{ fontSize: "14px", fontWeight: "700", color: colors.textPrimary, marginBottom: "2px" }}>{item.name}</div>
+                          <div style={{ fontSize: "12px", color: colors.textSecondary }}>Used {item.count} in last 30 days</div>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontSize: "11px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "2px" }}>Order at least</div>
+                        <div style={{ fontSize: "16px", fontWeight: "800", color: colors.blue }}>{item.suggestedStock} units</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
         {isAdmin && (
           (() => {
             const totalU = users.length;

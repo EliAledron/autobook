@@ -74,11 +74,11 @@ function MechanicFormModal({ existing, onClose, onSaved, ownerId, shopId }) {
   const [error, setError] = useState("");
 
   const inputStyle = {
-    width: "100%", padding: "14px 16px", borderRadius: "14px",
-    border: `1.5px solid ${colors.border}`, fontSize: "14px",
-    background: "#f9fafb", color: colors.textPrimary,
+    width: "100%", padding: "16px", borderRadius: "16px",
+    border: `1.5px solid ${colors.border}`, fontSize: "14px", fontWeight: "600",
+    background: "#fff", color: colors.textPrimary,
     fontFamily: "inherit", boxSizing: "border-box", outline: "none",
-    transition: "border-color 0.2s, box-shadow 0.2s",
+    transition: "all 0.2s ease", boxShadow: "0 2px 10px rgba(0,0,0,0.02)"
   };
 
   const emptyCert = () => ({ name: "", issuingBody: "", date: "", photoURL: "", photoFile: null, localPreview: null });
@@ -135,17 +135,23 @@ function MechanicFormModal({ existing, onClose, onSaved, ownerId, shopId }) {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 110, display: "flex", alignItems: "flex-end", animation: "ab-fade-in 0.2s ease-out" }} onClick={onClose}>
-      <div style={{ background: colors.white, borderRadius: "28px 28px 0 0", width: "100%", padding: "2rem 1.5rem", maxHeight: "92vh", overflowY: "auto", animation: "ab-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards", boxShadow: "0 -4px 24px rgba(0,0,0,0.15)" }} onClick={e => e.stopPropagation()}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-          <div style={{ fontWeight: "800", fontSize: "18px", color: colors.navy, display: "flex", alignItems: "center", gap: "8px" }}>
-            {existing ? (
-              <><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Edit Mechanic</>
-            ) : (
-              <><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg> Add Mechanic</>
-            )}
+    <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 110, display: "flex", alignItems: "center", justifyContent: "center", animation: "ab-fade-in 0.2s ease-out", padding: "20px" }} onClick={onClose}>
+      <div style={{ background: colors.white, borderRadius: "28px", width: "100%", maxWidth: "450px", padding: "2rem", maxHeight: "90vh", overflowY: "auto", animation: "ab-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards", boxShadow: "0 24px 48px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem" }}>
+          <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+            <div style={{ width: "56px", height: "56px", borderRadius: "18px", background: `linear-gradient(135deg, ${colors.infoBg}, #e0f2fe)`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 16px rgba(14,165,233,0.15)" }}>
+              {existing ? (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={colors.info} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              ) : (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={colors.info} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+              )}
+            </div>
+            <div>
+              <div style={{ fontWeight: "800", fontSize: "20px", color: colors.textPrimary, letterSpacing: "-0.5px" }}>{existing ? "Edit Mechanic" : "Add Mechanic"}</div>
+              <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500", marginTop: "4px" }}>Manage your shop's team</div>
+            </div>
           </div>
-          <button onClick={onClose} style={{ background: colors.bg, border: "none", width: "32px", height: "32px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", cursor: "pointer", color: colors.textSecondary }}>×</button>
+          <button onClick={onClose} style={{ background: colors.bg, border: "none", width: "36px", height: "36px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", cursor: "pointer", color: colors.textSecondary, transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "#e2e8f0"} onMouseLeave={e => e.currentTarget.style.background = colors.bg}>✕</button>
         </div>
         <ErrorModal error={error} onClose={() => setError("")} />
         {[
@@ -153,16 +159,20 @@ function MechanicFormModal({ existing, onClose, onSaved, ownerId, shopId }) {
           { label: "Phone Number", placeholder: "e.g. 09171234567", value: phone, set: (val) => setPhone(val.replace(/[^0-9+]/g, '')) },
         ].map(({ label, placeholder, value, set }) => (
           <div key={label} style={{ marginBottom: "1.25rem" }}>
-            <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>{label}</div>
-            <input style={inputStyle} placeholder={placeholder} value={value} onChange={e => set(e.target.value)} />
+            <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+              {label.replace(' *', '')} {label.includes('*') && <span style={{ color: colors.danger }}>*</span>}
+            </div>
+            <input style={inputStyle} placeholder={placeholder} value={value} onChange={e => set(e.target.value)} onFocus={e => e.currentTarget.style.borderColor = colors.info} onBlur={e => e.currentTarget.style.borderColor = colors.border} />
           </div>
         ))}
         
         <div style={{ marginBottom: "1.25rem" }}>
-          <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Specializations *</div>
+          <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+            Specializations <span style={{ color: colors.danger }}>*</span>
+          </div>
           
           {/* Modern Token Input Box */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center", padding: "10px", borderRadius: "14px", border: `1.5px solid ${colors.border}`, background: "#f9fafb", transition: "all 0.2s ease" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center", padding: "10px", borderRadius: "16px", border: `1.5px solid ${colors.border}`, background: "#fff", transition: "all 0.2s ease", boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
             {specializations.map(s => (
               <div key={s} style={{ background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", padding: "6px 12px", borderRadius: "10px", fontSize: "13px", fontWeight: "600", display: "flex", alignItems: "center", gap: "6px", boxShadow: "0 2px 6px rgba(42,82,152,0.2)" }}>
                 {s}
@@ -170,7 +180,7 @@ function MechanicFormModal({ existing, onClose, onSaved, ownerId, shopId }) {
               </div>
             ))}
             <input
-              style={{ border: "none", background: "transparent", outline: "none", fontSize: "14px", color: colors.textPrimary, flex: 1, minWidth: "150px", padding: "4px 0", fontFamily: "inherit" }}
+              style={{ border: "none", background: "transparent", outline: "none", fontSize: "14px", fontWeight: "600", color: colors.textPrimary, flex: 1, minWidth: "150px", padding: "4px 0", fontFamily: "inherit" }}
               placeholder={specializations.length === 0 ? "e.g. Engine Specialist (press Enter)" : "Add another..."}
               value={specInput}
               onChange={e => setSpecInput(e.target.value)}
@@ -210,26 +220,26 @@ function MechanicFormModal({ existing, onClose, onSaved, ownerId, shopId }) {
         <div style={{ marginBottom: "1.25rem" }}>
           <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Certifications</div>
           {certs.map((cert, idx) => (
-            <div key={idx} style={{ background: colors.bg, border: `1px solid ${colors.border}`, borderRadius: "12px", padding: "12px", marginBottom: "10px" }}>
-              <input style={{ ...inputStyle, marginBottom: "8px", background: colors.white }} placeholder="Certificate name (e.g. TESDA NC II)" value={cert.name} onChange={(e) => updateCert(idx, "name", e.target.value)} />
-              <input style={{ ...inputStyle, marginBottom: "8px", background: colors.white }} placeholder="Issuing body (e.g. TESDA)" value={cert.issuingBody} onChange={(e) => updateCert(idx, "issuingBody", e.target.value)} />
-              <div onClick={() => document.getElementById(`certPhoto_${idx}`)?.click()} style={{ width: "100%", height: cert.localPreview || cert.photoURL ? "auto" : "70px", background: colors.white, borderRadius: "10px", border: `1.5px dashed ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", color: colors.textMuted, cursor: "pointer", overflow: "hidden", marginBottom: "8px", boxSizing: "border-box" }}>
-                {cert.localPreview || cert.photoURL ? <img src={cert.localPreview || cert.photoURL} alt="cert" style={{ width: "100%", objectFit: "cover", borderRadius: "8px" }} /> : <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Tap to upload certificate photo</span>}
+            <div key={idx} style={{ background: "#f8fafc", border: `1px solid ${colors.border}`, borderRadius: "16px", padding: "16px", marginBottom: "12px" }}>
+              <input style={{ ...inputStyle, marginBottom: "12px" }} placeholder="Certificate name (e.g. TESDA NC II)" value={cert.name} onChange={(e) => updateCert(idx, "name", e.target.value)} onFocus={e => e.currentTarget.style.borderColor = colors.info} onBlur={e => e.currentTarget.style.borderColor = colors.border} />
+              <input style={{ ...inputStyle, marginBottom: "12px" }} placeholder="Issuing body (e.g. TESDA)" value={cert.issuingBody} onChange={(e) => updateCert(idx, "issuingBody", e.target.value)} onFocus={e => e.currentTarget.style.borderColor = colors.info} onBlur={e => e.currentTarget.style.borderColor = colors.border} />
+              <div onClick={() => document.getElementById(`certPhoto_${idx}`)?.click()} style={{ width: "100%", height: cert.localPreview || cert.photoURL ? "auto" : "80px", background: colors.white, borderRadius: "12px", border: `1.5px dashed ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "600", color: colors.textMuted, cursor: "pointer", overflow: "hidden", marginBottom: "12px", boxSizing: "border-box", transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.borderColor = colors.blue} onMouseLeave={e => e.currentTarget.style.borderColor = colors.border}>
+                {cert.localPreview || cert.photoURL ? <img src={cert.localPreview || cert.photoURL} alt="cert" style={{ width: "100%", objectFit: "cover", borderRadius: "10px" }} /> : <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Upload Photo</span>}
               </div>
               <input id={`certPhoto_${idx}`} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleCertPhotoChange(e, idx)} />
-              <button onClick={() => removeCert(idx)} style={{ background: "none", border: "none", color: colors.danger, fontSize: "12px", fontWeight: "600", cursor: "pointer", padding: 0 }}>Remove</button>
+              <button onClick={() => removeCert(idx)} style={{ background: "none", border: "none", color: colors.danger, fontSize: "13px", fontWeight: "700", cursor: "pointer", padding: 0 }}>Remove</button>
             </div>
           ))}
-          <button onClick={addCert} style={{ width: "100%", padding: "11px", background: colors.white, border: `1.5px dashed ${colors.blue}`, color: colors.blue, fontSize: "13px", fontWeight: "600", borderRadius: "12px", cursor: "pointer", fontFamily: "inherit" }}>+ Add certification</button>
+          <button onClick={addCert} style={{ width: "100%", padding: "14px", background: colors.white, border: `1.5px dashed ${colors.blue}`, color: colors.blue, fontSize: "14px", fontWeight: "700", borderRadius: "16px", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s", boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }} onMouseEnter={e => e.currentTarget.style.background = "#f0f9ff"} onMouseLeave={e => e.currentTarget.style.background = colors.white}>+ Add Certification</button>
         </div>
         
-        <div style={{ marginBottom: "1.5rem" }}>
+        <div style={{ marginBottom: "2rem" }}>
           <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Notes (optional)</div>
-          <textarea style={{ ...inputStyle, minHeight: "80px", resize: "vertical" }} placeholder="Any additional notes..." value={notes} onChange={e => setNotes(e.target.value)} />
+          <textarea style={{ ...inputStyle, minHeight: "100px", resize: "vertical" }} placeholder="Any additional notes..." value={notes} onChange={e => setNotes(e.target.value)} onFocus={e => e.currentTarget.style.borderColor = colors.info} onBlur={e => e.currentTarget.style.borderColor = colors.border} />
         </div>
-        <button onClick={handleSubmit} disabled={saving} style={{ ...sh.primaryBtn, padding: "16px", borderRadius: "16px", fontSize: "15px", boxShadow: "0 8px 20px rgba(42,82,152,0.25)" }}>{saving ? "Saving..." : existing ? "Save Changes" : "Add Mechanic"}</button>
-        <div style={{ height: "12px" }} />
-        <button onClick={onClose} style={{ ...sh.outlineBtn, padding: "16px", borderRadius: "16px", fontSize: "15px", border: "none", background: colors.bg, color: colors.textSecondary, fontWeight: "700" }}>Cancel</button>
+        <button onClick={handleSubmit} disabled={saving} style={{ width: "100%", padding: "18px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", border: "none", borderRadius: "18px", fontSize: "16px", fontWeight: "800", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", boxShadow: "0 10px 24px rgba(42, 82, 152, 0.3)", transition: "all 0.2s transform", transform: saving ? "scale(0.98)" : "scale(1)" }}>
+          {saving ? "Saving..." : existing ? "Save Changes" : "Add Mechanic"}
+        </button>
       </div>
     </div>
   );
@@ -771,15 +781,17 @@ export default function AdminMechanics() {
           <div style={{ ...sh.sectionLabel, marginBottom: 0 }}>All Mechanics ({filteredMechanics.length})</div>
           <button onClick={() => { setEditingMechanic(null); setShowMechanicForm(true); }} style={{ background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", border: "none", borderRadius: "10px", padding: "6px 14px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit" }}>+ Add</button>
         </div>
-        <div style={sh.card}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           {loading ? (
             <SkeletonLoader count={3} type="list" />
           ) : filteredMechanics.length === 0 ? (
-            <EmptyState
-              icon={<Wrench size={48} />}
-              title="No mechanics found"
-              subtitle={search ? "No mechanics match your search." : "There are currently no mechanics registered."}
-            />
+            <div style={sh.card}>
+              <EmptyState
+                icon={<Wrench size={48} />}
+                title="No mechanics found"
+                subtitle={search ? "No mechanics match your search." : "There are currently no mechanics registered."}
+              />
+            </div>
           ) : (
             filteredMechanics.map((m, i) => {
               const assigned = getAssignedCount(m.id);
@@ -789,37 +801,48 @@ export default function AdminMechanics() {
                 <div
                   key={m.id}
                   style={{
-                    ...sh.rowItem,
-                    borderBottom: i === filteredMechanics.length - 1 ? "none" : `1px solid ${colors.border}`,
-                    cursor: "pointer",
+                    background: colors.white, borderRadius: "18px", padding: "16px 20px",
+                    border: `1px solid ${colors.border}`,
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                    display: "flex", alignItems: "center", gap: "16px",
+                    cursor: "pointer", transition: "all 0.2s ease"
                   }}
                   onClick={() => setSelected(m)}
+                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.08)"; e.currentTarget.style.borderColor = "#cbd5e1"; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.03)"; e.currentTarget.style.borderColor = colors.border; }}
                 >
                   <div style={{
-                    width: "40px", height: "40px", borderRadius: "50%",
-                    background: colors.infoBg, display: "flex",
-                    alignItems: "center", justifyContent: "center",
-                    fontSize: "14px", fontWeight: "700",
+                    width: "48px", height: "48px", borderRadius: "14px",
+                    background: `linear-gradient(135deg, ${colors.infoBg}, #e0f2fe)`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "16px", fontWeight: "800",
                     color: colors.info, flexShrink: 0,
                   }}>
                     {getInitials(m.name || m.displayName || "M")}
                   </div>
 
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: "600", fontSize: "13px" }}>{m.name || m.displayName || "No name"}</div>
-                    <div style={{ fontSize: "12px", color: colors.textSecondary }}>
-                      {m.specializations ? m.specializations.join(", ") : (m.specialization || m.email || "General")}{m.phone ? ` · 📞 ${m.phone}` : ""}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: "700", fontSize: "15px", color: colors.textPrimary, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.name || m.displayName || "No name"}</div>
+                    <div style={{ fontSize: "12px", color: colors.textSecondary, marginTop: "4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {m.specializations ? m.specializations.join(", ") : (m.specialization || m.email || "General")}{m.phone ? ` • ${m.phone}` : ""}
                     </div>
-                    <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "2px" }}>
-                      {assigned} active · {completed} completed
+                    <div style={{ display: "flex", gap: "12px", marginTop: "6px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", fontWeight: "600", color: assigned > 0 ? colors.warning : colors.textMuted }}>
+                        <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: assigned > 0 ? colors.warning : colors.border }} />
+                        {assigned} active
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", fontWeight: "600", color: completed > 0 ? colors.success : colors.textMuted }}>
+                        <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: completed > 0 ? colors.success : colors.border }} />
+                        {completed} completed
+                      </div>
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
-                    <span style={verifyStyle(m.verified)}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "flex-end" }}>
+                    <span style={{ ...verifyStyle(m.verified), padding: "4px 8px", fontSize: "11px", borderRadius: "8px", fontWeight: "800", border: `1px solid ${m.verified ? "#a7f3d0" : "#fde68a"}` }}>
                       {m.verified ? "✓ Verified" : "Unverified"}
                     </span>
-                    <span style={sh.badge(avail.bg, avail.color)}>
+                    <span style={{ ...sh.badge(avail.bg, avail.color), padding: "4px 8px", fontSize: "11px", borderRadius: "8px", fontWeight: "800" }}>
                       {avail.label}
                     </span>
                   </div>
