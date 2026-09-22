@@ -3,7 +3,7 @@ import { collection, onSnapshot, updateDoc, doc, deleteDoc, addDoc, serverTimest
 import { db } from "../../firebase";
 import { colors, ConfirmModal } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
-import { Check, X, Ban, Trash2, Search, UserCheck } from "lucide-react";
+import { Check, X, Ban, Trash2, Search, UserCheck, Eye } from "lucide-react";
 
 const getUserActivityStatus = (lastActiveAt) => {
   if (!lastActiveAt) return { text: "No data", color: colors.textMuted, dot: colors.border };
@@ -30,6 +30,7 @@ export default function DesktopAdminUsers() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [confirmProps, setConfirmProps] = useState({ isOpen: false, title: "", message: "", type: "primary", onConfirm: null, requireInput: false, inputPlaceholder: "" });
 
   useEffect(() => {
@@ -281,6 +282,9 @@ export default function DesktopAdminUsers() {
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px" }}>
                         {filter === "pending" && (
                           <>
+                            <button onClick={() => setSelectedUser(u)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.infoBg, color: colors.info, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="View Profile">
+                              <Eye size={18} />
+                            </button>
                             <button disabled={actionLoading === u.id} onClick={() => handleStatusUpdate(u.id, "approved")} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.successBg, color: colors.success, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Approve">
                               <Check size={18} />
                             </button>
@@ -290,19 +294,34 @@ export default function DesktopAdminUsers() {
                           </>
                         )}
                         {filter === "approved" && (
-                          <button disabled={actionLoading === u.id} onClick={() => handleStatusUpdate(u.id, "restricted")} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.dangerBg, color: colors.danger, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Restrict Access">
-                            <Ban size={18} />
-                          </button>
+                          <>
+                            <button onClick={() => setSelectedUser(u)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.infoBg, color: colors.info, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="View Profile">
+                              <Eye size={18} />
+                            </button>
+                            <button disabled={actionLoading === u.id} onClick={() => handleStatusUpdate(u.id, "restricted")} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.dangerBg, color: colors.danger, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Restrict Access">
+                              <Ban size={18} />
+                            </button>
+                          </>
                         )}
                         {filter === "restricted" && (
-                          <button disabled={actionLoading === u.id} onClick={() => handleStatusUpdate(u.id, "approved")} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.successBg, color: colors.success, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Restore Access">
-                            <UserCheck size={18} />
-                          </button>
+                          <>
+                            <button onClick={() => setSelectedUser(u)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.infoBg, color: colors.info, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="View Profile">
+                              <Eye size={18} />
+                            </button>
+                            <button disabled={actionLoading === u.id} onClick={() => handleStatusUpdate(u.id, "approved")} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.successBg, color: colors.success, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Restore Access">
+                              <UserCheck size={18} />
+                            </button>
+                          </>
                         )}
                         {filter === "rejected" && (
-                          <button disabled={actionLoading === u.id} onClick={() => handleStatusUpdate(u.id, "approved")} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.successBg, color: colors.success, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Approve User">
-                            <UserCheck size={18} />
-                          </button>
+                          <>
+                            <button onClick={() => setSelectedUser(u)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.infoBg, color: colors.info, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="View Profile">
+                              <Eye size={18} />
+                            </button>
+                            <button disabled={actionLoading === u.id} onClick={() => handleStatusUpdate(u.id, "approved")} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.successBg, color: colors.success, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Approve User">
+                              <UserCheck size={18} />
+                            </button>
+                          </>
                         )}
                         {(filter === "rejected" || filter === "restricted") && (
                           <button disabled={actionLoading === u.id} onClick={() => handleDelete(u.id)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#f1f5f9", color: colors.textSecondary, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Delete Permanently">
@@ -318,6 +337,93 @@ export default function DesktopAdminUsers() {
           </table>
         </div>
       </div>
+
+      {/* DESKTOP USER DETAIL MODAL */}
+      {selectedUser && (
+        <div
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)",
+            zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "20px"
+          }}
+          onClick={() => setSelectedUser(null)}
+        >
+          <div
+            style={{
+              background: colors.white, borderRadius: "24px",
+              width: "100%", maxWidth: "500px", padding: "2rem",
+              maxHeight: "90vh", overflowY: "auto",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.15)"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                <div
+                  style={{
+                    width: "60px", height: "60px", borderRadius: "50%",
+                    background: colors.navy, display: "flex",
+                    alignItems: "center", justifyContent: "center",
+                    fontSize: "22px", fontWeight: "700", color: "#fff",
+                  }}
+                >
+                  {(selectedUser.displayName || selectedUser.name || "?")[0].toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ fontWeight: "800", fontSize: "20px", color: colors.textPrimary, marginBottom: "2px" }}>
+                    {selectedUser.displayName || selectedUser.name || "Unknown"}
+                  </div>
+                  <div style={{ fontSize: "14px", color: colors.textSecondary }}>
+                    {selectedUser.email}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedUser(null)}
+                style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: colors.textMuted, padding: "4px" }}
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
+              {[
+                ["Role", selectedUser.role || "Customer"],
+                ["Status", selectedUser.status || "pending"],
+                ["Phone", selectedUser.phone || "N/A"],
+                ["Address", selectedUser.address || "N/A"],
+                ["Shop Name", selectedUser.shopName],
+                ["Joined", selectedUser.createdAt?.seconds ? new Date(selectedUser.createdAt.seconds * 1000).toLocaleDateString() : "N/A"],
+                ["Last Active", getUserActivityStatus(selectedUser.lastActiveAt).text]
+              ].map(([label, value]) => {
+                if (!value && (label === "Shop Name" || label === "Address" || label === "Phone")) return null;
+                return (
+                  <div key={label}>
+                    <div style={{ fontSize: "12px", color: colors.textMuted, fontWeight: "700", textTransform: "uppercase", marginBottom: "4px", letterSpacing: "0.5px" }}>
+                      {label}
+                    </div>
+                    <div style={{ fontSize: "15px", fontWeight: label === "Role" || label === "Status" || label === "Last Active" ? "700" : "500", color: label === "Last Active" ? getUserActivityStatus(selectedUser.lastActiveAt).color : colors.textPrimary, textTransform: label === "Role" || label === "Status" ? "capitalize" : "none" }}>
+                      {value}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {(selectedUser.businessPermitUrl || selectedUser.dtiUrl || selectedUser.licenseUrl) && (
+              <div style={{ marginTop: "2rem", paddingTop: "1.5rem", borderTop: `1px solid ${colors.border}` }}>
+                <div style={{ fontSize: "12px", color: colors.textMuted, fontWeight: "700", textTransform: "uppercase", marginBottom: "12px", letterSpacing: "0.5px" }}>Documents</div>
+                <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                  {selectedUser.businessPermitUrl && <a href={selectedUser.businessPermitUrl} target="_blank" rel="noreferrer" style={{ fontSize: "13px", background: colors.infoBg, color: colors.info, padding: "8px 16px", borderRadius: "12px", textDecoration: "none", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}>Permit ↗</a>}
+                  {selectedUser.dtiUrl && <a href={selectedUser.dtiUrl} target="_blank" rel="noreferrer" style={{ fontSize: "13px", background: colors.infoBg, color: colors.info, padding: "8px 16px", borderRadius: "12px", textDecoration: "none", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}>DTI ↗</a>}
+                  {selectedUser.licenseUrl && <a href={selectedUser.licenseUrl} target="_blank" rel="noreferrer" style={{ fontSize: "13px", background: colors.infoBg, color: colors.info, padding: "8px 16px", borderRadius: "12px", textDecoration: "none", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}>License ↗</a>}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
     </RoleBasedWrapper>
     </>
   );
