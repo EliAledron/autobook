@@ -6,6 +6,9 @@ import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import BackButton from "../components/BackButton";
 import { Store, AlertTriangle, FileText, Check, Star, Edit, Flag, Calendar, Heart, Phone, MapPin } from "lucide-react";
+import { useUser } from "../UserContext";
+import AdminLayout from "../components/AdminLayout";
+import DesktopOnly from "../components/DesktopOnly";
 
 function timeAgo(timestamp) {
   if (!timestamp) return "Just now";
@@ -289,6 +292,8 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
 }
 
 export default function AutoShopProfile() {
+  const { userProfile } = useUser();
+  const isAdmin = userProfile?.role?.toLowerCase() === "admin";
   const navigate = useNavigate();
   const location = useLocation();
   const [shop, setShop] = useState(location.state?.shop || null);
@@ -493,36 +498,44 @@ export default function AutoShopProfile() {
 
 
   if (loadingShop) {
-    return (
+    const content = (
       <div style={sh.page}>
-        <div style={sh.topbar}>
-          <BackButton />
-          <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
-        </div>
-        <div style={{ padding: "4rem 2rem", textAlign: "center", color: colors.textSecondary }}>Loading shop details...</div>
-      </div>
-    );
-  }
-
-  if (!shop) {
-    return (
-      <div style={sh.page}>
-        <div style={sh.topbar}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        {!isAdmin && (
+          <div style={sh.topbar}>
             <BackButton />
             <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
           </div>
-        </div>
+        )}
+        <div style={{ padding: "4rem 2rem", textAlign: "center", color: colors.textSecondary }}>Loading shop details...</div>
+      </div>
+    );
+    if (isAdmin) return <DesktopOnly><AdminLayout>{content}</AdminLayout></DesktopOnly>;
+    return content;
+  }
+
+  if (!shop) {
+    const content = (
+      <div style={sh.page}>
+        {!isAdmin && (
+          <div style={sh.topbar}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <BackButton />
+              <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
+            </div>
+          </div>
+        )}
         <div style={{ padding: "40px", textAlign: "center", color: colors.textMuted }}>Shop not found.</div>
       </div>
     );
+    if (isAdmin) return <DesktopOnly><AdminLayout>{content}</AdminLayout></DesktopOnly>;
+    return content;
   }
 
   const displayServices = shop.services?.length > 0 
     ? shop.services 
     : ["Oil Change", "Brake Inspection", "Tire Rotation", "Aircon Cleaning", "Battery Replacement", "General Checkup"];
 
-  return (
+  const content = (
     <div style={sh.page}>
       <SuccessModal message={successMsg} onClose={() => setSuccessMsg("")} />
       <ErrorModal error={errorMsg} onClose={() => setErrorMsg("")} />
@@ -533,13 +546,14 @@ export default function AutoShopProfile() {
         `}
       </style>
 
-      {/* TOPBAR */}
-      <div style={sh.topbar}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <BackButton />
-          <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
+      {!isAdmin && (
+        <div style={sh.topbar}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <BackButton />
+            <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* MODERN SHOP HEADER */}
       <div style={{ padding: "16px", maxWidth: "1200px", margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
@@ -852,4 +866,16 @@ export default function AutoShopProfile() {
       )}
     </div>
   );
+
+  if (isAdmin) {
+    return (
+      <DesktopOnly>
+        <AdminLayout>
+          {content}
+        </AdminLayout>
+      </DesktopOnly>
+    );
+  }
+  
+  return content;
 }
