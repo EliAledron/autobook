@@ -495,7 +495,7 @@ export default function AutoShopProfile() {
   if (loadingShop) {
     return (
       <div style={sh.page}>
-        <div style={sh.topbar} className="mobile-topbar">
+        <div style={sh.topbar}>
           <BackButton />
           <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
         </div>
@@ -507,7 +507,7 @@ export default function AutoShopProfile() {
   if (!shop) {
     return (
       <div style={sh.page}>
-        <div style={sh.topbar} className="mobile-topbar">
+        <div style={sh.topbar}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <BackButton />
             <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
@@ -534,7 +534,7 @@ export default function AutoShopProfile() {
       </style>
 
       {/* TOPBAR */}
-      <div style={sh.topbar} className="mobile-topbar">
+      <div style={sh.topbar}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <BackButton />
           <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
