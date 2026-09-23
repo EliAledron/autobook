@@ -202,17 +202,16 @@ export default function FindMechanic() {
               style={{
                 background: colors.white,
                 borderRadius: "20px",
-                border: `1px solid ${selected?.id === shop.id ? (shop.accent || colors.info) : colors.border}`,
+                border: `1px solid ${selected?.id === shop.id ? colors.blue : colors.border}`,
                 cursor: "pointer",
-                borderLeft: `5px solid ${shop.accent || colors.info}`,
-                boxShadow: selected?.id === shop.id ? `0 8px 24px ${shop.accent || colors.info}30` : "0 4px 20px rgba(0,0,0,0.05)",
+                boxShadow: selected?.id === shop.id ? `0 8px 24px ${colors.blue}30` : "0 4px 20px rgba(0,0,0,0.05)",
                 padding: "20px",
                 marginBottom: "1.25rem",
                 transition: "all 0.2s",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "1.25rem" }}>
-                <div style={{ width: "56px", height: "56px", borderRadius: "16px", background: shop.bg || colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.info, flexShrink: 0 }}>
+                <div style={{ width: "56px", height: "56px", borderRadius: "16px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.blue, flexShrink: 0, fontSize: "26px" }}>
                   {shop.icon || <Store size={26} />}
                 </div>
                 <div style={{ flex: 1 }}>
@@ -225,7 +224,7 @@ export default function FindMechanic() {
                   <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>{shop.tagline || "Quality auto services"}</div>
                 </div>
                 {selected?.id === shop.id
-                  ? <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: shop.accent || colors.info, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "16px", fontWeight: "700" }}>✓</div>
+                  ? <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "16px", fontWeight: "700" }}>✓</div>
                   : <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.textSecondary, fontSize: "18px", fontWeight: "700" }}>›</div>
                 }
               </div>
@@ -233,52 +232,59 @@ export default function FindMechanic() {
           ))
         )}
 
-        {/* REQUEST FORM — shows below once a shop is selected */}
-        {selected && !requestSent && (
-          <div style={{ background: colors.white, borderRadius: "20px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 20px rgba(0,0,0,0.05)", padding: "20px", marginTop: "0.5rem", marginBottom: "1.5rem" }}>
-            <div style={{ fontSize: "16px", fontWeight: "800", marginBottom: "1.25rem", color: colors.navy }}>
-              <span style={{display: 'inline-flex', alignItems: 'center', gap: '4px'}}><MapPin size={16} /> Request from {selected.shortName}</span>
+        {/* REQUEST MODAL */}
+        {(selected || requestSent) && (
+          <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15, 23, 42, 0.6)", backdropFilter: "blur(4px)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", animation: "fadeIn 0.2s ease-out" }}>
+            <div style={{ background: colors.white, borderRadius: "24px", width: "100%", maxWidth: "400px", padding: "24px", boxShadow: "0 20px 40px rgba(0,0,0,0.2)", animation: "slideUp 0.3s ease-out" }}>
+              
+              {!requestSent ? (
+                <>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+                    <div style={{ fontSize: "18px", fontWeight: "800", color: colors.navy, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <MapPin size={20} color={colors.blue} /> Request from {selected.shortName}
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Your address / location *</div>
+                  <input
+                    style={{ ...inputStyle, marginBottom: "16px" }}
+                    placeholder="Enter your address..."
+                    value={requestAddress}
+                    onChange={(e) => setRequestAddress(e.target.value)}
+                  />
+
+                  <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>What do you need help with? (optional)</div>
+                  <textarea
+                    style={{ ...inputStyle, minHeight: "100px", resize: "vertical", marginBottom: "1.5rem" }}
+                    placeholder="e.g. Car won't start, aircon not cooling..."
+                    value={requestNote}
+                    onChange={(e) => setRequestNote(e.target.value)}
+                  />
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    <button
+                      onClick={handlePreSubmit}
+                      disabled={saving || !requestAddress.trim()}
+                      style={{ ...sh.primaryBtn, padding: "16px", borderRadius: "16px", fontSize: "15px", boxShadow: "0 8px 20px rgba(42,82,152,0.25)", opacity: saving || !requestAddress.trim() ? 0.6 : 1 }}
+                    >
+                      {saving ? "Sending..." : `Send Request to ${selected.shortName} →`}
+                    </button>
+                    <button onClick={() => setSelected(null)} style={{ ...sh.outlineBtn, padding: "16px", borderRadius: "16px", fontSize: "15px", border: "none", background: colors.bg, color: colors.textSecondary, fontWeight: "700" }}>Cancel</button>
+                  </div>
+                </>
+              ) : (
+                <div style={{ textAlign: "center", padding: "1rem 0" }}>
+                  <div style={{ marginBottom: "16px", color: colors.success, display: "flex", justifyContent: "center" }}><CheckCircle2 size={56} /></div>
+                  <div style={{ fontWeight: "800", fontSize: "22px", marginBottom: "8px", color: colors.textPrimary }}>Request Sent!</div>
+                  <div style={{ fontSize: "15px", color: colors.textSecondary, marginBottom: "2rem", lineHeight: "1.5" }}>
+                    {selected?.name} will assign a mechanic and confirm shortly.
+                  </div>
+                  <button onClick={() => { setSelected(null); setRequestSent(false); }} style={{ ...sh.primaryBtn, padding: "16px", width: "100%", borderRadius: "16px", fontSize: "15px" }}>
+                    Close
+                  </button>
+                </div>
+              )}
             </div>
-
-            <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Your address / location *</div>
-            <input
-              style={{ ...inputStyle, marginBottom: "12px" }}
-              placeholder="Enter your address..."
-              value={requestAddress}
-              onChange={(e) => setRequestAddress(e.target.value)}
-            />
-
-            <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>What do you need help with? (optional)</div>
-            <textarea
-              style={{ ...inputStyle, minHeight: "80px", resize: "vertical", marginBottom: "1.5rem" }}
-              placeholder="e.g. Car won't start, aircon not cooling..."
-              value={requestNote}
-              onChange={(e) => setRequestNote(e.target.value)}
-            />
-
-            <button
-              onClick={handlePreSubmit}
-              disabled={saving || !requestAddress.trim()}
-              style={{ ...sh.primaryBtn, padding: "16px", borderRadius: "16px", fontSize: "15px", boxShadow: "0 8px 20px rgba(42,82,152,0.25)", opacity: saving || !requestAddress.trim() ? 0.6 : 1 }}
-            >
-              {saving ? "Sending..." : `Send Request to ${selected.shortName} →`}
-            </button>
-            <div style={{ height: "12px" }} />
-            <button onClick={() => setSelected(null)} style={{ ...sh.outlineBtn, padding: "16px", borderRadius: "16px", fontSize: "15px", border: "none", background: colors.bg, color: colors.textSecondary, fontWeight: "700" }}>Cancel</button>
-          </div>
-        )}
-
-        {/* SUCCESS STATE */}
-        {requestSent && (
-          <div style={{ background: colors.white, borderRadius: "20px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 20px rgba(0,0,0,0.05)", padding: "2.5rem 1.5rem", textAlign: "center", marginBottom: "1.5rem" }}>
-            <div style={{ marginBottom: "10px", color: colors.success, display: "flex", justifyContent: "center" }}><CheckCircle2 size={42} /></div>
-            <div style={{ fontWeight: "800", fontSize: "18px", marginBottom: "6px", color: colors.textPrimary }}>Request Sent!</div>
-            <div style={{ fontSize: "14px", color: colors.textSecondary, marginBottom: "1.5rem" }}>
-              {selected.name} will assign a mechanic and confirm shortly.
-            </div>
-            <button onClick={() => { setSelected(null); setRequestSent(false); }} style={{ ...sh.outlineBtn, padding: "16px", borderRadius: "16px", fontSize: "15px", border: "none", background: colors.bg, color: colors.textSecondary, fontWeight: "700" }}>
-              Send Another Request
-            </button>
           </div>
         )}
       </div>

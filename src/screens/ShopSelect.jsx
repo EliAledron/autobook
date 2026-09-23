@@ -145,7 +145,6 @@ export default function ShopSelect() {
                 background: colors.white,
                 borderRadius: "20px",
                 border: `1px solid ${colors.border}`,
-                borderLeft: `5px solid ${shop.accent || colors.info}`,
                 boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
                 padding: "20px",
                 marginBottom: "1.25rem",
@@ -155,8 +154,8 @@ export default function ShopSelect() {
               <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "1.25rem" }}>
                 <div style={{
                   width: "56px", height: "56px", borderRadius: "16px",
-                  background: shop.bg || colors.infoBg, display: "flex", alignItems: "center",
-                  justifyContent: "center", fontSize: "26px", flexShrink: 0,
+                  background: colors.infoBg, display: "flex", alignItems: "center",
+                  justifyContent: "center", color: colors.blue, fontSize: "26px", flexShrink: 0,
                 }}>
                   {shop.icon || <Store size={26} />}
                 </div>

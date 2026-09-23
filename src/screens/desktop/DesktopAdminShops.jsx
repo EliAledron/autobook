@@ -3,7 +3,7 @@ import { collection, onSnapshot, deleteDoc, doc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { colors, ConfirmModal } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
-import { Search, Store, MapPin, Star, Eye, Archive } from "lucide-react";
+import { Search, Store, MapPin, Star, Eye, Archive, RotateCcw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function DesktopAdminShops() {
@@ -65,8 +65,48 @@ export default function DesktopAdminShops() {
     });
   };
 
+  const [showArchived, setShowArchived] = useState(false);
+
+  const handleRestore = async (shop) => {
+    setConfirmProps({
+      isOpen: true,
+      title: "Restore Shop",
+      message: "Are you sure you want to restore this shop? It will be visible to users again.",
+      type: "success",
+      requireInput: false,
+      onConfirm: async () => {
+        setConfirmProps({ isOpen: false });
+        setActionLoading(shop.id);
+        try {
+          if (shop.ownerId) {
+            import("firebase/firestore").then(({ addDoc, collection, serverTimestamp }) => {
+              addDoc(collection(db, "notifications"), {
+                userId: shop.ownerId,
+                title: "Shop Restored",
+                message: `Your shop "${shop.name || 'Auto Shop'}" has been successfully restored and is now visible on AutoBook!`,
+                read: false,
+                createdAt: serverTimestamp(),
+                type: "system"
+              }).catch(err => console.error("Notification failed", err));
+            });
+          }
+          import("firebase/firestore").then(async ({ updateDoc }) => {
+            await updateDoc(doc(db, "shops", shop.id), { status: "active" });
+          });
+        } catch (e) {
+          console.error("Failed to restore", e);
+        }
+        setActionLoading(null);
+      }
+    });
+  };
+
   const filteredShops = shops.filter(s => {
-    if (s.status === "archived") return false;
+    if (showArchived) {
+      if (s.status !== "archived") return false;
+    } else {
+      if (s.status === "archived") return false;
+    }
     const q = search.toLowerCase();
     return (s.name || "").toLowerCase().includes(q) ||
            (s.tagline || "").toLowerCase().includes(q) ||
@@ -100,18 +140,35 @@ export default function DesktopAdminShops() {
             
             <div style={{ fontSize: "14px", fontWeight: "700", color: colors.textPrimary, display: "flex", alignItems: "center", gap: "8px" }}>
               <Store size={20} color={colors.info} />
-              Total Shops: {shops.length}
+              Total Shops: {shops.filter(s => s.status !== "archived").length}
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", background: "#f8fafc", padding: "10px 16px", borderRadius: "12px", border: `1px solid ${colors.border}`, width: "300px" }}>
-              <Search size={18} color={colors.textMuted} />
-              <input 
-                type="text" 
-                placeholder="Search shops..." 
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                style={{ border: "none", outline: "none", background: "transparent", width: "100%", fontSize: "14px", color: colors.textPrimary }}
-              />
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <button 
+                onClick={() => setShowArchived(!showArchived)}
+                style={{
+                  padding: "10px 16px", 
+                  borderRadius: "12px", 
+                  border: `1px solid ${showArchived ? colors.info : colors.border}`,
+                  background: showArchived ? colors.infoBg : "#fff",
+                  color: showArchived ? colors.info : colors.textSecondary,
+                  fontSize: "14px", fontWeight: "600", cursor: "pointer",
+                  transition: "all 0.2s"
+                }}
+              >
+                {showArchived ? "Viewing Archived" : "Show Archived"}
+              </button>
+              
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", background: "#f8fafc", padding: "10px 16px", borderRadius: "12px", border: `1px solid ${colors.border}`, width: "300px" }}>
+                <Search size={18} color={colors.textMuted} />
+                <input 
+                  type="text" 
+                  placeholder="Search shops..." 
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  style={{ border: "none", outline: "none", background: "transparent", width: "100%", fontSize: "14px", color: colors.textPrimary }}
+                />
+              </div>
             </div>
           </div>
 
@@ -174,9 +231,15 @@ export default function DesktopAdminShops() {
                           <button onClick={() => navigate("/customer/shop-profile", { state: { shopId: s.id } })} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.infoBg, color: colors.info, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }} title="View Shop Profile">
                             <Eye size={18} />
                           </button>
-                          <button disabled={actionLoading === s.id} onClick={() => handleArchive(s)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#fef2f2", color: colors.danger, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }} title="Archive Shop">
-                            <Archive size={18} />
-                          </button>
+                          {s.status === "archived" ? (
+                            <button disabled={actionLoading === s.id} onClick={() => handleRestore(s)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.successBg, color: colors.success, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }} title="Restore Shop">
+                              <RotateCcw size={18} />
+                            </button>
+                          ) : (
+                            <button disabled={actionLoading === s.id} onClick={() => handleArchive(s)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#fef2f2", color: colors.danger, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }} title="Archive Shop">
+                              <Archive size={18} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
