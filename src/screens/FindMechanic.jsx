@@ -43,9 +43,27 @@ export default function FindMechanic() {
               const bQuery = query(collection(db, "bookings"), where("shopId", "==", shop.id));
               const bSnap = await getDocs(bQuery);
               const ratedBookings = bSnap.docs.map(d => d.data()).filter(b => b.rating && b.rating > 0);
+              
+              let reportCount = 0;
+              try {
+                const repSnap = await getDocs(query(collection(db, "adminAlerts"), where("type", "==", "shop_report"), where("shopId", "==", shop.id)));
+                reportCount = repSnap.size;
+              } catch(e) {}
+
+              let avg = shop.rating || 0;
+              let reviewCount = shop.reviews || 0;
+
               if (ratedBookings.length > 0) {
-                const avg = ratedBookings.reduce((sum, b) => sum + b.rating, 0) / ratedBookings.length;
-                return { ...shop, rating: avg, reviews: ratedBookings.length };
+                avg = ratedBookings.reduce((sum, b) => sum + b.rating, 0) / ratedBookings.length;
+                reviewCount = ratedBookings.length;
+              }
+
+              if (avg > 0 && reportCount > 0) {
+                avg = Math.max(0.5, avg - (reportCount * 0.5));
+              }
+
+              if (reviewCount > 0 || reportCount > 0) {
+                return { ...shop, rating: avg, reviews: reviewCount };
               }
             } catch(e) {}
             return shop;

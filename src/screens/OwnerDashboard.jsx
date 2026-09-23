@@ -339,13 +339,30 @@ export default function OwnerDashboard({ user }) {
             const data = { id: shopSnap.id, ...shopSnap.data() };
             const bSnap = await getDocs(query(collection(db, "bookings"), where("shopId", "==", shopId)));
             const ratedBookings = bSnap.docs.map(d => d.data()).filter(b => b.rating && b.rating > 0);
+            let reportCount = 0;
+            try {
+              const repSnap = await getDocs(query(collection(db, "adminAlerts"), where("type", "==", "shop_report"), where("shopId", "==", shopId)));
+              reportCount = repSnap.size;
+            } catch(e) {}
+
+            let avg = data.rating || 0;
+            let reviewCount = data.reviews || 0;
+
             if (ratedBookings.length > 0) {
-              const avg = ratedBookings.reduce((sum, b) => sum + b.rating, 0) / ratedBookings.length;
-              if (data.rating !== avg || data.reviews !== ratedBookings.length) {
-                await updateDoc(doc(db, "shops", shopId), { rating: avg, reviews: ratedBookings.length });
+              avg = ratedBookings.reduce((sum, b) => sum + b.rating, 0) / ratedBookings.length;
+              reviewCount = ratedBookings.length;
+            }
+
+            if (avg > 0 && reportCount > 0) {
+              avg = Math.max(0.5, avg - (reportCount * 0.5));
+            }
+
+            if (reviewCount > 0 || reportCount > 0) {
+              if (data.rating !== avg || data.reviews !== reviewCount) {
+                await updateDoc(doc(db, "shops", shopId), { rating: avg, reviews: reviewCount });
               }
               data.rating = avg;
-              data.reviews = ratedBookings.length;
+              data.reviews = reviewCount;
             }
             setShopData(data);
           }

@@ -127,9 +127,27 @@ export default function ShopFeed() {
             } catch(e) {}
             
             const allReviews = [...ratedBookings, ...directReviews];
+            
+            let reportCount = 0;
+            try {
+              const repSnap = await getDocs(query(collection(db, "adminAlerts"), where("type", "==", "shop_report"), where("shopId", "==", shop.id)));
+              reportCount = repSnap.size;
+            } catch(e) {}
+
+            let avg = shop.rating || 0;
+            let reviewCount = shop.reviews || 0;
+
             if (allReviews.length > 0) {
-              const avg = allReviews.reduce((sum, b) => sum + Number(b.rating), 0) / allReviews.length;
-              return { ...shop, rating: avg, reviews: allReviews.length };
+              avg = allReviews.reduce((sum, b) => sum + Number(b.rating), 0) / allReviews.length;
+              reviewCount = allReviews.length;
+            }
+
+            if (avg > 0 && reportCount > 0) {
+              avg = Math.max(0.5, avg - (reportCount * 0.5));
+            }
+
+            if (reviewCount > 0 || reportCount > 0) {
+              return { ...shop, rating: avg, reviews: reviewCount };
             }
           } catch(e) {}
           return shop;
