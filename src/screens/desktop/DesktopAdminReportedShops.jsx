@@ -3,11 +3,12 @@ import { collection, onSnapshot, updateDoc, doc, getDoc, getDocs, query, where, 
 import { db } from "../../firebase";
 import { colors, ErrorModal, SuccessModal, ConfirmModal } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
-import { ShieldAlert, CheckCircle, Search, Ban, Flag, Trash2, Eye } from "lucide-react";
+import { ShieldAlert, CheckCircle, Search, Ban, Flag, Trash2, Eye, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function DesktopAdminReportedShops() {
   const [reports, setReports] = useState([]);
+  const [shopsMap, setShopsMap] = useState({});
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
@@ -17,12 +18,22 @@ export default function DesktopAdminReportedShops() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const unsub = onSnapshot(query(collection(db, "adminAlerts"), where("type", "==", "shop_report")), (snap) => {
+    const unsubAlerts = onSnapshot(query(collection(db, "adminAlerts"), where("type", "==", "shop_report")), (snap) => {
       const arr = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       setReports(arr.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0)));
       setLoading(false);
     });
-    return () => unsub();
+
+    const unsubShops = onSnapshot(collection(db, "shops"), (snap) => {
+      const sm = {};
+      snap.forEach(d => { sm[d.id] = d.data(); });
+      setShopsMap(sm);
+    });
+
+    return () => {
+      unsubAlerts();
+      unsubShops();
+    };
   }, []);
 
   const dismissReport = (id) => {
@@ -40,25 +51,26 @@ export default function DesktopAdminReportedShops() {
     setActionLoading(null);
   };
 
-  const banShopOwner = (shopId) => {
+  const banShopOwner = (report) => {
     setConfirmAction({
       type: 'ban',
-      shopId,
+      report,
       title: 'Restrict Shop Owner',
       message: 'Are you sure you want to restrict the owner of this shop? They will lose access to the platform.'
     });
   };
 
-  const executeBan = async (shopId) => {
-    setActionLoading(shopId);
+  const executeBan = async (report) => {
+    setActionLoading(report.shopId);
     try {
-      const q = query(collection(db, "users"), where("shopId", "==", shopId));
+      const q = query(collection(db, "users"), where("shopId", "==", report.shopId));
       const s = await getDocs(q);
       s.docs.forEach(async (d) => {
         if (d.data().role?.toLowerCase() === "owner") {
           await updateDoc(doc(db, "users", d.id), { status: "restricted" });
         }
       });
+      await deleteDoc(doc(db, "adminAlerts", report.id));
       setSuccessMsg("Shop Owner has been restricted.");
     } catch (e) {
       console.error(e);
@@ -67,10 +79,52 @@ export default function DesktopAdminReportedShops() {
     setActionLoading(null);
   };
 
+  const giveWarning = (report) => {
+    setConfirmAction({
+      type: 'warning',
+      report,
+      title: 'Issue Warning',
+      message: 'Are you sure you want to issue a warning to this shop?'
+    });
+  };
+
+  const executeWarning = async (report) => {
+    setActionLoading(report.id);
+    try {
+      const sRef = doc(db, "shops", report.shopId);
+      const sSnap = await getDoc(sRef);
+      let currentWarnings = 0;
+      if (sSnap.exists()) {
+        currentWarnings = sSnap.data().warnings || 0;
+        await updateDoc(sRef, { warnings: currentWarnings + 1 });
+        
+        import("firebase/firestore").then(({ addDoc, collection, serverTimestamp }) => {
+          if (sSnap.data().ownerId) {
+            addDoc(collection(db, "notifications"), {
+              userId: sSnap.data().ownerId,
+              title: "Official Warning",
+              message: `Your shop has received an official warning regarding a recent report. You now have ${currentWarnings + 1}/3 warnings. After 3 warnings, your shop may be banned.`,
+              read: false,
+              createdAt: serverTimestamp(),
+              type: "system"
+            }).catch(err => console.error("Notification failed", err));
+          }
+        });
+      }
+      await deleteDoc(doc(db, "adminAlerts", report.id));
+      setSuccessMsg("Warning issued successfully.");
+    } catch (e) {
+      console.error(e);
+      setErrorMsg("Failed to issue warning.");
+    }
+    setActionLoading(null);
+  };
+
   const handleConfirmAction = () => {
     if (!confirmAction) return;
     if (confirmAction.type === 'dismiss') executeDismiss(confirmAction.id);
-    if (confirmAction.type === 'ban') executeBan(confirmAction.shopId);
+    if (confirmAction.type === 'ban') executeBan(confirmAction.report);
+    if (confirmAction.type === 'warning') executeWarning(confirmAction.report);
     setConfirmAction(null);
   };
 
@@ -148,6 +202,11 @@ export default function DesktopAdminReportedShops() {
                     <td style={{ padding: "16px 24px", verticalAlign: "top" }}>
                       <div style={{ fontWeight: "700", fontSize: "14px", color: colors.textPrimary }}>{r.shopName || "Unknown"}</div>
                       {r.shopId && <div style={{ fontSize: "12px", color: colors.textSecondary }}>ID: {r.shopId}</div>}
+                      {r.shopId && shopsMap[r.shopId] && (
+                        <div style={{ fontSize: "11px", fontWeight: "700", color: colors.warning, marginTop: "4px" }}>
+                          Warnings: {shopsMap[r.shopId].warnings || 0}/3
+                        </div>
+                      )}
                     </td>
                     <td style={{ padding: "16px 24px" }}>
                       <div style={{ fontSize: "14px", color: colors.textPrimary, lineHeight: "1.5" }}>{r.reason || r.message || "No reason provided"}</div>
@@ -166,9 +225,15 @@ export default function DesktopAdminReportedShops() {
                         <button disabled={actionLoading === r.id} onClick={() => dismissReport(r.id)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.successBg, color: colors.success, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Dismiss Report">
                           <CheckCircle size={18} />
                         </button>
-                        <button disabled={actionLoading === r.shopId} onClick={() => banShopOwner(r.shopId)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.dangerBg, color: colors.danger, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Ban Shop Owner">
-                          <Ban size={18} />
-                        </button>
+                        {r.shopId && shopsMap[r.shopId] && (shopsMap[r.shopId].warnings || 0) >= 3 ? (
+                          <button disabled={actionLoading === r.shopId} onClick={() => banShopOwner(r)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.dangerBg, color: colors.danger, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Ban Shop Owner">
+                            <Ban size={18} />
+                          </button>
+                        ) : (
+                          <button disabled={actionLoading === r.id} onClick={() => giveWarning(r)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.warningBg, color: colors.warning, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Issue Warning">
+                            <AlertTriangle size={18} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
