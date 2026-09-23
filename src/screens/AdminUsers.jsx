@@ -527,12 +527,7 @@ export default function AdminUsers() {
                     {u.email}
                   </div>
                   <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "4px", fontWeight: "600", display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span>Role: {u.role || "User"}</span>
-                    <span style={{ color: colors.border }}>|</span>
-                    <span style={{ display: "flex", alignItems: "center", gap: "4px", color: getUserActivityStatus(u.lastActiveAt).color }}>
-                      <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: getUserActivityStatus(u.lastActiveAt).dot }} />
-                      {getUserActivityStatus(u.lastActiveAt).text}
-                    </span>
+                    <span>Role: {capitalize(u.role || "User")}</span>
                   </div>
                 </div>
 

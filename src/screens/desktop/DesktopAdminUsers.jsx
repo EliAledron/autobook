@@ -251,18 +251,15 @@ export default function DesktopAdminUsers() {
               <tr style={{ background: "#f8fafc", borderBottom: `1px solid ${colors.border}` }}>
                 <th style={{ padding: "16px 24px", fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px" }}>User</th>
                 <th style={{ padding: "16px 24px", fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px" }}>Role</th>
-                <th style={{ padding: "16px 24px", fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px" }}>Status</th>
-                <th style={{ padding: "16px 24px", fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px" }}>Shop Affiliation</th>
-                <th style={{ padding: "16px 24px", fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px" }}>Documents</th>
                 <th style={{ padding: "16px 24px", fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px" }}>Date Joined</th>
                 <th style={{ padding: "16px 24px", fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="7" style={{ padding: "48px", textAlign: "center", color: colors.textMuted }}>Loading users...</td></tr>
+                <tr><td colSpan="4" style={{ padding: "48px", textAlign: "center", color: colors.textMuted }}>Loading users...</td></tr>
               ) : currentUsers.length === 0 ? (
-                <tr><td colSpan="7" style={{ padding: "48px", textAlign: "center", color: colors.textMuted }}>No users found for this filter.</td></tr>
+                <tr><td colSpan="4" style={{ padding: "48px", textAlign: "center", color: colors.textMuted }}>No users found for this filter.</td></tr>
               ) : (
                 currentUsers.map(u => (
                   <tr key={u.id} style={{ borderBottom: `1px solid ${colors.border}` }}>
@@ -282,26 +279,7 @@ export default function DesktopAdminUsers() {
                         {u.role || "Customer"}
                       </span>
                     </td>
-                    <td style={{ padding: "16px 24px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: getUserActivityStatus(u.lastActiveAt).dot }} />
-                        <span style={{ fontSize: "13px", fontWeight: "600", color: getUserActivityStatus(u.lastActiveAt).color }}>
-                          {getUserActivityStatus(u.lastActiveAt).text}
-                        </span>
-                      </div>
-                    </td>
-                    <td style={{ padding: "16px 24px" }}>
-                      <div style={{ fontSize: "14px", fontWeight: "600", color: colors.textPrimary }}>{u.shopName || "N/A"}</div>
-                      {u.shopId && <div style={{ fontSize: "12px", color: colors.textSecondary }}>ID: {u.shopId}</div>}
-                    </td>
-                    <td style={{ padding: "16px 24px" }}>
-                      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                        {u.businessPermitUrl && <a href={u.businessPermitUrl} target="_blank" rel="noreferrer" style={{ fontSize: "12px", background: colors.infoBg, color: colors.info, padding: "4px 8px", borderRadius: "12px", textDecoration: "none", fontWeight: "600" }}>Permit</a>}
-                        {u.dtiUrl && <a href={u.dtiUrl} target="_blank" rel="noreferrer" style={{ fontSize: "12px", background: colors.infoBg, color: colors.info, padding: "4px 8px", borderRadius: "12px", textDecoration: "none", fontWeight: "600" }}>DTI</a>}
-                        {u.licenseUrl && <a href={u.licenseUrl} target="_blank" rel="noreferrer" style={{ fontSize: "12px", background: colors.infoBg, color: colors.info, padding: "4px 8px", borderRadius: "12px", textDecoration: "none", fontWeight: "600" }}>License</a>}
-                        {!u.businessPermitUrl && !u.dtiUrl && !u.licenseUrl && <span style={{ fontSize: "12px", color: colors.textMuted }}>None</span>}
-                      </div>
-                    </td>
+
                     <td style={{ padding: "16px 24px", fontSize: "14px", color: colors.textSecondary }}>
                       {u.createdAt?.seconds ? new Date(u.createdAt.seconds * 1000).toLocaleDateString() : "Unknown"}
                     </td>
