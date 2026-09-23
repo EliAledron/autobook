@@ -58,10 +58,10 @@ export default function AdminLayout({ children }) {
   ];
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f4f7fa", fontFamily: "Inter, sans-serif" }}>
+    <div style={{ display: "flex", height: "100vh", background: "#f4f7fa", fontFamily: "Inter, sans-serif" }}>
       
       {/* SIDEBAR */}
-      <div style={{ width: "260px", background: colors.navy, color: "#fff", display: "flex", flexDirection: "column", flexShrink: 0, borderRight: "1px solid rgba(255,255,255,0.1)" }}>
+      <div style={{ width: "260px", background: colors.navy, color: "#fff", display: "flex", flexDirection: "column", flexShrink: 0, borderRight: "1px solid rgba(255,255,255,0.1)", overflowY: "auto" }}>
         <div onClick={() => navigate("/dashboard")} style={{ padding: "24px", display: "flex", alignItems: "center", gap: "10px", borderBottom: "1px solid rgba(255,255,255,0.1)", cursor: "pointer" }}>
           <div style={{ width: "32px", height: "32px", background: colors.accent, borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", color: colors.navy }}>A</div>
           <div style={{ fontSize: "20px", fontWeight: "800", letterSpacing: "-0.5px" }}>Auto<span style={{ color: colors.accent }}>Book</span></div>

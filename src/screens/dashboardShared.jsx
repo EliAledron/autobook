@@ -239,7 +239,7 @@ export function SharedSearchBar({ value, onChange, placeholder = "Search...", st
 
 // ─── Error Modal ─────────────────────────────────────────────────────────────
 
-export function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, confirmText = "Confirm", cancelText = "Cancel", type = "primary", requireInput = false, inputPlaceholder = "Type here..." }) {
+export function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, confirmText = "Confirm", cancelText = "Cancel", type = "primary", requireInput = false, inputPlaceholder = "Type here...", inputOptions = null }) {
   const [inputValue, setInputValue] = useState("");
 
   useEffect(() => {
@@ -293,12 +293,22 @@ export function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, conf
 
         {requireInput && (
           <div style={{ marginBottom: "24px", textAlign: "left" }}>
-            <textarea 
-              value={inputValue}
-              onChange={e => setInputValue(e.target.value)}
-              placeholder={inputPlaceholder}
-              style={{ width: "100%", padding: "14px 16px", borderRadius: "12px", border: `1px solid ${colors.border}`, fontSize: "14px", fontFamily: "inherit", boxSizing: "border-box", minHeight: "80px", outline: "none", resize: "vertical", background: "#f9fafb" }}
-            />
+            {inputOptions ? (
+              <CustomDropdown
+                value={inputValue}
+                onChange={setInputValue}
+                options={inputOptions}
+                placeholder={inputPlaceholder}
+                style={{ width: "100%", padding: "14px 16px", borderRadius: "12px", border: `1px solid ${colors.border}`, fontSize: "14px", background: "#f9fafb" }}
+              />
+            ) : (
+              <textarea 
+                value={inputValue}
+                onChange={e => setInputValue(e.target.value)}
+                placeholder={inputPlaceholder}
+                style={{ width: "100%", padding: "14px 16px", borderRadius: "12px", border: `1px solid ${colors.border}`, fontSize: "14px", fontFamily: "inherit", boxSizing: "border-box", minHeight: "80px", outline: "none", resize: "vertical", background: "#f9fafb" }}
+              />
+            )}
           </div>
         )}
 

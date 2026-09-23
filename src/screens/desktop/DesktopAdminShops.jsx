@@ -3,7 +3,7 @@ import { collection, onSnapshot, deleteDoc, doc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { colors, ConfirmModal } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
-import { Search, Store, Trash2, MapPin, Star, Eye } from "lucide-react";
+import { Search, Store, MapPin, Star, Eye, Archive } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function DesktopAdminShops() {
@@ -24,14 +24,20 @@ export default function DesktopAdminShops() {
     return () => unsub();
   }, []);
 
-  const handleDelete = async (shop) => {
+  const handleArchive = async (shop) => {
     setConfirmProps({
       isOpen: true,
-      title: "Delete Shop",
-      message: "Are you sure you want to permanently delete this shop? Please provide a reason below. This cannot be undone.",
+      title: "Archive Shop",
+      message: "Are you sure you want to archive this shop? Please select a reason below.",
       type: "danger",
       requireInput: true,
-      inputPlaceholder: "Reason for deletion (e.g. Terms violation)...",
+      inputPlaceholder: "Select reason for archiving...",
+      inputOptions: [
+        { label: "Terms Violation", value: "Terms Violation" },
+        { label: "Shop Inactive", value: "Shop Inactive" },
+        { label: "Customer Complaints", value: "Customer Complaints" },
+        { label: "Other", value: "Other" }
+      ],
       onConfirm: async (inputValue) => {
         setConfirmProps({ isOpen: false });
         setActionLoading(shop.id);
@@ -40,17 +46,19 @@ export default function DesktopAdminShops() {
             import("firebase/firestore").then(({ addDoc, collection, serverTimestamp }) => {
               addDoc(collection(db, "notifications"), {
                 userId: shop.ownerId,
-                title: "Shop Deleted",
-                message: `Your shop "${shop.name || 'Auto Shop'}" has been removed from AutoBook. Reason: ${inputValue || 'Violation of platform policies.'}`,
+                title: "Shop Archived",
+                message: `Your shop "${shop.name || 'Auto Shop'}" has been archived from AutoBook. Reason: ${inputValue || 'Violation of platform policies.'}`,
                 read: false,
                 createdAt: serverTimestamp(),
                 type: "system"
               }).catch(err => console.error("Notification failed", err));
             });
           }
-          await deleteDoc(doc(db, "shops", shop.id));
+          import("firebase/firestore").then(async ({ updateDoc }) => {
+            await updateDoc(doc(db, "shops", shop.id), { status: "archived" });
+          });
         } catch (e) {
-          console.error("Failed to delete", e);
+          console.error("Failed to archive", e);
         }
         setActionLoading(null);
       }
@@ -58,6 +66,7 @@ export default function DesktopAdminShops() {
   };
 
   const filteredShops = shops.filter(s => {
+    if (s.status === "archived") return false;
     const q = search.toLowerCase();
     return (s.name || "").toLowerCase().includes(q) ||
            (s.tagline || "").toLowerCase().includes(q) ||
@@ -73,6 +82,7 @@ export default function DesktopAdminShops() {
           type={confirmProps.type}
           requireInput={confirmProps.requireInput}
           inputPlaceholder={confirmProps.inputPlaceholder}
+          inputOptions={confirmProps.inputOptions}
         onCancel={() => setConfirmProps({ isOpen: false })}
         onConfirm={confirmProps.onConfirm}
       />
@@ -164,8 +174,8 @@ export default function DesktopAdminShops() {
                           <button onClick={() => navigate("/customer/shop-profile", { state: { shopId: s.id } })} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.infoBg, color: colors.info, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }} title="View Shop Profile">
                             <Eye size={18} />
                           </button>
-                          <button disabled={actionLoading === s.id} onClick={() => handleDelete(s)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#fef2f2", color: colors.danger, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }} title="Delete Shop">
-                            <Trash2 size={18} />
+                          <button disabled={actionLoading === s.id} onClick={() => handleArchive(s)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#fef2f2", color: colors.danger, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }} title="Archive Shop">
+                            <Archive size={18} />
                           </button>
                         </div>
                       </td>

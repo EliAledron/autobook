@@ -31,7 +31,9 @@ export default function DesktopAdminUsers() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [confirmProps, setConfirmProps] = useState({ isOpen: false, title: "", message: "", type: "primary", onConfirm: null, requireInput: false, inputPlaceholder: "" });
+  const [confirmProps, setConfirmProps] = useState({ isOpen: false, title: "", message: "", type: "primary", onConfirm: null, requireInput: false, inputPlaceholder: "", inputOptions: null });
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 10;
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "users"), (snap) => {
@@ -43,12 +45,17 @@ export default function DesktopAdminUsers() {
     return () => unsub();
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, search]);
+
   const handleStatusUpdate = async (id, status) => {
     let title = "";
     let message = "";
     let type = "primary";
     let requireInput = false;
     let inputPlaceholder = "";
+    let inputOptions = null;
 
     if (status === "approved") {
       title = "Approve User";
@@ -56,19 +63,33 @@ export default function DesktopAdminUsers() {
       type = "blueGradient";
     } else if (status === "rejected") {
       title = "Reject User";
-      message = "Are you sure you want to reject this user's application? Please provide a reason below.";
+      message = "Are you sure you want to reject this user's application? Please select a reason below.";
       type = "danger";
       requireInput = true;
-      inputPlaceholder = "Reason for rejection (e.g. Invalid documents)...";
+      inputPlaceholder = "Select rejection reason...";
+      inputOptions = [
+        { label: "Invalid Documents", value: "Invalid Documents" },
+        { label: "Incomplete Profile", value: "Incomplete Profile" },
+        { label: "Suspicious Activity", value: "Suspicious Activity" },
+        { label: "Other", value: "Other" }
+      ];
     } else if (status === "restricted") {
       title = "Restrict User";
-      message = "Are you sure you want to restrict this user? They will lose access immediately.";
+      message = "Are you sure you want to restrict this user? Please select a reason below.";
       type = "danger";
+      requireInput = true;
+      inputPlaceholder = "Select restriction reason...";
+      inputOptions = [
+        { label: "Violation of Terms", value: "Violation of Terms" },
+        { label: "Too Many Reports", value: "Too Many Reports" },
+        { label: "Fraudulent Activity", value: "Fraudulent Activity" },
+        { label: "Other", value: "Other" }
+      ];
     }
 
     if (title) {
       setConfirmProps({
-        isOpen: true, title, message, type, requireInput, inputPlaceholder,
+        isOpen: true, title, message, type, requireInput, inputPlaceholder, inputOptions,
         onConfirm: async (inputValue) => {
           setConfirmProps({ isOpen: false });
           setActionLoading(id);
@@ -153,6 +174,11 @@ export default function DesktopAdminUsers() {
     return matchSearch && matchFilter;
   });
 
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
   const stats = {
     pending: users.filter(u => (u.status || "pending") === "pending").length,
     approved: users.filter(u => u.status === "approved").length,
@@ -169,6 +195,7 @@ export default function DesktopAdminUsers() {
           type={confirmProps.type}
           requireInput={confirmProps.requireInput}
           inputPlaceholder={confirmProps.inputPlaceholder}
+          inputOptions={confirmProps.inputOptions}
         onCancel={() => setConfirmProps({ isOpen: false })}
         onConfirm={confirmProps.onConfirm}
       />
@@ -234,10 +261,10 @@ export default function DesktopAdminUsers() {
             <tbody>
               {loading ? (
                 <tr><td colSpan="7" style={{ padding: "48px", textAlign: "center", color: colors.textMuted }}>Loading users...</td></tr>
-              ) : filteredUsers.length === 0 ? (
+              ) : currentUsers.length === 0 ? (
                 <tr><td colSpan="7" style={{ padding: "48px", textAlign: "center", color: colors.textMuted }}>No users found for this filter.</td></tr>
               ) : (
-                filteredUsers.map(u => (
+                currentUsers.map(u => (
                   <tr key={u.id} style={{ borderBottom: `1px solid ${colors.border}` }}>
                     <td style={{ padding: "16px 24px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
@@ -335,6 +362,41 @@ export default function DesktopAdminUsers() {
               )}
             </tbody>
           </table>
+          
+          {totalPages > 1 && (
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderTop: `1px solid ${colors.border}`, background: "#f8fafc" }}>
+              <div style={{ fontSize: "14px", color: colors.textSecondary }}>
+                Showing {indexOfFirstUser + 1} to {Math.min(indexOfLastUser, filteredUsers.length)} of {filteredUsers.length} users
+              </div>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                  disabled={currentPage === 1}
+                  style={{ padding: "6px 12px", borderRadius: "8px", border: `1px solid ${colors.border}`, background: currentPage === 1 ? "#f1f5f9" : "#fff", color: currentPage === 1 ? colors.textMuted : colors.textPrimary, cursor: currentPage === 1 ? "not-allowed" : "pointer" }}
+                >
+                  Previous
+                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  {Array.from({ length: totalPages }).map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentPage(i + 1)}
+                      style={{ width: "32px", height: "32px", borderRadius: "8px", border: "none", background: currentPage === i + 1 ? colors.navy : "transparent", color: currentPage === i + 1 ? "#fff" : colors.textPrimary, fontWeight: "600", cursor: "pointer" }}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                </div>
+                <button 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                  disabled={currentPage === totalPages}
+                  style={{ padding: "6px 12px", borderRadius: "8px", border: `1px solid ${colors.border}`, background: currentPage === totalPages ? "#f1f5f9" : "#fff", color: currentPage === totalPages ? colors.textMuted : colors.textPrimary, cursor: currentPage === totalPages ? "not-allowed" : "pointer" }}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

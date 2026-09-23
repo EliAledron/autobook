@@ -106,6 +106,9 @@ export default function AdminUsers() {
   const [selectedUserVehicles, setSelectedUserVehicles] = useState([]);
   const [selectedUserShop, setSelectedUserShop] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [confirmProps, setConfirmProps] = useState({ isOpen: false, title: "", message: "", type: "primary", onConfirm: null, requireInput: false, inputPlaceholder: "", inputOptions: null });
+  const usersPerPage = 10;
 
   const fetchUsers = async (shopId) => {
     setLoading(true);
@@ -126,6 +129,10 @@ export default function AdminUsers() {
       }
     }
   };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter]);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -176,6 +183,7 @@ export default function AdminUsers() {
     let type = "primary";
     let requireInput = false;
     let inputPlaceholder = "";
+    let inputOptions = null;
 
     if (status === "approved") {
       title = "Approve User";
@@ -183,19 +191,33 @@ export default function AdminUsers() {
       type = "blueGradient";
     } else if (status === "rejected") {
       title = "Reject User";
-      message = "Are you sure you want to reject this user's application? Please provide a reason below.";
+      message = "Are you sure you want to reject this user's application? Please select a reason below.";
       type = "danger";
       requireInput = true;
-      inputPlaceholder = "Reason for rejection (e.g. Invalid documents)...";
+      inputPlaceholder = "Select rejection reason...";
+      inputOptions = [
+        { label: "Invalid Documents", value: "Invalid Documents" },
+        { label: "Incomplete Profile", value: "Incomplete Profile" },
+        { label: "Suspicious Activity", value: "Suspicious Activity" },
+        { label: "Other", value: "Other" }
+      ];
     } else if (status === "restricted") {
       title = "Restrict User";
-      message = "Are you sure you want to restrict this user? They will lose access immediately.";
+      message = "Are you sure you want to restrict this user? Please select a reason below.";
       type = "danger";
+      requireInput = true;
+      inputPlaceholder = "Select restriction reason...";
+      inputOptions = [
+        { label: "Violation of Terms", value: "Violation of Terms" },
+        { label: "Too Many Reports", value: "Too Many Reports" },
+        { label: "Fraudulent Activity", value: "Fraudulent Activity" },
+        { label: "Other", value: "Other" }
+      ];
     }
 
     if (title) {
       setConfirmProps({
-        isOpen: true, title, message, type, requireInput, inputPlaceholder,
+        isOpen: true, title, message, type, requireInput, inputPlaceholder, inputOptions,
         onConfirm: async (inputValue) => {
           setConfirmProps({ isOpen: false });
           await proceedUpdateStatus(id, status, inputValue);
@@ -281,6 +303,11 @@ export default function AdminUsers() {
     (u) => (u.status || "pending") === filter
   );
 
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
   const stats = {
     total: users.length,
     pending: users.filter((u) => (u.status || "pending") === "pending").length,
@@ -298,6 +325,7 @@ export default function AdminUsers() {
           type={confirmProps.type}
           requireInput={confirmProps.requireInput}
           inputPlaceholder={confirmProps.inputPlaceholder}
+          inputOptions={confirmProps.inputOptions}
         onCancel={() => setConfirmProps({ isOpen: false })}
         onConfirm={confirmProps.onConfirm}
       />
@@ -455,7 +483,7 @@ export default function AdminUsers() {
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           {loading ? (
             <SkeletonLoader count={3} type="card" />
-          ) : filteredUsers.length === 0 ? (
+          ) : currentUsers.length === 0 ? (
             <div style={sh.card}>
               <EmptyState
                 icon={<Users size={48} />}
@@ -464,7 +492,7 @@ export default function AdminUsers() {
               />
             </div>
           ) : (
-            filteredUsers.map((u) => (
+            currentUsers.map((u) => (
               <div
                 key={u.id}
                 style={{
@@ -515,6 +543,28 @@ export default function AdminUsers() {
             ))
           )}
         </div>
+        
+        {totalPages > 1 && (
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "16px", padding: "10px", background: "#fff", borderRadius: "12px", border: `1px solid ${colors.border}` }}>
+            <button 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+              disabled={currentPage === 1}
+              style={{ padding: "6px 12px", borderRadius: "8px", border: `1px solid ${colors.border}`, background: currentPage === 1 ? "#f1f5f9" : "#fff", color: currentPage === 1 ? colors.textMuted : colors.textPrimary, fontSize: "13px", fontWeight: "600", cursor: currentPage === 1 ? "not-allowed" : "pointer" }}
+            >
+              Prev
+            </button>
+            <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "600" }}>
+              Page {currentPage} of {totalPages}
+            </div>
+            <button 
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+              disabled={currentPage === totalPages}
+              style={{ padding: "6px 12px", borderRadius: "8px", border: `1px solid ${colors.border}`, background: currentPage === totalPages ? "#f1f5f9" : "#fff", color: currentPage === totalPages ? colors.textMuted : colors.textPrimary, fontSize: "13px", fontWeight: "600", cursor: currentPage === totalPages ? "not-allowed" : "pointer" }}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
 
       {/* USER DETAIL MODAL */}
