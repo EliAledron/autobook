@@ -7,9 +7,9 @@ import { sh, colors, getInitials, EmptyState, ConfirmModal } from "./dashboardSh
 import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
 import BackButton from "../components/BackButton";
-import { Store, Users, Car, CheckCircle2, Ban, XCircle, Trash2, Check, X } from "lucide-react";
+import { Store, Users, Car, CheckCircle2, Ban, XCircle, Trash2, Check, X, Archive, RotateCcw } from "lucide-react";
 
-const FILTER_TABS = ["pending", "approved", "rejected", "restricted"];
+const FILTER_TABS = ["pending", "approved", "rejected", "restricted", "archived"];
 
 const capitalize = (str) =>
   str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
@@ -281,19 +281,19 @@ export default function AdminUsers() {
     }
   };
 
-  const handleDeleteUser = (u) => {
+  const handleArchiveUser = (u) => {
     setUserToDelete(u);
   };
 
-  const confirmDeleteUser = async () => {
+  const confirmArchiveUser = async () => {
     if (!userToDelete) return;
     setSaving(true);
     try {
-      await deleteDoc(doc(db, "users", userToDelete.id));
+      await updateDoc(doc(db, "users", userToDelete.id), { status: "archived" });
       setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
       setSelected(null);
     } catch (e) {
-      console.error("Failed to delete user:", e);
+      console.error("Failed to archive user:", e);
     }
     setSaving(false);
     setUserToDelete(null);
@@ -314,6 +314,7 @@ export default function AdminUsers() {
     approved: users.filter((u) => u.status === "approved").length,
     rejected: users.filter((u) => u.status === "rejected").length,
     restricted: users.filter((u) => u.status === "restricted").length,
+    archived: users.filter((u) => u.status === "archived").length,
   };
 
   return (
@@ -844,7 +845,7 @@ export default function AdminUsers() {
               )}
 
               <button
-                onClick={() => handleDeleteUser(selected)}
+                onClick={() => handleArchiveUser(selected)}
                 disabled={saving}
                 style={{
                   width: "100%", padding: "14px",
@@ -856,7 +857,7 @@ export default function AdminUsers() {
                   display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"
                 }}
               >
-                {saving ? "Saving..." : <><Trash2 size={16} /> Remove User</>}
+                {saving ? "Saving..." : <><Archive size={16} /> Archive User</>}
               </button>
 
               <button onClick={() => setSelected(null)} style={sh.outlineBtn}>
@@ -867,23 +868,23 @@ export default function AdminUsers() {
         </div>
       )}
 
-      {/* CONFIRM DELETE USER MODAL */}
+      {/* CONFIRM ARCHIVE USER MODAL */}
       {userToDelete && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 120, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setUserToDelete(null)}>
           <div style={{ background: colors.white, borderRadius: "24px", width: "90%", maxWidth: "340px", padding: "24px", textAlign: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
             <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: colors.dangerBg, color: colors.danger, fontSize: "28px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-              <Trash2 size={32} />
+              <Archive size={32} />
             </div>
-            <h3 style={{ margin: "0 0 8px", fontSize: "18px", color: colors.textPrimary, fontWeight: "800" }}>Remove User?</h3>
+            <h3 style={{ margin: "0 0 8px", fontSize: "18px", color: colors.textPrimary, fontWeight: "800" }}>Archive User?</h3>
             <p style={{ margin: "0 0 24px", fontSize: "13px", color: colors.textSecondary, lineHeight: "1.5" }}>
-              Are you sure you want to completely remove <strong>{userToDelete.displayName || userToDelete.email}</strong>? This action cannot be undone.
+              Are you sure you want to archive <strong>{userToDelete.displayName || userToDelete.email}</strong>? They will be hidden and their access revoked.
             </p>
             <div style={{ display: "flex", gap: "12px" }}>
               <button onClick={() => setUserToDelete(null)} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.bg, border: `1px solid ${colors.border}`, color: colors.textSecondary, fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "14px" }}>
                 Cancel
               </button>
-              <button onClick={confirmDeleteUser} disabled={saving} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.danger, border: "none", color: "#fff", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "14px", boxShadow: "0 4px 12px rgba(220,38,38,0.25)" }}>
-                {saving ? "Removing..." : "Yes, Remove"}
+              <button onClick={confirmArchiveUser} disabled={saving} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.danger, border: "none", color: "#fff", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "14px", boxShadow: "0 4px 12px rgba(220,38,38,0.25)" }}>
+                {saving ? "Archiving..." : "Yes, Archive"}
               </button>
             </div>
           </div>

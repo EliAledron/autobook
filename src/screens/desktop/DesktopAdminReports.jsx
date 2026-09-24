@@ -4,6 +4,7 @@ import { db } from "../../firebase";
 import { colors } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
 import { BarChart3, Users, Wrench, Calendar, ClipboardList, TrendingUp, Flame } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from "recharts";
 
 export default function DesktopAdminReports() {
   const [users, setUsers] = useState([]);
@@ -129,6 +130,24 @@ export default function DesktopAdminReports() {
     if (count > overallMax) { overallMax = count; overallTop = s; }
   }
 
+  const chartColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+  const trendingServicesSet = new Set();
+  const chartData = months.map((m, i) => {
+    const services = servicesByMonth[i];
+    let topService = null;
+    let max = 0;
+    for (const [s, count] of Object.entries(services)) {
+      if (count > max) { max = count; topService = s; }
+    }
+    const dataObj = { name: m };
+    if (topService) {
+      dataObj[topService] = max;
+      trendingServicesSet.add(topService);
+    }
+    return dataObj;
+  });
+  const uniqueServices = Array.from(trendingServicesSet);
+
   return (
     <RoleBasedWrapper title="System Reports">
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "32px" }}>
@@ -191,48 +210,19 @@ export default function DesktopAdminReports() {
                   )}
                 </div>
                 
-                <div style={{ display: "flex", alignItems: "flex-end", gap: "8px", height: "140px", marginTop: "32px", paddingBottom: "8px", borderBottom: `1px solid ${colors.border}`, position: "relative" }}>
-                  {months.map((m, i) => {
-                    const max = Math.max(...bookingsByMonth, 1);
-                    const height = (bookingsByMonth[i] / max) * 100;
-                    const topSvc = getTopService(i);
-                    const isHovered = hoveredMonth === i;
-                    
-                    return (
-                      <div 
-                        key={m} 
-                        style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", position: "relative" }}
-                        onMouseEnter={() => setHoveredMonth(i)}
-                        onMouseLeave={() => setHoveredMonth(null)}
-                      >
-                        <div style={{ width: "100%", height: "100px", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-                          <div style={{ width: "60%", height: `${height}%`, background: isHovered ? colors.blue : colors.navy, borderRadius: "4px 4px 0 0", minHeight: bookingsByMonth[i] > 0 ? "4px" : "0", transition: "all 0.2s ease", cursor: "pointer", opacity: hoveredMonth !== null && !isHovered ? 0.5 : 1 }} />
-                        </div>
-                        
-                        {/* CUSTOM TOOLTIP */}
-                        {isHovered && (
-                          <div style={{ position: "absolute", bottom: "110px", left: "50%", transform: "translateX(-50%)", background: "#1e293b", color: "#fff", padding: "10px 14px", borderRadius: "8px", fontSize: "12px", whiteSpace: "nowrap", zIndex: 10, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", pointerEvents: "none" }}>
-                            <div style={{ fontWeight: "700", marginBottom: "4px", fontSize: "13px", color: "#94a3b8" }}>{m} {selectedYear}</div>
-                            <div style={{ display: "flex", justifyContent: "space-between", gap: "16px", marginBottom: "4px" }}>
-                              <span>Total Bookings:</span>
-                              <span style={{ fontWeight: "700" }}>{bookingsByMonth[i]}</span>
-                            </div>
-                            <div style={{ display: "flex", justifyContent: "space-between", gap: "16px" }}>
-                              <span>Top Service:</span>
-                              <span style={{ fontWeight: "700", color: "#60a5fa" }}>{topSvc ? `${topSvc.name} (${topSvc.count})` : "None"}</span>
-                            </div>
-                            {/* Tooltip Arrow */}
-                            <div style={{ position: "absolute", bottom: "-4px", left: "50%", transform: "translateX(-50%) rotate(45deg)", width: "8px", height: "8px", background: "#1e293b" }} />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                <div style={{ display: "flex", gap: "8px", paddingTop: "8px" }}>
-                  {months.map((m, i) => (
-                    <div key={m} style={{ flex: 1, textAlign: "center", fontSize: "11px", color: hoveredMonth === i ? colors.blue : colors.textSecondary, fontWeight: "700", transition: "color 0.2s" }}>{m}</div>
-                  ))}
+                <div style={{ height: "200px", marginTop: "32px", position: "relative" }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.border} />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: colors.textSecondary }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: colors.textSecondary }} />
+                      <RechartsTooltip cursor={{ fill: "#f1f5f9" }} contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }} />
+                      <Legend iconType="circle" wrapperStyle={{ fontSize: "12px", fontWeight: "600", paddingTop: "10px" }} />
+                      {uniqueServices.map((service, index) => (
+                        <Bar key={service} dataKey={service} stackId="a" fill={chartColors[index % chartColors.length]} />
+                      ))}
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
 

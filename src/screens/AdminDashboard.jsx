@@ -5,6 +5,11 @@ import { db } from "../firebase";
 import AdminLayout from "../components/AdminLayout";
 import { Users, ClipboardList, AlertTriangle, CheckCircle } from "lucide-react";
 import { colors } from "./dashboardShared";
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+  PieChart, Pie, Cell,
+  BarChart, Bar, Legend
+} from "recharts";
 
 export default function AdminDashboard({ user }) {
   const navigate = useNavigate();
@@ -15,7 +20,7 @@ export default function AdminDashboard({ user }) {
   const [approvedUsers, setApprovedUsers] = useState([]);
   const [unreadAlerts, setUnreadAlerts] = useState(0);
   const [allBookings, setAllBookings] = useState([]);
-  const [shopsCount, setShopsCount] = useState("...");
+  const [shops, setShops] = useState([]);
 
   useEffect(() => {
     const unsubscribers = [];
@@ -32,7 +37,7 @@ export default function AdminDashboard({ user }) {
     }));
 
     unsubscribers.push(onSnapshot(collection(db, "shops"), (snap) => {
-      setShopsCount(snap.docs.length);
+      setShops(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     }));
 
     const qAlerts = query(
@@ -45,6 +50,102 @@ export default function AdminDashboard({ user }) {
 
     return () => unsubscribers.forEach(u => u());
   }, []);
+
+  // DATA PROCESSING FOR GRAPHS
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+
+  // 1. User Growth (Cumulative over months this year)
+  const userGrowthData = React.useMemo(() => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const counts = new Array(12).fill(0);
+    
+    users.forEach(u => {
+      let d = null;
+      if (u.createdAt?.seconds) d = new Date(u.createdAt.seconds * 1000);
+      else if (u.createdAt) d = new Date(u.createdAt);
+      
+      // If we don't have a date, let's just dump it in Jan for fallback, or skip it.
+      if (d && d.getFullYear() === currentYear) {
+        counts[d.getMonth()]++;
+      } else if (!d) {
+        counts[0]++; // Fallback for dummy data without dates
+      }
+    });
+
+    let cumulative = 0;
+    return months.map((m, i) => {
+      cumulative += counts[i];
+      return { name: m, Users: cumulative, New: counts[i] };
+    }).filter((_, i) => i <= currentMonth); 
+  }, [users, currentMonth, currentYear]);
+
+  // 2. Shop Status (Donut Chart)
+  const shopStatusData = React.useMemo(() => {
+    let active = 0;
+    let pending = 0;
+    let archived = 0;
+    shops.forEach(s => {
+      const st = (s.status || "").toLowerCase();
+      if (st === "archived") archived++;
+      else if (st === "pending") pending++;
+      else active++;
+    });
+    return [
+      { name: 'Active', value: active, color: colors.success },
+      { name: 'Pending', value: pending, color: colors.warning },
+      { name: 'Archived', value: archived, color: colors.danger }
+    ].filter(d => d.value > 0);
+  }, [shops]);
+
+  // 3. Bookings by Service (Stacked Bar Chart)
+  const chartColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+  const { bookingsData, uniqueServices } = React.useMemo(() => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const data = months.map(m => ({ name: m }));
+    const servicesSet = new Set();
+
+    allBookings.forEach(b => {
+      let mIndex = -1;
+      if (b.date && typeof b.date === 'string') {
+        const parts = b.date.split('-');
+        if (parts.length >= 2 && parseInt(parts[0]) === currentYear) {
+          mIndex = parseInt(parts[1]) - 1;
+        }
+      } else if (b.createdAt?.seconds) {
+        const d = new Date(b.createdAt.seconds * 1000);
+        if (d.getFullYear() === currentYear) mIndex = d.getMonth();
+      }
+
+      if (mIndex >= 0 && mIndex < 12) {
+        const service = b.serviceType || b.service || "Other";
+        servicesSet.add(service);
+        if (!data[mIndex][service]) data[mIndex][service] = 0;
+        data[mIndex][service]++;
+      }
+    });
+
+    const finalUniqueServices = new Set();
+    const trendingData = data.map(monthData => {
+      let topService = null;
+      let max = 0;
+      for (const [key, val] of Object.entries(monthData)) {
+        if (key !== 'name' && val > max) {
+          max = val;
+          topService = key;
+        }
+      }
+      
+      const newMonthData = { name: monthData.name };
+      if (topService) {
+        newMonthData[topService] = max;
+        finalUniqueServices.add(topService);
+      }
+      return newMonthData;
+    });
+
+    return { bookingsData: trendingData.filter((_, i) => i <= currentMonth), uniqueServices: Array.from(finalUniqueServices) };
+  }, [allBookings, currentMonth, currentYear]);
 
   return (
     <AdminLayout>
@@ -61,7 +162,7 @@ export default function AdminDashboard({ user }) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "24px", marginBottom: "32px" }}>
           {[
             { label: "Total Users", val: users.length, color: colors.navy, icon: <Users size={24} color={colors.navy} />, bg: "#eef2ff", path: "/admin/users" },
-            { label: "Active Shops", val: shopsCount, color: colors.success, icon: <CheckCircle size={24} color={colors.success} />, bg: "#ecfdf5", path: "/admin/shops" },
+            { label: "Active Shops", val: shops.filter(s => s.status !== 'archived' && s.status !== 'pending').length, color: colors.success, icon: <CheckCircle size={24} color={colors.success} />, bg: "#ecfdf5", path: "/admin/shops" },
             { label: "Overall Bookings", val: allBookings.length, color: colors.info, icon: <ClipboardList size={24} color={colors.info} />, bg: "#eff6ff", path: "/admin/reports" },
             { label: "System Alerts", val: unreadAlerts, color: colors.danger, icon: <AlertTriangle size={24} color={colors.danger} />, bg: "#fef2f2", path: "/admin/alerts" }
           ].map((m, i) => (
@@ -75,7 +176,75 @@ export default function AdminDashboard({ user }) {
           ))}
         </div>
 
-        {/* SPLIT SECTION */}
+        {/* NEW GRAPHS SECTION */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px", marginBottom: "32px" }}>
+          
+          {/* User Growth */}
+          <div style={{ background: "#fff", borderRadius: "20px", border: `1px solid ${colors.border}`, boxShadow: "0 2px 8px rgba(0,0,0,0.02)", padding: "24px", display: "flex", flexDirection: "column" }}>
+            <h3 style={{ margin: "0 0 24px 0", fontSize: "16px", fontWeight: "700", color: colors.textPrimary }}>User Growth ({currentYear})</h3>
+            <div style={{ flex: 1, minHeight: "220px" }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={userGrowthData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={colors.navy} stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor={colors.navy} stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.border} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: colors.textSecondary }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: colors.textSecondary }} />
+                  <RechartsTooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }} />
+                  <Area type="monotone" dataKey="Users" stroke={colors.navy} strokeWidth={3} fillOpacity={1} fill="url(#colorUsers)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Active Shops Distribution */}
+          <div style={{ background: "#fff", borderRadius: "20px", border: `1px solid ${colors.border}`, boxShadow: "0 2px 8px rgba(0,0,0,0.02)", padding: "24px", display: "flex", flexDirection: "column" }}>
+            <h3 style={{ margin: "0 0 8px 0", fontSize: "16px", fontWeight: "700", color: colors.textPrimary }}>Shop Status</h3>
+            <div style={{ flex: 1, minHeight: "220px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {shopStatusData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={shopStatusData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value" stroke="none">
+                      {shopStatusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }} itemStyle={{ color: colors.textPrimary, fontWeight: "700" }} />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: "12px", fontWeight: "600", color: colors.textSecondary }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div style={{ color: colors.textMuted, fontSize: "14px" }}>No shop data</div>
+              )}
+            </div>
+          </div>
+
+          {/* Bookings Overview */}
+          <div style={{ background: "#fff", borderRadius: "20px", border: `1px solid ${colors.border}`, boxShadow: "0 2px 8px rgba(0,0,0,0.02)", padding: "24px", display: "flex", flexDirection: "column" }}>
+            <h3 style={{ margin: "0 0 24px 0", fontSize: "16px", fontWeight: "700", color: colors.textPrimary }}>Booking Volume</h3>
+            <div style={{ flex: 1, minHeight: "220px" }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={bookingsData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.border} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: colors.textSecondary }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: colors.textSecondary }} />
+                  <RechartsTooltip cursor={{ fill: "#f1f5f9" }} contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }} />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: "12px", fontWeight: "600", paddingTop: "10px" }} />
+                  {uniqueServices.map((service, index) => (
+                    <Bar key={service} dataKey={service} stackId="a" fill={chartColors[index % chartColors.length]} />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+        </div>
+
+        {/* SPLIT SECTION (Pending Approvals & Recent Bookings) */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
           
           {/* PENDING APPROVALS */}

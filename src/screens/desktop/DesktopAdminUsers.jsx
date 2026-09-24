@@ -3,7 +3,7 @@ import { collection, onSnapshot, updateDoc, doc, deleteDoc, addDoc, serverTimest
 import { db } from "../../firebase";
 import { colors, ConfirmModal } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
-import { Check, X, Ban, Trash2, Search, UserCheck, Eye } from "lucide-react";
+import { Check, X, Ban, Trash2, Search, UserCheck, Eye, Archive } from "lucide-react";
 
 const getUserActivityStatus = (lastActiveAt) => {
   if (!lastActiveAt) return { text: "No data", color: colors.textMuted, dot: colors.border };
@@ -145,19 +145,19 @@ export default function DesktopAdminUsers() {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleArchive = async (id) => {
     setConfirmProps({
       isOpen: true,
-      title: "Delete User",
-      message: "Are you sure you want to permanently delete this user? This cannot be undone.",
+      title: "Archive User",
+      message: "Are you sure you want to archive this user? They will be hidden and their access will be revoked.",
       type: "danger",
       onConfirm: async () => {
         setConfirmProps({ isOpen: false });
         setActionLoading(id);
         try {
-          await deleteDoc(doc(db, "users", id));
+          await updateDoc(doc(db, "users", id), { status: "archived" });
         } catch (e) {
-          console.error("Failed to delete", e);
+          console.error("Failed to archive", e);
         }
         setActionLoading(null);
       }
@@ -183,7 +183,8 @@ export default function DesktopAdminUsers() {
     pending: users.filter(u => (u.status || "pending") === "pending").length,
     approved: users.filter(u => u.status === "approved").length,
     rejected: users.filter(u => u.status === "rejected").length,
-    restricted: users.filter(u => u.status === "restricted").length
+    restricted: users.filter(u => u.status === "restricted").length,
+    archived: users.filter(u => u.status === "archived").length
   };
 
   return (
@@ -214,7 +215,7 @@ export default function DesktopAdminUsers() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", background: "#fff", padding: "16px", borderRadius: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.02)", border: `1px solid ${colors.border}` }}>
           
           <div style={{ display: "flex", gap: "8px" }}>
-            {["pending", "approved", "rejected", "restricted"].map(f => (
+            {["pending", "approved", "rejected", "restricted", "archived"].map(f => (
               <button 
                 key={f}
                 onClick={() => setFilter(f)}
@@ -329,9 +330,19 @@ export default function DesktopAdminUsers() {
                           </>
                         )}
                         {(filter === "rejected" || filter === "restricted") && (
-                          <button disabled={actionLoading === u.id} onClick={() => handleDelete(u.id)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#f1f5f9", color: colors.textSecondary, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Delete Permanently">
-                            <Trash2 size={18} />
+                          <button disabled={actionLoading === u.id} onClick={() => handleArchive(u.id)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#fef2f2", color: colors.danger, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Archive User">
+                            <Archive size={18} />
                           </button>
+                        )}
+                        {filter === "archived" && (
+                          <>
+                            <button onClick={() => setSelectedUser(u)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.infoBg, color: colors.info, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="View Profile">
+                              <Eye size={18} />
+                            </button>
+                            <button disabled={actionLoading === u.id} onClick={() => handleStatusUpdate(u.id, "approved")} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.successBg, color: colors.success, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Restore User">
+                              <UserCheck size={18} />
+                            </button>
+                          </>
                         )}
                       </div>
                     </td>
