@@ -78,9 +78,9 @@ export const sendSmsNotification = async (toPhone, message) => {
     }
     
     const data = await response.json();
-    return data.success;
+    return { success: data.success, error: null };
   } catch (error) {
     console.error("Failed to send SMS notification:", error);
-    return false;
+    return { success: false, error: error.message };
   }
 };

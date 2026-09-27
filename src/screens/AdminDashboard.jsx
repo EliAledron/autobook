@@ -315,9 +315,9 @@ export default function AdminDashboard({ user }) {
                   const testPhone = prompt("Enter your phone number (e.g. +1234567890):");
                   if (testPhone) {
                     alert("Sending SMS test...");
-                    const success = await sendSmsNotification(testPhone, "Hello from AutoBook! This is a test Brevo SMS message.");
-                    if (success) alert("Test SMS Sent successfully!");
-                    else alert("Failed to send test SMS. Check backend logs.");
+                    const result = await sendSmsNotification(testPhone, "Hello from AutoBook! This is a test Brevo SMS message.");
+                    if (result && result.success) alert("Test SMS Sent successfully!");
+                    else alert("Failed: " + (result?.error || "Unknown error"));
                   }
                 }}
               >
