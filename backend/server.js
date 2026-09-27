@@ -17,20 +17,8 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     credential: cert(serviceAccount)
   });
 } else {
-  console.warn('⚠️ FIREBASE_SERVICE_ACCOUNT env var is missing! FCM and Auth will fail.');
   initializeApp();
 }
-
-// Nodemailer setup
-const transporter = nodemailer.createTransport({
-  host: 'smtp-relay.brevo.com',
-  port: 587,
-  secure: false, // true for 465, false for other ports
-  auth: {
-    user: process.env.BREVO_SMTP_LOGIN || process.env.GMAIL_EMAIL,
-    pass: process.env.BREVO_SMTP_PASSWORD || process.env.GMAIL_PASSWORD,
-  },
-});
 
 // Middleware to verify Firebase Auth token
 const authenticate = async (req, res, next) => {
@@ -51,7 +39,7 @@ const authenticate = async (req, res, next) => {
 };
 
 // ==========================================
-// ENDPOINT: SEND EMAIL
+// ENDPOINT: SEND EMAIL (VIA BREVO API)
 // ==========================================
 app.post('/api/send-email', authenticate, async (req, res) => {
   try {
@@ -61,15 +49,31 @@ app.post('/api/send-email', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const mailOptions = {
-      from: `"AutoBook" <${process.env.BREVO_SMTP_LOGIN || process.env.GMAIL_EMAIL}>`,
-      to: email,
-      subject: subject,
-      html: html,
-    };
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': process.env.BREVO_API_KEY,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        sender: {
+          name: process.env.BREVO_SMS_SENDER_NAME || 'AutoBook',
+          email: process.env.BREVO_SMTP_LOGIN || process.env.GMAIL_EMAIL
+        },
+        to: [{ email: email }],
+        subject: subject,
+        htmlContent: html
+      })
+    });
 
-    const info = await transporter.sendMail(mailOptions);
-    res.status(200).json({ success: true, messageId: info.messageId });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to send email via Brevo API');
+    }
+
+    res.status(200).json({ success: true, messageId: data.messageId });
   } catch (error) {
     console.error('Email Error:', error);
     res.status(500).json({ error: error.message });
