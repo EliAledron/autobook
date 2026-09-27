@@ -62,7 +62,7 @@ app.post('/api/send-email', authenticate, async (req, res) => {
     }
 
     const mailOptions = {
-      from: `"AutoBook" <${process.env.GMAIL_EMAIL}>`,
+      from: `"AutoBook" <${process.env.BREVO_SMTP_LOGIN || process.env.GMAIL_EMAIL}>`,
       to: email,
       subject: subject,
       html: html,

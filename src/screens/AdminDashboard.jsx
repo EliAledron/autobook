@@ -329,9 +329,9 @@ export default function AdminDashboard({ user }) {
                 onClick={async () => {
                   if (user?.email) {
                     alert("Sending Email test...");
-                    const success = await sendEmailNotification(user.email, "AutoBook Test Email", "<h1>It Works!</h1><p>Your Brevo email setup is working perfectly.</p>");
-                    if (success) alert("Test Email Sent to " + user.email);
-                    else alert("Failed to send test email. Check backend logs.");
+                    const result = await sendEmailNotification(user.email, "AutoBook Test Email", "<h1>It Works!</h1><p>Your Brevo email setup is working perfectly.</p>");
+                    if (result && result.success) alert("Test Email Sent to " + user.email);
+                    else alert("Failed: " + (result?.error || "Unknown error"));
                   } else {
                     alert("No email found for your account.");
                   }

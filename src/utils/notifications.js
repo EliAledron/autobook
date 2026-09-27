@@ -47,10 +47,13 @@ export const sendEmailNotification = async (email, subject, html) => {
     });
     
     const data = await response.json();
-    return data.success;
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to send Email");
+    }
+    return { success: data.success, error: null };
   } catch (error) {
     console.error("Failed to send email notification:", error);
-    return false;
+    return { success: false, error: error.message };
   }
 };
 
