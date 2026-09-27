@@ -19,6 +19,7 @@ export default function ShopSelect() {
 
   const [showNeedsModal, setShowNeedsModal] = useState(false);
   const [selectedNeeds, setSelectedNeeds] = useState([]);
+  const [otherText, setOtherText] = useState("");
 
   useEffect(() => {
     if (loading) return;
@@ -229,7 +230,7 @@ export default function ShopSelect() {
             <h2 style={{ fontSize: "22px", fontWeight: "800", color: colors.textPrimary, margin: "0 0 8px 0" }}>What do you need today?</h2>
             <p style={{ fontSize: "14px", color: colors.textSecondary, marginBottom: "24px", lineHeight: "1.5" }}>Select the services you're looking for, and we'll intelligently match you with the best-rated shops.</p>
             
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center", marginBottom: "32px" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center", marginBottom: selectedNeeds.includes("Other") ? "16px" : "32px" }}>
               {NEEDS_OPTIONS.map(need => {
                 const isSelected = selectedNeeds.includes(need);
                 return (
@@ -243,10 +244,27 @@ export default function ShopSelect() {
               })}
             </div>
             
+            {selectedNeeds.includes("Other") && (
+              <div style={{ marginBottom: "32px" }}>
+                <input 
+                  type="text" 
+                  value={otherText} 
+                  onChange={e => setOtherText(e.target.value)} 
+                  placeholder="Please specify what you need..." 
+                  style={{ width: "100%", padding: "14px 16px", borderRadius: "12px", border: `1.5px solid ${colors.info}`, fontSize: "14px", outline: "none", boxSizing: "border-box", background: colors.infoBg }}
+                  autoFocus
+                />
+              </div>
+            )}
+            
             <button onClick={() => {
               setShowNeedsModal(false);
-              setSearch(selectedNeeds.join(" "));
-            }} disabled={selectedNeeds.length === 0} style={{ width: "100%", padding: "16px", borderRadius: "16px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", fontSize: "15px", fontWeight: "800", border: "none", cursor: selectedNeeds.length === 0 ? "not-allowed" : "pointer", opacity: selectedNeeds.length === 0 ? 0.5 : 1, boxShadow: "0 4px 12px rgba(26,58,92,0.2)", transition: "opacity 0.2s" }}>
+              const terms = selectedNeeds.filter(n => n !== "Other");
+              if (selectedNeeds.includes("Other") && otherText.trim()) {
+                terms.push(otherText.trim());
+              }
+              setSearch(terms.join(" "));
+            }} disabled={selectedNeeds.length === 0 || (selectedNeeds.includes("Other") && !otherText.trim())} style={{ width: "100%", padding: "16px", borderRadius: "16px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", fontSize: "15px", fontWeight: "800", border: "none", cursor: (selectedNeeds.length === 0 || (selectedNeeds.includes("Other") && !otherText.trim())) ? "not-allowed" : "pointer", opacity: (selectedNeeds.length === 0 || (selectedNeeds.includes("Other") && !otherText.trim())) ? 0.5 : 1, boxShadow: "0 4px 12px rgba(26,58,92,0.2)", transition: "opacity 0.2s" }}>
               Find Shop
             </button>
           </div>
