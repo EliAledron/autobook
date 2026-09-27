@@ -23,10 +23,12 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 
 // Nodemailer setup
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp-relay.brevo.com',
+  port: 587,
+  secure: false, // true for 465, false for other ports
   auth: {
-    user: process.env.GMAIL_EMAIL,
-    pass: process.env.GMAIL_PASSWORD,
+    user: process.env.BREVO_SMTP_LOGIN || process.env.GMAIL_EMAIL,
+    pass: process.env.BREVO_SMTP_PASSWORD || process.env.GMAIL_PASSWORD,
   },
 });
 
@@ -95,6 +97,45 @@ app.post('/api/send-push', authenticate, async (req, res) => {
     res.status(200).json({ success: true, response });
   } catch (error) {
     console.error('Push Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==========================================
+// ENDPOINT: SEND SMS (VIA BREVO)
+// ==========================================
+app.post('/api/send-sms', authenticate, async (req, res) => {
+  try {
+    const { toPhone, message } = req.body;
+
+    if (!toPhone || !message) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const response = await fetch('https://api.brevo.com/v3/transactionalSMS/sms', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': process.env.BREVO_API_KEY,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        type: 'transactional',
+        sender: process.env.BREVO_SMS_SENDER_NAME || 'AutoBook',
+        recipient: toPhone,
+        content: message
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to send SMS via Brevo');
+    }
+
+    res.status(200).json({ success: true, messageId: data.messageId });
+  } catch (error) {
+    console.error('SMS Error:', error.message);
     res.status(500).json({ error: error.message });
   }
 });

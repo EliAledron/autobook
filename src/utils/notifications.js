@@ -53,3 +53,34 @@ export const sendEmailNotification = async (email, subject, html) => {
     return false;
   }
 };
+
+/**
+ * Sends an SMS message via our Render backend using Brevo.
+ */
+export const sendSmsNotification = async (toPhone, message) => {
+  if (!auth.currentUser || !toPhone) return false;
+  
+  try {
+    const idToken = await auth.currentUser.getIdToken();
+    
+    const response = await fetch(`${BACKEND_URL}/api/send-sms`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${idToken}`
+      },
+      body: JSON.stringify({ toPhone, message })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to send SMS");
+    }
+    
+    const data = await response.json();
+    return data.success;
+  } catch (error) {
+    console.error("Failed to send SMS notification:", error);
+    return false;
+  }
+};
