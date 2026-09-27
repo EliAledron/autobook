@@ -59,7 +59,7 @@ app.post('/api/send-email', authenticate, async (req, res) => {
       body: JSON.stringify({
         sender: {
           name: process.env.BREVO_SMS_SENDER_NAME || 'AutoBook',
-          email: process.env.BREVO_SMTP_LOGIN || process.env.GMAIL_EMAIL
+          email: process.env.GMAIL_EMAIL // Must be their actual verified email, not the SMTP login handle
         },
         to: [{ email: email }],
         subject: subject,
