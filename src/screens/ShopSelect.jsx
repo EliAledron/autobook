@@ -130,27 +130,30 @@ export default function ShopSelect() {
         <div style={{ ...sh.sectionLabel, fontSize: "13px", color: colors.textPrimary, letterSpacing: "0.5px", marginBottom: "1rem" }}>Available shops</div>
 
         {/* SEARCH & FILTER */}
-        <div style={{ display: "flex", gap: "10px", marginBottom: "1.5rem" }}>
-          <button 
-            onClick={() => setShowNeedsModal(true)}
-            style={{ display: "flex", alignItems: "center", gap: "6px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", border: "none", borderRadius: "24px", padding: "0 20px", fontWeight: "700", fontSize: "14px", cursor: "pointer", boxShadow: "0 4px 12px rgba(26,58,92,0.15)" }}
-          >
-            <Sparkles size={16} /> Match
-          </button>
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "1.5rem" }}>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button 
+              onClick={() => setShowNeedsModal(true)}
+              style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", border: "none", borderRadius: "24px", padding: "14px", fontWeight: "700", fontSize: "14px", cursor: "pointer", boxShadow: "0 4px 12px rgba(26,58,92,0.15)" }}
+            >
+              <Sparkles size={16} /> Smart Match
+            </button>
+            <SharedFilterSelect
+              value={minRating}
+              onChange={(val) => setMinRating(Number(val))}
+              options={[
+                { label: "All Ratings", value: 0 },
+                { label: "4.5+ Stars", value: 4.5 },
+                { label: "4.0+ Stars", value: 4.0 },
+                { label: "3.0+ Stars", value: 3.0 },
+              ]}
+              style={{ flex: 1 }}
+            />
+          </div>
           <SharedSearchBar
             value={search}
             onChange={setSearch}
             placeholder="Search shops or services..."
-          />
-          <SharedFilterSelect
-            value={minRating}
-            onChange={(val) => setMinRating(Number(val))}
-            options={[
-              { label: "All Ratings", value: 0 },
-              { label: "4.5+ Stars", value: 4.5 },
-              { label: "4.0+ Stars", value: 4.0 },
-              { label: "3.0+ Stars", value: 3.0 },
-            ]}
           />
         </div>
 
