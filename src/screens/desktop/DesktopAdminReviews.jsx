@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { collection, onSnapshot, deleteDoc, doc } from "firebase/firestore";
+import { collection, onSnapshot, updateDoc, doc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { colors, ConfirmModal } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
-import { Star, Trash2, Search, MessageSquare } from "lucide-react";
+import { Star, Archive, Search, MessageSquare, RotateCcw } from "lucide-react";
 
 export default function DesktopAdminReviews() {
   const [reviews, setReviews] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
-  const [idToDelete, setIdToDelete] = useState(null);
+  const [idToArchive, setIdToArchive] = useState(null);
+  const [idToRestore, setIdToRestore] = useState(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
     // Note: Assuming reviews are kept in a global 'reviews' collection, 
@@ -26,17 +28,24 @@ export default function DesktopAdminReviews() {
     return () => unsub();
   }, []);
 
-  const deleteReview = (id) => {
-    setIdToDelete(id);
+  const confirmArchiveReview = async () => {
+    if (!idToArchive) return;
+    try { await updateDoc(doc(db, "reviews", idToArchive), { status: "archived" }); } catch (e) {}
+    setIdToArchive(null);
   };
 
-  const confirmDeleteReview = async () => {
-    if (!idToDelete) return;
-    try { await deleteDoc(doc(db, "reviews", idToDelete)); } catch (e) {}
-    setIdToDelete(null);
+  const confirmRestoreReview = async () => {
+    if (!idToRestore) return;
+    try { await updateDoc(doc(db, "reviews", idToRestore), { status: "active" }); } catch (e) {}
+    setIdToRestore(null);
   };
 
   const filteredReviews = reviews.filter(r => {
+    if (showArchived) {
+      if (r.status !== "archived") return false;
+    } else {
+      if (r.status === "archived") return false;
+    }
     const s = search.toLowerCase();
     return (r.customerName || "").toLowerCase().includes(s) || 
            (r.comment || "").toLowerCase().includes(s) || 
@@ -46,13 +55,22 @@ export default function DesktopAdminReviews() {
   return (
     <>
       <ConfirmModal 
-        isOpen={!!idToDelete} 
-        title="Delete Review" 
-        message="Permanently delete this review from the platform?" 
-        onConfirm={confirmDeleteReview} 
-        onCancel={() => setIdToDelete(null)} 
+        isOpen={!!idToArchive} 
+        title="Archive Review" 
+        message="Are you sure you want to archive this review? It will be hidden from the platform." 
+        onConfirm={confirmArchiveReview} 
+        onCancel={() => setIdToArchive(null)} 
         type="danger" 
-        confirmText="Delete" 
+        confirmText="Archive" 
+      />
+      <ConfirmModal 
+        isOpen={!!idToRestore} 
+        title="Restore Review" 
+        message="Are you sure you want to restore this review? It will be visible on the platform again." 
+        onConfirm={confirmRestoreReview} 
+        onCancel={() => setIdToRestore(null)} 
+        type="success" 
+        confirmText="Restore" 
       />
       <RoleBasedWrapper title="Platform Reviews">
         <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "32px" }}>
@@ -65,7 +83,23 @@ export default function DesktopAdminReviews() {
         </div>
 
         {/* CONTROLS */}
-        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: "24px", background: "#fff", padding: "16px", borderRadius: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.02)", border: `1px solid ${colors.border}` }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", background: "#fff", padding: "16px", borderRadius: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.02)", border: `1px solid ${colors.border}` }}>
+          <div>
+            <button 
+              onClick={() => setShowArchived(!showArchived)}
+              style={{
+                padding: "10px 16px", 
+                borderRadius: "12px", 
+                border: `1px solid ${showArchived ? colors.info : colors.border}`,
+                background: showArchived ? colors.infoBg : "#fff",
+                color: showArchived ? colors.info : colors.textSecondary,
+                fontSize: "14px", fontWeight: "600", cursor: "pointer",
+                transition: "all 0.2s"
+              }}
+            >
+              {showArchived ? "Viewing Archived" : "Show Archived"}
+            </button>
+          </div>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", background: "#f8fafc", padding: "10px 16px", borderRadius: "12px", border: `1px solid ${colors.border}`, width: "350px" }}>
             <Search size={18} color={colors.textMuted} />
             <input 
@@ -125,9 +159,15 @@ export default function DesktopAdminReviews() {
                       {r.createdAt?.seconds ? new Date(r.createdAt.seconds * 1000).toLocaleDateString() : "Unknown"}
                     </td>
                     <td style={{ padding: "16px 24px", textAlign: "right", verticalAlign: "top" }}>
-                      <button onClick={() => deleteReview(r.id)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.dangerBg, color: colors.danger, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }} title="Delete Review">
-                        <Trash2 size={18} />
-                      </button>
+                      {r.status === "archived" ? (
+                        <button onClick={() => setIdToRestore(r.id)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.successBg, color: colors.success, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }} title="Restore Review">
+                          <RotateCcw size={18} />
+                        </button>
+                      ) : (
+                        <button onClick={() => setIdToArchive(r.id)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.dangerBg, color: colors.danger, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }} title="Archive Review">
+                          <Archive size={18} />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
