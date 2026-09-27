@@ -241,9 +241,13 @@ export function SharedSearchBar({ value, onChange, placeholder = "Search...", st
 
 export function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, confirmText = "Confirm", cancelText = "Cancel", type = "primary", requireInput = false, inputPlaceholder = "Type here...", inputOptions = null }) {
   const [inputValue, setInputValue] = useState("");
+  const [customValue, setCustomValue] = useState("");
 
   useEffect(() => {
-    if (isOpen) setInputValue("");
+    if (isOpen) {
+      setInputValue("");
+      setCustomValue("");
+    }
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -257,7 +261,8 @@ export function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, conf
 
   const style = typeColors[type] || typeColors.primary;
   
-  const isConfirmDisabled = requireInput && !inputValue.trim();
+  const finalInputValue = inputValue === "Other" ? customValue : inputValue;
+  const isConfirmDisabled = requireInput && !finalInputValue.trim();
 
   return (
     <div style={{
@@ -294,13 +299,23 @@ export function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, conf
         {requireInput && (
           <div style={{ marginBottom: "24px", textAlign: "left" }}>
             {inputOptions ? (
-              <CustomDropdown
-                value={inputValue}
-                onChange={setInputValue}
-                options={inputOptions}
-                placeholder={inputPlaceholder}
-                style={{ width: "100%", padding: "14px 16px", borderRadius: "12px", border: `1px solid ${colors.border}`, fontSize: "14px", background: "#f9fafb" }}
-              />
+              <>
+                <CustomDropdown
+                  value={inputValue}
+                  onChange={setInputValue}
+                  options={inputOptions}
+                  placeholder={inputPlaceholder}
+                  style={{ width: "100%", padding: "14px 16px", borderRadius: "12px", border: `1px solid ${colors.border}`, fontSize: "14px", background: "#f9fafb" }}
+                />
+                {inputValue === "Other" && (
+                  <textarea 
+                    value={customValue}
+                    onChange={e => setCustomValue(e.target.value)}
+                    placeholder="Please specify your reason..."
+                    style={{ width: "100%", padding: "14px 16px", borderRadius: "12px", border: `1px solid ${colors.border}`, fontSize: "14px", fontFamily: "inherit", boxSizing: "border-box", minHeight: "80px", outline: "none", resize: "vertical", background: "#f9fafb", marginTop: "12px" }}
+                  />
+                )}
+              </>
             ) : (
               <textarea 
                 value={inputValue}
@@ -316,7 +331,7 @@ export function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, conf
           <button onClick={onCancel} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.bg, border: `1px solid ${colors.border}`, color: colors.textSecondary, fontWeight: "700", cursor: "pointer", fontSize: "14px", transition: "all 0.2s" }}>
             {cancelText}
           </button>
-          <button onClick={() => isConfirmDisabled ? null : onConfirm(inputValue)} disabled={isConfirmDisabled} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: style.bg, border: "none", color: style.text, fontWeight: "700", cursor: isConfirmDisabled ? "not-allowed" : "pointer", fontSize: "14px", transition: "all 0.2s", opacity: isConfirmDisabled ? 0.5 : 1, boxShadow: !isConfirmDisabled && type === "danger" ? "0 4px 12px rgba(220,38,38,0.25)" : (!isConfirmDisabled && type === "success" ? "0 4px 12px rgba(22,163,74,0.25)" : (!isConfirmDisabled && type === "blueGradient" ? "0 4px 12px rgba(37,99,235,0.25)" : "none")) }}>
+          <button onClick={() => isConfirmDisabled ? null : onConfirm(finalInputValue)} disabled={isConfirmDisabled} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: style.bg, border: "none", color: style.text, fontWeight: "700", cursor: isConfirmDisabled ? "not-allowed" : "pointer", fontSize: "14px", transition: "all 0.2s", opacity: isConfirmDisabled ? 0.5 : 1, boxShadow: !isConfirmDisabled && type === "danger" ? "0 4px 12px rgba(220,38,38,0.25)" : (!isConfirmDisabled && type === "success" ? "0 4px 12px rgba(22,163,74,0.25)" : (!isConfirmDisabled && type === "blueGradient" ? "0 4px 12px rgba(37,99,235,0.25)" : "none")) }}>
             {confirmText}
           </button>
         </div>
