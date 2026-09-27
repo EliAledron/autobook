@@ -7,7 +7,7 @@ import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
 import { Store, Star, Sparkles, X } from "lucide-react";
 
-export const NEEDS_OPTIONS = ["Oil Change", "Brake Repair", "Tire Service", "Engine Diagnostics", "AC Cleaning", "Battery Replacement", "Paint & Body", "General Maintenance", "Transmission", "Detailing"];
+export const NEEDS_OPTIONS = ["Oil Change", "Brake Repair", "Tire Service", "Engine Diagnostics", "AC Cleaning", "Battery Replacement", "Paint & Body", "General Maintenance", "Transmission", "Detailing", "Other"];
 
 export default function ShopSelect() {
   const navigate = useNavigate();
@@ -247,7 +247,7 @@ export default function ShopSelect() {
               setShowNeedsModal(false);
               setSearch(selectedNeeds.join(" "));
             }} disabled={selectedNeeds.length === 0} style={{ width: "100%", padding: "16px", borderRadius: "16px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", fontSize: "15px", fontWeight: "800", border: "none", cursor: selectedNeeds.length === 0 ? "not-allowed" : "pointer", opacity: selectedNeeds.length === 0 ? 0.5 : 1, boxShadow: "0 4px 12px rgba(26,58,92,0.2)", transition: "opacity 0.2s" }}>
-              Find My Perfect Shop
+              Find Shop
             </button>
           </div>
         </div>
