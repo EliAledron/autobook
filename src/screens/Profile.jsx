@@ -574,40 +574,44 @@ export default function Profile() {
         </div>
 
         {/* SIGN OUT */}
-        {/* TEST BREVO NOTIFICATIONS */}
-        <div style={sh.sectionLabel}>Test Integrations (Admin/Dev)</div>
-        <div className="profile-card" style={{ ...sh.card, padding: "20px", borderRadius: "20px", border: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.03)", marginBottom: "32px", display: "flex", flexDirection: "column", gap: "10px" }}>
-          <button
-            style={{ width: "100%", padding: "16px", fontSize: "15px", fontWeight: "700", border: "none", borderRadius: "12px", cursor: "pointer", background: colors.blue, color: "#fff" }}
-            onClick={async () => {
-              const testPhone = prompt("Enter your phone number (e.g. +1234567890):");
-              if (testPhone) {
-                showToast("Sending SMS test...");
-                const success = await sendSmsNotification(testPhone, "Hello from AutoBook! This is a test Brevo SMS message.");
-                if (success) showToast("Test SMS Sent successfully!");
-                else showToast("Failed to send test SMS. Check backend logs.");
-              }
-            }}
-          >
-            Test Brevo SMS
-          </button>
-          
-          <button
-            style={{ width: "100%", padding: "16px", fontSize: "15px", fontWeight: "700", border: "none", borderRadius: "12px", cursor: "pointer", background: colors.navy, color: "#fff" }}
-            onClick={async () => {
-              if (email) {
-                showToast("Sending Email test...");
-                const success = await sendEmailNotification(email, "AutoBook Test Email", "<h1>It Works!</h1><p>Your Brevo email setup is working perfectly.</p>");
-                if (success) showToast("Test Email Sent to " + email);
-                else showToast("Failed to send test email. Check backend logs.");
-              } else {
-                showToast("No email found for your account.");
-              }
-            }}
-          >
-            Test Brevo Email
-          </button>
-        </div>
+        {/* TEST BREVO NOTIFICATIONS - ONLY VISIBLE TO DEV */}
+        {role.toLowerCase() === "dev" && (
+          <>
+            <div style={sh.sectionLabel}>Test Integrations (Dev)</div>
+            <div className="profile-card" style={{ ...sh.card, padding: "20px", borderRadius: "20px", border: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.03)", marginBottom: "32px", display: "flex", flexDirection: "column", gap: "10px" }}>
+              <button
+                style={{ width: "100%", padding: "16px", fontSize: "15px", fontWeight: "700", border: "none", borderRadius: "12px", cursor: "pointer", background: colors.blue, color: "#fff" }}
+                onClick={async () => {
+                  const testPhone = prompt("Enter your phone number (e.g. +1234567890):");
+                  if (testPhone) {
+                    showToast("Sending SMS test...");
+                    const success = await sendSmsNotification(testPhone, "Hello from AutoBook! This is a test Brevo SMS message.");
+                    if (success) showToast("Test SMS Sent successfully!");
+                    else showToast("Failed to send test SMS. Check backend logs.");
+                  }
+                }}
+              >
+                Test Brevo SMS
+              </button>
+              
+              <button
+                style={{ width: "100%", padding: "16px", fontSize: "15px", fontWeight: "700", border: "none", borderRadius: "12px", cursor: "pointer", background: colors.navy, color: "#fff" }}
+                onClick={async () => {
+                  if (email) {
+                    showToast("Sending Email test...");
+                    const success = await sendEmailNotification(email, "AutoBook Test Email", "<h1>It Works!</h1><p>Your Brevo email setup is working perfectly.</p>");
+                    if (success) showToast("Test Email Sent to " + email);
+                    else showToast("Failed to send test email. Check backend logs.");
+                  } else {
+                    showToast("No email found for your account.");
+                  }
+                }}
+              >
+                Test Brevo Email
+              </button>
+            </div>
+          </>
+        )}
 
         <div style={sh.sectionLabel}>Account</div>
         <div className="profile-card" style={{ ...sh.card, padding: 0, borderRadius: "20px", border: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.03)" }}>
