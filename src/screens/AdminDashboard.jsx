@@ -5,6 +5,7 @@ import { db } from "../firebase";
 import AdminLayout from "../components/AdminLayout";
 import { Users, ClipboardList, AlertTriangle, CheckCircle } from "lucide-react";
 import { colors } from "./dashboardShared";
+import { sendEmailNotification, sendSmsNotification } from "../utils/notifications";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
@@ -299,6 +300,45 @@ export default function AdminDashboard({ user }) {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+
+          {/* TEST BREVO NOTIFICATIONS */}
+          <div style={{ background: "#fff", borderRadius: "20px", border: `1px solid ${colors.border}`, boxShadow: "0 2px 8px rgba(0,0,0,0.02)", padding: "24px", overflow: "hidden" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: colors.textPrimary }}>Test Integrations</h3>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <button
+                style={{ width: "100%", padding: "16px", fontSize: "15px", fontWeight: "700", border: "none", borderRadius: "12px", cursor: "pointer", background: colors.blue, color: "#fff" }}
+                onClick={async () => {
+                  const testPhone = prompt("Enter your phone number (e.g. +1234567890):");
+                  if (testPhone) {
+                    alert("Sending SMS test...");
+                    const success = await sendSmsNotification(testPhone, "Hello from AutoBook! This is a test Brevo SMS message.");
+                    if (success) alert("Test SMS Sent successfully!");
+                    else alert("Failed to send test SMS. Check backend logs.");
+                  }
+                }}
+              >
+                Test Brevo SMS
+              </button>
+              
+              <button
+                style={{ width: "100%", padding: "16px", fontSize: "15px", fontWeight: "700", border: "none", borderRadius: "12px", cursor: "pointer", background: colors.navy, color: "#fff" }}
+                onClick={async () => {
+                  if (user?.email) {
+                    alert("Sending Email test...");
+                    const success = await sendEmailNotification(user.email, "AutoBook Test Email", "<h1>It Works!</h1><p>Your Brevo email setup is working perfectly.</p>");
+                    if (success) alert("Test Email Sent to " + user.email);
+                    else alert("Failed to send test email. Check backend logs.");
+                  } else {
+                    alert("No email found for your account.");
+                  }
+                }}
+              >
+                Test Brevo Email
+              </button>
             </div>
           </div>
 
