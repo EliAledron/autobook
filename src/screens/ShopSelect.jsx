@@ -12,7 +12,7 @@ export default function ShopSelect() {
   const location = useLocation();
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(location.state?.searchTerms || "");
   const [minRating, setMinRating] = useState(0);
 
   useEffect(() => {

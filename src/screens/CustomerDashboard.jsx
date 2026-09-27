@@ -8,7 +8,7 @@ import { doc, getDoc, collection, query, where, getDocs, orderBy, addDoc, server
 import { sh, colors, getGreeting, EmptyState } from "./dashboardShared";
 import TopbarAvatar from "./TopbarAvatar";
 import CarLoader from "./CarLoader";
-import { Droplet, Settings, ShieldAlert, Snowflake, AlertTriangle, Calendar, Wrench } from "lucide-react";
+import { Droplet, Settings, ShieldAlert, Snowflake, AlertTriangle, Calendar, Wrench, Sparkles, X } from "lucide-react";
 
 // ─── Quick Action SVG Icons ────────────────────────────────────────────────────
 const IcoBook    = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>;
@@ -18,8 +18,12 @@ const IcoSearch  = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="n
 const IcoCar     = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 17H3v-5l2-5h14l2 5v5h-2"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>;
 const IcoHistory = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>;
 const IcoStar    = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>;
+const IcoSparkles= () => <Sparkles size={22} />;
+
+export const NEEDS_OPTIONS = ["Oil Change", "Brake Repair", "Tire Service", "Engine Diagnostics", "AC Cleaning", "Battery Replacement", "Paint & Body", "General Maintenance", "Transmission", "Detailing"];
 
 const QUICK_ACTIONS = [
+  { id: "needs",    Icon: IcoSparkles,label: "Smart Match",      sub: "Find perfect shop",  path: "needs",                 iconColor: "#ec4899", iconBg: "#fce7f3" },
   { id: "book",     Icon: IcoBook,    label: "Book a Service",   sub: "Schedule a repair",  path: "/customer/shop-select", iconColor: "#2a5298", iconBg: "#dbeafe" },
   // { id: "checkup",  Icon: IcoDiag,    label: "Diagnostic Check", sub: "Analyze symptoms", path: "/customer/checkup", iconColor: "#0d9488", iconBg: "#ccfbf1" },
   { id: "reviews",  Icon: IcoStar,    label: "My Reviews",       sub: "Shops I've rated",   path: "/customer/reviews",     iconColor: "#7c3aed", iconBg: "#ede9fe" },
@@ -118,11 +122,29 @@ export default function CustomerDashboard() {
   const [selectedVehicleId, setSelectedVehicleId] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  
+  // Smart Match Modal State
+  const [showNeedsModal, setShowNeedsModal] = useState(false);
+  const [selectedNeeds, setSelectedNeeds] = useState([]);
+
   useEffect(() => {
     if (loading) return;
     setAnimate(false);
     const t = setTimeout(() => setAnimate(true), 100);
     return () => clearTimeout(t);
+  }, [loading]);
+
+  useEffect(() => {
+    if (loading) return;
+    const lastShown = localStorage.getItem('lastNeedsFormDate');
+    const today = new Date().toDateString();
+    if (lastShown !== today) {
+      const t = setTimeout(() => {
+        setShowNeedsModal(true);
+        localStorage.setItem('lastNeedsFormDate', today);
+      }, 1500);
+      return () => clearTimeout(t);
+    }
   }, [loading]);
 
   useEffect(() => {
@@ -371,7 +393,13 @@ export default function CustomerDashboard() {
               key={id}
               className="customer-card"
               style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "12px", cursor: "pointer", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}
-              onClick={() => navigate(path)}
+              onClick={() => {
+                if (path === "needs") {
+                  setShowNeedsModal(true);
+                } else {
+                  navigate(path);
+                }
+              }}
             >
               <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", color: iconColor }}>
                 <Icon />
@@ -585,6 +613,43 @@ export default function CustomerDashboard() {
         </div>
       </div>
 
+      {/* Smart Match Needs Assessment Modal */}
+      {showNeedsModal && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }} onClick={() => setShowNeedsModal(false)}>
+          <div style={{ background: colors.white, borderRadius: "24px", padding: "32px 24px", maxWidth: "420px", width: "100%", textAlign: "center", position: "relative", animation: "ab-slide-up-modal 0.3s ease-out" }} onClick={e => e.stopPropagation()}>
+            <button onClick={() => setShowNeedsModal(false)} style={{ position: "absolute", top: "16px", right: "16px", background: "none", border: "none", fontSize: "20px", color: colors.textMuted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={24}/></button>
+            
+            <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: colors.infoBg, color: colors.info, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+              <Sparkles size={32} />
+            </div>
+            
+            <h2 style={{ fontSize: "22px", fontWeight: "800", color: colors.textPrimary, margin: "0 0 8px 0" }}>What do you need today?</h2>
+            <p style={{ fontSize: "14px", color: colors.textSecondary, marginBottom: "24px", lineHeight: "1.5" }}>Select the services you're looking for, and we'll intelligently match you with the best-rated shops.</p>
+            
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center", marginBottom: "32px" }}>
+              {NEEDS_OPTIONS.map(need => {
+                const isSelected = selectedNeeds.includes(need);
+                return (
+                  <button key={need} onClick={() => {
+                    if (isSelected) setSelectedNeeds(selectedNeeds.filter(n => n !== need));
+                    else setSelectedNeeds([...selectedNeeds, need]);
+                  }} style={{ padding: "8px 16px", borderRadius: "20px", fontSize: "13px", fontWeight: "600", border: `1.5px solid ${isSelected ? colors.info : colors.border}`, background: isSelected ? colors.infoBg : "#fff", color: isSelected ? colors.info : colors.textSecondary, cursor: "pointer", transition: "all 0.2s" }}>
+                    {need}
+                  </button>
+                )
+              })}
+            </div>
+            
+            <button onClick={() => {
+              setShowNeedsModal(false);
+              navigate("/customer/shop-select", { state: { searchTerms: selectedNeeds.join(" ") } });
+            }} disabled={selectedNeeds.length === 0} style={{ width: "100%", padding: "16px", borderRadius: "16px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", fontSize: "15px", fontWeight: "800", border: "none", cursor: selectedNeeds.length === 0 ? "not-allowed" : "pointer", opacity: selectedNeeds.length === 0 ? 0.5 : 1, boxShadow: "0 4px 12px rgba(26,58,92,0.2)", transition: "opacity 0.2s" }}>
+              Find My Perfect Shop
+            </button>
           </div>
+        </div>
+      )}
+
+    </div>
   );
 }
