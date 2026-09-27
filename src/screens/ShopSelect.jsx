@@ -5,7 +5,9 @@ import { db } from "../firebase";
 import { sh, colors, EmptyState, SharedSearchBar, SharedFilterSelect } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
-import { Store, Star } from "lucide-react";
+import { Store, Star, Sparkles, X } from "lucide-react";
+
+export const NEEDS_OPTIONS = ["Oil Change", "Brake Repair", "Tire Service", "Engine Diagnostics", "AC Cleaning", "Battery Replacement", "Paint & Body", "General Maintenance", "Transmission", "Detailing"];
 
 export default function ShopSelect() {
   const navigate = useNavigate();
@@ -14,6 +16,22 @@ export default function ShopSelect() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(location.state?.searchTerms || "");
   const [minRating, setMinRating] = useState(0);
+
+  const [showNeedsModal, setShowNeedsModal] = useState(false);
+  const [selectedNeeds, setSelectedNeeds] = useState([]);
+
+  useEffect(() => {
+    if (loading) return;
+    const lastShown = localStorage.getItem('lastNeedsFormDate');
+    const today = new Date().toDateString();
+    if (lastShown !== today) {
+      const t = setTimeout(() => {
+        setShowNeedsModal(true);
+        localStorage.setItem('lastNeedsFormDate', today);
+      }, 500);
+      return () => clearTimeout(t);
+    }
+  }, [loading]);
 
   useEffect(() => {
     const fetchShops = async () => {
@@ -112,6 +130,12 @@ export default function ShopSelect() {
 
         {/* SEARCH & FILTER */}
         <div style={{ display: "flex", gap: "10px", marginBottom: "1.5rem" }}>
+          <button 
+            onClick={() => setShowNeedsModal(true)}
+            style={{ display: "flex", alignItems: "center", gap: "6px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", border: "none", borderRadius: "24px", padding: "0 20px", fontWeight: "700", fontSize: "14px", cursor: "pointer", boxShadow: "0 4px 12px rgba(26,58,92,0.15)" }}
+          >
+            <Sparkles size={16} /> Match
+          </button>
           <SharedSearchBar
             value={search}
             onChange={setSearch}
@@ -191,6 +215,43 @@ export default function ShopSelect() {
           ))
         )}
       </div>
+
+      {/* Smart Match Needs Assessment Modal */}
+      {showNeedsModal && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }} onClick={() => setShowNeedsModal(false)}>
+          <div style={{ background: colors.white, borderRadius: "24px", padding: "32px 24px", maxWidth: "420px", width: "100%", textAlign: "center", position: "relative", animation: "ab-slide-up-modal 0.3s ease-out" }} onClick={e => e.stopPropagation()}>
+            <button onClick={() => setShowNeedsModal(false)} style={{ position: "absolute", top: "16px", right: "16px", background: "none", border: "none", fontSize: "20px", color: colors.textMuted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={24}/></button>
+            
+            <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: colors.infoBg, color: colors.info, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+              <Sparkles size={32} />
+            </div>
+            
+            <h2 style={{ fontSize: "22px", fontWeight: "800", color: colors.textPrimary, margin: "0 0 8px 0" }}>What do you need today?</h2>
+            <p style={{ fontSize: "14px", color: colors.textSecondary, marginBottom: "24px", lineHeight: "1.5" }}>Select the services you're looking for, and we'll intelligently match you with the best-rated shops.</p>
+            
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center", marginBottom: "32px" }}>
+              {NEEDS_OPTIONS.map(need => {
+                const isSelected = selectedNeeds.includes(need);
+                return (
+                  <button key={need} onClick={() => {
+                    if (isSelected) setSelectedNeeds(selectedNeeds.filter(n => n !== need));
+                    else setSelectedNeeds([...selectedNeeds, need]);
+                  }} style={{ padding: "8px 16px", borderRadius: "20px", fontSize: "13px", fontWeight: "600", border: `1.5px solid ${isSelected ? colors.info : colors.border}`, background: isSelected ? colors.infoBg : "#fff", color: isSelected ? colors.info : colors.textSecondary, cursor: "pointer", transition: "all 0.2s" }}>
+                    {need}
+                  </button>
+                )
+              })}
+            </div>
+            
+            <button onClick={() => {
+              setShowNeedsModal(false);
+              setSearch(selectedNeeds.join(" "));
+            }} disabled={selectedNeeds.length === 0} style={{ width: "100%", padding: "16px", borderRadius: "16px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", fontSize: "15px", fontWeight: "800", border: "none", cursor: selectedNeeds.length === 0 ? "not-allowed" : "pointer", opacity: selectedNeeds.length === 0 ? 0.5 : 1, boxShadow: "0 4px 12px rgba(26,58,92,0.2)", transition: "opacity 0.2s" }}>
+              Find My Perfect Shop
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );
