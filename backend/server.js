@@ -81,6 +81,57 @@ app.post('/api/send-email', authenticate, async (req, res) => {
 });
 
 // ==========================================
+// ENDPOINT: SEND VERIFICATION EMAIL (CUSTOM BREVO)
+// ==========================================
+app.post('/api/send-verification-email', authenticate, async (req, res) => {
+  try {
+    const email = req.user.email;
+    if (!email) {
+      return res.status(400).json({ error: 'No email associated with this user' });
+    }
+
+    // Generate Firebase Action Link
+    const link = await getAuth().generateEmailVerificationLink(email);
+
+    // Build Email HTML
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; text-align: center; border: 1px solid #e2e8f0; border-radius: 10px;">
+        <h1 style="color: #1e3a8a;">Welcome to AutoBook!</h1>
+        <p style="font-size: 16px; color: #475569;">Please verify your email address to complete your registration and get started.</p>
+        <a href="${link}" style="display: inline-block; background-color: #1e3a8a; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px; margin-bottom: 20px;">Verify My Email</a>
+        <p style="font-size: 12px; color: #94a3b8;">If you did not request this, you can safely ignore this email.</p>
+      </div>
+    `;
+
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': process.env.BREVO_API_KEY,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        sender: {
+          name: process.env.BREVO_SMS_SENDER_NAME || 'AutoBook',
+          email: process.env.GMAIL_EMAIL
+        },
+        to: [{ email: email }],
+        subject: "Verify your AutoBook account",
+        htmlContent: htmlContent
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Failed to send verification email');
+
+    res.status(200).json({ success: true, messageId: data.messageId });
+  } catch (error) {
+    console.error('Verification Email Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==========================================
 // ENDPOINT: SEND PUSH NOTIFICATION
 // ==========================================
 app.post('/api/send-push', authenticate, async (req, res) => {

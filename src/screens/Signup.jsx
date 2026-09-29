@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import BackButton from "../components/BackButton";
+import { sendCustomVerificationEmail } from "../utils/notifications";
 import { AlertTriangle, Car, Store, Wrench, Paperclip, FileText, CreditCard, Camera } from "lucide-react";
 import {
   createUserWithEmailAndPassword,
@@ -164,7 +165,7 @@ export default function Signup() {
       if (!user) {
         try {
           const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
-          await sendEmailVerification(newUser);
+          await sendCustomVerificationEmail();
           user = newUser;
         } catch (authErr) {
           if (authErr.code === "auth/email-already-in-use") {
@@ -234,7 +235,7 @@ export default function Signup() {
       if (!user) {
         try {
           const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
-          await sendEmailVerification(newUser);
+          await sendCustomVerificationEmail();
           user = newUser;
         } catch (authErr) {
           if (authErr.code === "auth/email-already-in-use") {
@@ -292,7 +293,7 @@ export default function Signup() {
       if (!user) {
         try {
           const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
-          await sendEmailVerification(newUser);
+          await sendCustomVerificationEmail();
           user = newUser;
         } catch (authErr) {
           if (authErr.code === "auth/email-already-in-use") {

@@ -87,3 +87,31 @@ export const sendSmsNotification = async (toPhone, message) => {
     return { success: false, error: error.message };
   }
 };
+
+/**
+ * Requests the backend to generate and send a custom Brevo verification email
+ */
+export const sendCustomVerificationEmail = async () => {
+  if (!auth.currentUser) return { success: false, error: "No user logged in" };
+  
+  try {
+    const idToken = await auth.currentUser.getIdToken();
+    
+    const response = await fetch(`${BACKEND_URL}/api/send-verification-email`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${idToken}`
+      }
+    });
+    
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to send verification email");
+    }
+    
+    return { success: data.success, error: null };
+  } catch (error) {
+    console.error("Failed to send custom verification email:", error);
+    return { success: false, error: error.message };
+  }
+};

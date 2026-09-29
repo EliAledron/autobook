@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Hourglass, Clock, CheckCircle, XCircle, Mail, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
+import { sendCustomVerificationEmail } from "../utils/notifications";
 import { onAuthStateChanged, signOut, sendEmailVerification } from "firebase/auth";
 import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { ErrorModal, SuccessModal } from "./dashboardShared";
@@ -85,7 +86,7 @@ export default function PendingApproval() {
   const handleResendEmail = async () => {
     if (auth.currentUser && resendCooldown === 0) {
       try {
-        await sendEmailVerification(auth.currentUser);
+        await sendCustomVerificationEmail();
         setSuccessMsg("Verification email resent! Please check your inbox and spam folder.");
         setResendCooldown(60);
         const interval = setInterval(() => {
