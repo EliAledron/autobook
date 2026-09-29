@@ -98,6 +98,26 @@ export default function DesktopAdminProfile() {
             {success && <div style={{ textAlign: "center", color: colors.success, fontSize: "14px", fontWeight: "600" }}>Profile updated successfully!</div>}
 
           </div>
+          
+          <div style={{ marginTop: "24px", background: "#fff", padding: "32px", borderRadius: "16px", border: `1px solid ${colors.border}`, display: "flex", flexDirection: "column", gap: "24px" }}>
+            <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: colors.textPrimary, borderBottom: `1px solid ${colors.border}`, paddingBottom: "12px" }}>Notifications</h3>
+            
+            <button
+              onClick={async () => {
+                const { requestPushPermission } = await import("../../utils/notifications");
+                alert("Requesting push notification permission...");
+                const result = await requestPushPermission(auth.currentUser.uid);
+                if (result.success) {
+                  alert("Push notifications enabled!");
+                } else {
+                  alert(result.error || "Failed to enable notifications.");
+                }
+              }}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%", padding: "16px", borderRadius: "12px", background: colors.blue, color: "#fff", fontSize: "15px", fontWeight: "700", border: "none", cursor: "pointer" }}
+            >
+              Enable Push Notifications
+            </button>
+          </div>
 
         </div>
 

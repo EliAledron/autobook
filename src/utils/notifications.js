@@ -1,4 +1,6 @@
-import { auth } from "../firebase";
+import { auth, messaging, db } from "../firebase";
+import { getToken } from "firebase/messaging";
+import { doc, updateDoc } from "firebase/firestore";
 
 const BACKEND_URL = "https://autobook-backend-k543.onrender.com";
 
@@ -112,6 +114,34 @@ export const sendCustomVerificationEmail = async () => {
     return { success: data.success, error: null };
   } catch (error) {
     console.error("Failed to send custom verification email:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Requests browser push notification permission and saves the FCM token to Firestore.
+ */
+export const requestPushPermission = async (userUid) => {
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
+      const currentToken = await getToken(messaging, { 
+        vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY 
+      });
+      if (currentToken) {
+        // Save the token to the user's Firestore document
+        await updateDoc(doc(db, "users", userUid), {
+          fcmToken: currentToken
+        });
+        return { success: true, token: currentToken };
+      } else {
+        return { success: false, error: "No registration token available." };
+      }
+    } else {
+      return { success: false, error: "Notification permission denied." };
+    }
+  } catch (error) {
+    console.error("Error retrieving FCM token:", error);
     return { success: false, error: error.message };
   }
 };

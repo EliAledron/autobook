@@ -8,6 +8,7 @@ import { useUser } from "../UserContext";
 import BackButton from "../components/BackButton";
 import { Save } from "lucide-react";
 import ReviewAppModal from "../components/ReviewAppModal";
+import { requestPushPermission } from "../utils/notifications";
 
 const CLOUDINARY_CLOUD = "dpwojan8w";
 const CLOUDINARY_PRESET = "autobook_uploads";
@@ -569,6 +570,26 @@ export default function Profile() {
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
             Rate AutoBook
+          </button>
+        </div>
+
+        {/* PUSH NOTIFICATIONS */}
+        <div style={sh.sectionLabel}>Notifications</div>
+        <div className="profile-card" style={{ ...sh.card, padding: 0, borderRadius: "20px", border: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.03)", marginBottom: "32px" }}>
+          <button
+            style={{ width: "100%", padding: "16px", fontSize: "15px", fontWeight: "700", border: "none", borderRadius: "20px", cursor: "pointer", background: colors.blue, color: "#fff" }}
+            onClick={async () => {
+              if (!auth.currentUser) return;
+              showToast("Requesting permission...");
+              const result = await requestPushPermission(auth.currentUser.uid);
+              if (result.success) {
+                showToast("Push notifications enabled!");
+              } else {
+                showToast(result.error || "Failed to enable notifications.");
+              }
+            }}
+          >
+            Enable Push Notifications
           </button>
         </div>
 
