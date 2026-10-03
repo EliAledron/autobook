@@ -369,7 +369,7 @@ const s = {
   puff: {
     width: 8,
     height: 8,
-    background: "rgba(156,163,175,0.4)",
+    background: "rgba(107,114,128,0.5)",
     borderRadius: "50%",
     animation: "ab-puff 0.7s ease-out infinite",
   },
