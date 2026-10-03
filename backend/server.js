@@ -95,11 +95,29 @@ app.post('/api/send-verification-email', authenticate, async (req, res) => {
 
     // Build Email HTML
     const htmlContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; text-align: center; border: 1px solid #e2e8f0; border-radius: 10px;">
-        <h1 style="color: #1e3a8a;">Welcome to AutoBook!</h1>
-        <p style="font-size: 16px; color: #475569;">Please verify your email address to complete your registration and get started.</p>
-        <a href="${link}" style="display: inline-block; background-color: #1e3a8a; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px; margin-bottom: 20px;">Verify My Email</a>
-        <p style="font-size: 12px; color: #94a3b8;">If you did not request this, you can safely ignore this email.</p>
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f3f4f6; max-width: 600px; margin: 0 auto; border-radius: 12px; overflow: hidden; border: 1px solid #e5e7eb;">
+        <div style="padding: 40px 20px; text-align: center; background-color: #f3f4f6;">
+          <div style="background-color: white; border-radius: 16px; padding: 40px 30px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); margin-bottom: 20px;">
+            <img src="https://raw.githubusercontent.com/EliAledron/autobook/main/public/autobook-logo.png" alt="AutoBook Logo" style="max-width: 100px; height: auto; margin: 0 auto 24px; border-radius: 18px; display: block;" />
+            
+            <h1 style="color: #1e3a8a; font-size: 24px; font-weight: 700; margin: 0 0 16px; line-height: 1.3;">Welcome to AutoBook!</h1>
+            <p style="color: #4b5563; font-size: 16px; margin: 0 0 32px; line-height: 1.5;">Please verify your email address to complete your registration and get started.</p>
+            
+            <a href="${link}" style="display: inline-block; background-color: #1e3a8a; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.2);">Verify My Email</a>
+            
+            <p style="color: #9ca3af; font-size: 12px; margin-top: 32px; margin-bottom: 0;">If you did not request this, you can safely ignore this email.</p>
+          </div>
+
+          <div style="color: #6b7280; font-size: 12px; line-height: 1.5; text-align: center;">
+            <p style="margin: 0 0 4px;">© 2026 AutoBook Inc. All rights reserved.</p>
+            <p style="margin: 0 0 8px;">123 Mechanic Lane, Auto City, AC 12345</p>
+            <div>
+              <a href="#" style="color: #1e3a8a; text-decoration: underline;">Privacy Policy</a> &bull; 
+              <a href="#" style="color: #1e3a8a; text-decoration: underline;">Terms of Service</a> &bull; 
+              <a href="#" style="color: #1e3a8a; text-decoration: underline;">Contact Support</a>
+            </div>
+          </div>
+        </div>
       </div>
     `;
 
