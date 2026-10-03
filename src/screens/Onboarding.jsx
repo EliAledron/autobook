@@ -1129,12 +1129,12 @@ backdrop: {
   formLogoWrap: {
     width: "52px",
     height: "52px",
-    borderRadius: "50%",
+    borderRadius: "14px",
     border: "2px solid rgba(70,233,255,0.7)",
     overflow: "hidden",
     flexShrink: 0,
   },
-  formLogo: { width: "100%", height: "100%", objectFit: "cover" },
+  formLogo: { width: "100%", height: "100%", objectFit: "contain" },
   formHeaderText: { flex: 1 },
   formTitle: {
     fontSize: "20px",
