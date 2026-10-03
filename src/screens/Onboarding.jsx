@@ -3,6 +3,7 @@ import { Bell, Settings, Stethoscope, User, Check, Car, Store, Wrench, Paperclip
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { CustomDropdown } from "./dashboardShared";
+import { sendCustomVerificationEmail } from "../utils/notifications";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -403,6 +404,7 @@ function SignupForm({ goBack, navigate }) {
       if (!user) {
         try {
           const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
+          await sendCustomVerificationEmail();
           user = newUser;
         } catch (authErr) {
           if (authErr.code === "auth/email-already-in-use") {
@@ -439,6 +441,7 @@ function SignupForm({ goBack, navigate }) {
       if (!user) {
         try {
           const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
+          await sendCustomVerificationEmail();
           user = newUser;
         } catch (authErr) {
           if (authErr.code === "auth/email-already-in-use") {
@@ -494,6 +497,7 @@ function SignupForm({ goBack, navigate }) {
       if (!user) {
         try {
           const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
+          await sendCustomVerificationEmail();
           user = newUser;
         } catch (authErr) {
           if (authErr.code === "auth/email-already-in-use") {
