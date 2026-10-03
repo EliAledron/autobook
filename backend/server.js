@@ -109,8 +109,7 @@ app.post('/api/send-verification-email', authenticate, async (req, res) => {
           </div>
 
           <div style="color: #6b7280; font-size: 12px; line-height: 1.5; text-align: center;">
-            <p style="margin: 0 0 4px;">© 2026 AutoBook Inc. All rights reserved.</p>
-            <p style="margin: 0 0 8px;">123 Mechanic Lane, Auto City, AC 12345</p>
+            <p style="margin: 0 0 8px;">© 2026 AutoBook Inc. All rights reserved.</p>
             <div>
               <a href="#" style="color: #1e3a8a; text-decoration: underline;">Privacy Policy</a> &bull; 
               <a href="#" style="color: #1e3a8a; text-decoration: underline;">Terms of Service</a> &bull; 
