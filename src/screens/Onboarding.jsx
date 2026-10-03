@@ -271,7 +271,7 @@ function LandingContent({ onSignup, onLogin }) {
       {/* Hero */}
       <div style={{...s.hero, animation: "ab-zoom-in 0.8s ease backwards"}}>
         <div style={s.logoRing}>
-          <img src="/autobook-logo.jpg" alt="AutoBook" style={s.logoImg} />
+          <img src="/autobook-logo.png" alt="AutoBook" style={s.logoImg} />
         </div>
         <h1 style={s.heroTitle}>AutoBook</h1>
         <p style={s.heroSub}>The all-in-one platform for modern auto shops</p>
@@ -520,7 +520,7 @@ function SignupForm({ goBack, navigate }) {
       {/* Header stripe */}
       <div style={s.formHeader}>
         <div style={s.formLogoWrap}>
-          <img src="/autobook-logo.jpg" alt="AutoBook" style={s.formLogo} />
+          <img src="/autobook-logo.png" alt="AutoBook" style={s.formLogo} />
         </div>
         <div style={s.formHeaderText}>
           <h2 style={s.formTitle}>Create Account</h2>
@@ -850,7 +850,7 @@ function LoginForm({ goBack, navigate }) {
       {/* Header stripe */}
       <div style={s.formHeader}>
         <div style={s.formLogoWrap}>
-          <img src="/autobook-logo.jpg" alt="AutoBook" style={s.formLogo} />
+          <img src="/autobook-logo.png" alt="AutoBook" style={s.formLogo} />
         </div>
         <div style={s.formHeaderText}>
           <h2 style={s.formTitle}>Welcome Back</h2>
@@ -990,7 +990,7 @@ backdrop: {
   logoRing: {
     width: "88px",
     height: "88px",
-    borderRadius: "50%",
+    borderRadius: "24px",
     border: "3px solid rgba(70,233,255,0.7)",
     padding: "3px",
     background: "rgba(255,255,255,0.12)",
@@ -998,7 +998,7 @@ backdrop: {
     overflow: "hidden",
     animation: "ab-float 3s ease-in-out infinite",
   },
-  logoImg: { width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" },
+  logoImg: { width: "100%", height: "100%", objectFit: "cover", borderRadius: "18px" },
   heroTitle: {
     fontSize: "36px",
     fontWeight: "800",
