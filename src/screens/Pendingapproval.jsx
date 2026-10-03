@@ -104,17 +104,23 @@ export default function PendingApproval() {
     }
   };
 
-  const handleCheckVerification = async () => {
-    if (auth.currentUser) {
-      await auth.currentUser.reload();
-      if (auth.currentUser.emailVerified) {
-        setStatus("loading");
-        window.location.reload();
-      } else {
-        setErrorMsg("Email not verified yet. Please check your inbox or spam folder.");
-      }
+  useEffect(() => {
+    let intervalId;
+    if (status === "unverified") {
+      intervalId = setInterval(async () => {
+        if (auth.currentUser) {
+          await auth.currentUser.reload();
+          if (auth.currentUser.emailVerified) {
+            setStatus("loading");
+            window.location.reload();
+          }
+        }
+      }, 3000); // Check every 3 seconds
     }
-  };
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [status]);
 
 
   const handleLogout = async () => {
@@ -183,12 +189,8 @@ export default function PendingApproval() {
                 <div style={{ ...s.iconCircle, animation: "ab-float 2s ease-in-out infinite" }}><Mail size={32} color="#2a5298" /></div>
                 <h2 style={s.title}>Verify your email</h2>
                 <p style={s.subtitle}>
-                  We sent a verification link to your email address. Please click the link to verify your account, then click the button below.
+                  We sent a verification link to your email address. Please click the link to verify your account, and you will be automatically redirected.
                 </p>
-
-                <button className="ab-btn" style={{...s.primaryBtn, width: "100%", marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"}} onClick={handleCheckVerification}>
-                  <RefreshCw size={18} /> I have verified my email
-                </button>
 
                 <button className="ab-btn" style={{...s.secondaryBtn, width: "100%", marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "center"}} onClick={handleResendEmail} disabled={resendCooldown > 0}>
                   {resendCooldown > 0 ? `Resend available in ${resendCooldown}s` : 'Resend Verification Email'}
