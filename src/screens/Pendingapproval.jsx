@@ -129,138 +129,138 @@ export default function PendingApproval() {
       <style>{keyframes}</style>
 
       <div style={s.page}>
-        <div style={s.streak1} />
-        <div style={s.streak2} />
-        {/* ===== ANIMATION ===== */}
-        <div style={s.scene}>
-          <div style={s.speedLines}>
-            {[0, 1, 2, 3].map(i => (
-              <div key={i} style={{ ...s.speedLine, width: `${28 + i * 14}px`, animationDelay: `${i * 0.12}s` }} />
-            ))}
-          </div>
-          <div style={s.road}>
-            <div style={s.roadDashes}>
-              {Array.from({ length: 24 }).map((_, i) => (
-                <div key={i} style={s.dash} />
+        <div style={s.card}>
+          {/* ===== ANIMATION ===== */}
+          <div style={s.scene}>
+            <div style={s.speedLines}>
+              {[0, 1, 2, 3].map(i => (
+                <div key={i} style={{ ...s.speedLine, width: `${28 + i * 14}px`, animationDelay: `${i * 0.12}s` }} />
               ))}
             </div>
-          </div>
-          <div style={s.carWrap}>
-            <div style={s.exhaustWrap}>
-              <div style={{ ...s.puff, animationDelay: "0s" }} />
-              <div style={{ ...s.puff, width: 6, height: 6, animationDelay: "0.18s" }} />
-              <div style={{ ...s.puff, width: 5, height: 5, animationDelay: "0.36s" }} />
-            </div>
-            <div style={s.carOuter}>
-              <div style={s.carRoof}>
-                <div style={s.winFront} />
-                <div style={s.winRear} />
-              </div>
-              <div style={s.carBody}>
-                <div style={s.headlight} />
-                <div style={s.headlightBeam} />
-                <div style={s.taillight} />
-              </div>
-              <div style={s.wheelsRow}>
-                <div style={s.wheelGap} />
-                <div style={s.wheelGroup}>
-                  <div style={s.wheel}><div style={s.spoke} /></div>
-                </div>
-                <div style={{ flex: 1 }} />
-                <div style={s.wheelGroup}>
-                  <div style={s.wheel}><div style={s.spoke} /></div>
-                </div>
-                <div style={s.wheelGap} />
+            <div style={s.road}>
+              <div style={s.roadDashes}>
+                {Array.from({ length: 24 }).map((_, i) => (
+                  <div key={i} style={s.dash} />
+                ))}
               </div>
             </div>
+            <div style={s.carWrap}>
+              <div style={s.exhaustWrap}>
+                <div style={{ ...s.puff, animationDelay: "0s" }} />
+                <div style={{ ...s.puff, width: 6, height: 6, animationDelay: "0.18s" }} />
+                <div style={{ ...s.puff, width: 5, height: 5, animationDelay: "0.36s" }} />
+              </div>
+              <div style={s.carOuter}>
+                <div style={s.carRoof}>
+                  <div style={s.winFront} />
+                  <div style={s.winRear} />
+                </div>
+                <div style={s.carBody}>
+                  <div style={s.headlight} />
+                  <div style={s.headlightBeam} />
+                  <div style={s.taillight} />
+                </div>
+                <div style={s.wheelsRow}>
+                  <div style={s.wheelGap} />
+                  <div style={s.wheelGroup}>
+                    <div style={s.wheel}><div style={s.spoke} /></div>
+                  </div>
+                  <div style={{ flex: 1 }} />
+                  <div style={s.wheelGroup}>
+                    <div style={s.wheel}><div style={s.spoke} /></div>
+                  </div>
+                  <div style={s.wheelGap} />
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* ===== CONTENT ===== */}
-        <div style={s.content}>
-          
-          {status === "unverified" && (
-            <>
-              <div style={{ ...s.icon, animation: "ab-float 2s ease-in-out infinite" }}><Mail size={48} /></div>
-              <h2 style={s.title}>Verify your email</h2>
-              <p style={s.subtitle}>
-                We sent a verification link to your email address. Please click the link to verify your account, then click the button below.
-              </p>
+          {/* ===== CONTENT ===== */}
+          <div style={s.content}>
+            
+            {status === "unverified" && (
+              <>
+                <div style={{ ...s.iconCircle, animation: "ab-float 2s ease-in-out infinite" }}><Mail size={32} color="#2a5298" /></div>
+                <h2 style={s.title}>Verify your email</h2>
+                <p style={s.subtitle}>
+                  We sent a verification link to your email address. Please click the link to verify your account, then click the button below.
+                </p>
 
-              <button style={{...s.logoutBtn, background: "rgba(70, 233, 255, 0.2)", color: "#46e9ff", width: "100%", marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"}} onClick={handleCheckVerification}>
-                <RefreshCw size={18} /> I have verified my email
-              </button>
-
-              <button style={{...s.logoutBtn, background: "transparent", border: "1px solid rgba(70, 233, 255, 0.5)", color: "#46e9ff", width: "100%", marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "center"}} onClick={handleResendEmail} disabled={resendCooldown > 0}>
-                {resendCooldown > 0 ? `Resend available in ${resendCooldown}s` : 'Resend Verification Email'}
-              </button>
-
-              
-              <button style={{...s.logoutBtn, background: "transparent", color: "rgba(255,255,255,0.5)", width: "100%", marginTop: 0}} onClick={handleLogout}>
-                Sign out
-              </button>
-
-              {import.meta.env.DEV && (
-                <button style={{...s.logoutBtn, background: "transparent", border: "1px dashed rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.5)", width: "100%", marginTop: "12px", fontSize: "12px"}} onClick={() => setDevBypass(true)}>
-                  Bypass Verification (Dev)
+                <button className="ab-btn" style={{...s.primaryBtn, width: "100%", marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"}} onClick={handleCheckVerification}>
+                  <RefreshCw size={18} /> I have verified my email
                 </button>
-              )}
-            </>
-          )}
 
-          {status === "loading" && (
-            <>
-              <div style={s.icon}><Hourglass size={48} /></div>
-              <h2 style={s.title}>Loading...</h2>
-            </>
-          )}
+                <button className="ab-btn" style={{...s.secondaryBtn, width: "100%", marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "center"}} onClick={handleResendEmail} disabled={resendCooldown > 0}>
+                  {resendCooldown > 0 ? `Resend available in ${resendCooldown}s` : 'Resend Verification Email'}
+                </button>
 
-          {status === "pending" && (
-            <>
-              <div style={{ ...s.icon, animation: "ab-float 2s ease-in-out infinite" }}><Clock size={48} /></div>
-              <h2 style={s.title}>Waiting for approval</h2>
-              <p style={s.subtitle}>
-                Hi {name}! Your account is under review. Please wait for admin approval.
-              </p>
+                
+                <button className="ab-btn" style={{...s.textBtn, width: "100%", marginTop: 0}} onClick={handleLogout}>
+                  Sign out
+                </button>
 
-              <button style={s.logoutBtn} onClick={handleLogout}>
-                Sign out
-              </button>
-            </>
-          )}
+                {import.meta.env.DEV && (
+                  <button className="ab-btn" style={{...s.textBtn, border: "1px dashed #d1d5db", width: "100%", marginTop: "12px", fontSize: "12px"}} onClick={() => setDevBypass(true)}>
+                    Bypass Verification (Dev)
+                  </button>
+                )}
+              </>
+            )}
 
-          {status === "approved" && (
-            <>
-              <div style={{ ...s.icon, animation: "ab-float 1.5s ease-in-out infinite" }}><CheckCircle size={48} /></div>
-              <h2 style={s.title}>Approved!</h2>
-              <p style={s.subtitle}>Redirecting to dashboard...</p>
-            </>
-          )}
+            {status === "loading" && (
+              <>
+                <div style={s.iconCircle}><Hourglass size={32} color="#2a5298" /></div>
+                <h2 style={s.title}>Loading...</h2>
+              </>
+            )}
 
-          {status === "rejected" && (
-            <>
-              <div style={s.icon}><XCircle size={48} /></div>
-              <h2 style={s.title}>Application Rejected</h2>
-              <p style={s.subtitle}>
-                Unfortunately, your application to join the platform was not approved at this time.
-              </p>
-              
-              {reason && (
-                <div style={{ background: "rgba(255,255,255,0.1)", padding: "16px", borderRadius: "12px", width: "100%", boxSizing: "border-box", marginBottom: "24px", borderLeft: "4px solid #ef4444" }}>
-                  <div style={{ fontSize: "12px", textTransform: "uppercase", fontWeight: "700", color: "#fca5a5", marginBottom: "4px" }}>Admin Note:</div>
-                  <div style={{ fontSize: "14px", color: "#fff", lineHeight: "1.5" }}>{reason}</div>
-                </div>
-              )}
+            {status === "pending" && (
+              <>
+                <div style={{ ...s.iconCircle, animation: "ab-float 2s ease-in-out infinite" }}><Clock size={32} color="#2a5298" /></div>
+                <h2 style={s.title}>Waiting for approval</h2>
+                <p style={s.subtitle}>
+                  Hi {name}! Your account is under review. Please wait for admin approval.
+                </p>
 
-              <button style={{ ...s.logoutBtn, background: "transparent", border: "1px solid rgba(255,255,255,0.3)", color: "#fff", marginBottom: "12px", width: "100%" }} onClick={() => window.location.href = "mailto:support@autobook.com"}>
-                Contact Support
-              </button>
+                <button className="ab-btn" style={s.textBtn} onClick={handleLogout}>
+                  Sign out
+                </button>
+              </>
+            )}
 
-              <button style={{ ...s.logoutBtn, background: "transparent", border: "none", color: "rgba(255,255,255,0.5)", width: "100%", padding: 0 }} onClick={handleLogout}>
-                Sign out
-              </button>
-            </>
-          )}
+            {status === "approved" && (
+              <>
+                <div style={{ ...s.iconCircle, background: "#dcfce7", animation: "ab-float 1.5s ease-in-out infinite" }}><CheckCircle size={32} color="#16a34a" /></div>
+                <h2 style={s.title}>Approved!</h2>
+                <p style={s.subtitle}>Redirecting to dashboard...</p>
+              </>
+            )}
+
+            {status === "rejected" && (
+              <>
+                <div style={{ ...s.iconCircle, background: "#fee2e2" }}><XCircle size={32} color="#dc2626" /></div>
+                <h2 style={s.title}>Application Rejected</h2>
+                <p style={s.subtitle}>
+                  Unfortunately, your application to join the platform was not approved at this time.
+                </p>
+                
+                {reason && (
+                  <div style={{ background: "#fef2f2", padding: "16px", borderRadius: "12px", width: "100%", boxSizing: "border-box", marginBottom: "24px", borderLeft: "4px solid #ef4444", textAlign: "left" }}>
+                    <div style={{ fontSize: "12px", textTransform: "uppercase", fontWeight: "700", color: "#dc2626", marginBottom: "4px" }}>Admin Note:</div>
+                    <div style={{ fontSize: "14px", color: "#7f1d1d", lineHeight: "1.5" }}>{reason}</div>
+                  </div>
+                )}
+
+                <button className="ab-btn" style={{ ...s.secondaryBtn, marginBottom: "12px", width: "100%" }} onClick={() => window.location.href = "mailto:support@autobook.com"}>
+                  Contact Support
+                </button>
+
+                <button className="ab-btn" style={{ ...s.textBtn, width: "100%", padding: 0 }} onClick={handleLogout}>
+                  Sign out
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </>
@@ -271,25 +271,25 @@ export default function PendingApproval() {
 const s = {
   page: {
     minHeight: "100vh",
-    background: "#1a3a5c",
+    background: "#f3f4f6",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    fontFamily: "Segoe UI, sans-serif",
-    paddingBottom: "2rem",
+    justifyContent: "center",
+    fontFamily: "Inter, -apple-system, sans-serif",
+    padding: "2rem",
   },
-
-  streak1: {
-    position: "absolute", top: "20%", left: "-10%",
-    width: "120%", height: "1px",
-    background: "linear-gradient(90deg, transparent, rgba(70,233,255,0.08), transparent)",
-    transform: "rotate(-8deg)",
-  },
-  streak2: {
-    position: "absolute", top: "65%", left: "-10%",
-    width: "120%", height: "1px",
-    background: "linear-gradient(90deg, transparent, rgba(70,233,255,0.06), transparent)",
-    transform: "rotate(-8deg)",
+  card: {
+    background: "#ffffff",
+    borderRadius: "24px",
+    boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+    padding: "40px",
+    width: "100%",
+    maxWidth: "440px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    boxSizing: "border-box",
   },
 
   // Scene container
@@ -300,7 +300,6 @@ const s = {
     alignItems: "center",
     position: "relative",
     marginBottom: "32px",
-    marginTop: "4rem",
   },
 
   // Speed streaks (horizontal lines behind car for motion feel)
@@ -315,7 +314,7 @@ const s = {
   },
   speedLine: {
     height: "2px",
-    background: "linear-gradient(90deg, transparent, rgba(70,233,255,0.25))",
+    background: "linear-gradient(90deg, transparent, rgba(42,82,152,0.25))",
     borderRadius: "1px",
     animation: "ab-streak 0.8s ease-out infinite",
   },
@@ -329,7 +328,7 @@ const s = {
     position: "relative",
     overflow: "hidden",
     order: 2,
-    border: "1px solid rgba(70,233,255,0.1)",
+    border: "1px solid rgba(0,0,0,0.1)",
   },
   roadDashes: {
     position: "absolute",
@@ -343,7 +342,7 @@ const s = {
   dash: {
     width: "24px",
     height: "2px",
-    background: "rgba(70,233,255,0.5)",
+    background: "rgba(255,255,255,0.4)",
     borderRadius: "1px",
     flexShrink: 0,
   },
@@ -370,7 +369,7 @@ const s = {
   puff: {
     width: 8,
     height: 8,
-    background: "rgba(255,255,255,0.15)",
+    background: "rgba(156,163,175,0.4)",
     borderRadius: "50%",
     animation: "ab-puff 0.7s ease-out infinite",
   },
@@ -395,24 +394,24 @@ const s = {
   winFront: {
     width: "34px",
     height: "20px",
-    background: "linear-gradient(135deg, rgba(70,233,255,0.55), rgba(70,233,255,0.25))",
+    background: "linear-gradient(135deg, rgba(200,230,255,0.8), rgba(200,230,255,0.4))",
     borderRadius: "5px 5px 0 0",
     marginRight: "4px",
-    border: "1px solid rgba(70,233,255,0.3)",
+    border: "1px solid rgba(255,255,255,0.5)",
   },
   winRear: {
     width: "26px",
     height: "18px",
-    background: "linear-gradient(135deg, rgba(70,233,255,0.4), rgba(70,233,255,0.15))",
+    background: "linear-gradient(135deg, rgba(200,230,255,0.6), rgba(200,230,255,0.3))",
     borderRadius: "5px 5px 0 0",
-    border: "1px solid rgba(70,233,255,0.2)",
+    border: "1px solid rgba(255,255,255,0.4)",
   },
   carBody: {
     height: "34px",
     background: "linear-gradient(180deg, #f97316, #ea6c0a)",
     borderRadius: "4px 8px 4px 4px",
     position: "relative",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.2)",
   },
   headlight: {
     position: "absolute",
@@ -430,7 +429,7 @@ const s = {
     top: "13px",
     width: "22px",
     height: "6px",
-    background: "linear-gradient(90deg, rgba(254,240,138,0.4), transparent)",
+    background: "linear-gradient(90deg, rgba(254,240,138,0.6), transparent)",
     borderRadius: "0 4px 4px 0",
   },
   taillight: {
@@ -466,7 +465,7 @@ const s = {
     alignItems: "center",
     justifyContent: "center",
     animation: "ab-wheel 0.35s linear infinite",
-    boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
   },
   spoke: {
     width: "2px",
@@ -476,27 +475,72 @@ const s = {
   },
 
   content: {
-    padding: "2rem",
-    maxWidth: "400px",
+    width: "100%",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
     textAlign: "center",
-    color: "#fff",
   },
 
-  icon: { fontSize: "48px", marginBottom: "1rem" },
+  iconCircle: {
+    width: "64px",
+    height: "64px",
+    borderRadius: "50%",
+    background: "#e0e7ff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: "16px",
+  },
 
-  title: { fontSize: "20px", fontWeight: "700" },
+  title: { 
+    fontSize: "24px", 
+    fontWeight: "700", 
+    color: "#111827",
+    margin: "0 0 8px 0"
+  },
 
-  subtitle: { fontSize: "14px", opacity: 0.7, marginTop: "10px" },
+  subtitle: { 
+    fontSize: "15px", 
+    color: "#6b7280", 
+    lineHeight: "1.5",
+    margin: "0 0 24px 0"
+  },
 
-  logoutBtn: {
-    marginTop: "24px",
-    padding: "12px 32px",
-    borderRadius: "24px",
-    border: "1px solid rgba(255, 255, 255, 0.2)",
-    background: "rgba(255, 255, 255, 0.1)",
+  primaryBtn: {
+    padding: "14px 32px",
+    borderRadius: "12px",
+    border: "none",
+    background: "#2a5298",
     color: "#fff",
     cursor: "pointer",
     fontWeight: "600",
+    fontSize: "15px",
+    transition: "all 0.2s ease",
+    boxShadow: "0 4px 6px -1px rgba(42, 82, 152, 0.2)",
+  },
+
+  secondaryBtn: {
+    padding: "14px 32px",
+    borderRadius: "12px",
+    border: "1.5px solid #2a5298",
+    background: "#ffffff",
+    color: "#2a5298",
+    cursor: "pointer",
+    fontWeight: "600",
+    fontSize: "15px",
     transition: "all 0.2s ease",
   },
+
+  textBtn: {
+    padding: "12px 32px",
+    borderRadius: "12px",
+    border: "none",
+    background: "transparent",
+    color: "#6b7280",
+    cursor: "pointer",
+    fontWeight: "600",
+    fontSize: "14px",
+    transition: "all 0.2s ease",
+  }
 };
