@@ -22,7 +22,6 @@ export default function PendingApproval() {
   const [status, setStatus] = useState("loading");
   const [name, setName] = useState("");
   const [reason, setReason] = useState("");
-  const [devBypass, setDevBypass] = useState(false);
 
   useEffect(() => {
     let docUnsub = null;
@@ -37,7 +36,7 @@ export default function PendingApproval() {
 
       docUnsub = onSnapshot(userRef, (snap) => {
         if (!snap.exists()) {
-          if (!user.emailVerified && !devBypass) {
+          if (!user.emailVerified) {
             setStatus("unverified");
           } else {
             setStatus("pending");
@@ -58,7 +57,7 @@ export default function PendingApproval() {
         }
 
         // For pending/approved, require email verification first
-        if (!user.emailVerified && !devBypass) {
+        if (!user.emailVerified) {
           setStatus("unverified");
           return;
         }
@@ -75,7 +74,7 @@ export default function PendingApproval() {
       authUnsub();
       if (docUnsub) docUnsub();
     };
-  }, [navigate, devBypass]);
+  }, [navigate]);
 
   
   
@@ -200,12 +199,6 @@ export default function PendingApproval() {
                 <button className="ab-btn" style={{...s.textBtn, width: "100%", marginTop: 0}} onClick={handleLogout}>
                   Sign out
                 </button>
-
-                {import.meta.env.DEV && (
-                  <button className="ab-btn" style={{...s.textBtn, border: "1px dashed #d1d5db", width: "100%", marginTop: "12px", fontSize: "12px"}} onClick={() => setDevBypass(true)}>
-                    Bypass Verification (Dev)
-                  </button>
-                )}
               </>
             )}
 
