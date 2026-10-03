@@ -271,7 +271,7 @@ function LandingContent({ onSignup, onLogin }) {
       {/* Hero */}
       <div style={{...s.hero, animation: "ab-zoom-in 0.8s ease backwards"}}>
         <div style={s.logoRing}>
-          <img src="/autobook-logo.png" alt="AutoBook" style={s.logoImg} />
+          <img src="/autobook-logo.jpg" alt="AutoBook" style={s.logoImg} />
         </div>
         <h1 style={s.heroTitle}>AutoBook</h1>
         <p style={s.heroSub}>The all-in-one platform for modern auto shops</p>
@@ -520,7 +520,7 @@ function SignupForm({ goBack, navigate }) {
       {/* Header stripe */}
       <div style={s.formHeader}>
         <div style={s.formLogoWrap}>
-          <img src="/autobook-logo.png" alt="AutoBook" style={s.formLogo} />
+          <img src="/autobook-logo.jpg" alt="AutoBook" style={s.formLogo} />
         </div>
         <div style={s.formHeaderText}>
           <h2 style={s.formTitle}>Create Account</h2>
@@ -850,7 +850,7 @@ function LoginForm({ goBack, navigate }) {
       {/* Header stripe */}
       <div style={s.formHeader}>
         <div style={s.formLogoWrap}>
-          <img src="/autobook-logo.png" alt="AutoBook" style={s.formLogo} />
+          <img src="/autobook-logo.jpg" alt="AutoBook" style={s.formLogo} />
         </div>
         <div style={s.formHeaderText}>
           <h2 style={s.formTitle}>Welcome Back</h2>

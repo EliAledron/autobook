@@ -43,7 +43,7 @@ export default function ForgotPassword() {
       <div style={s.scroll}>
         <div style={s.header}>
           <div style={s.logoRing}>
-            <img src="/autobook-logo.png" alt="AutoBook" style={s.logo} />
+            <img src="/autobook-logo.jpg" alt="AutoBook" style={s.logo} />
           </div>
           <h1 style={s.appName}>AutoBook</h1>
           <p style={s.tagline}>Reset your password</p>
