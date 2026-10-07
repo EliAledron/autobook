@@ -224,7 +224,7 @@ export default function AdminBookings() {
         const [bSnap1, smSnap1, uSnap] = await Promise.all([
           getDocs(query(collection(db, "bookings"), where("shopId", "==", shopId || "invalid"))),
           getDocs(query(collection(db, "shopMechanics"), where("shopId", "==", shopId || "invalid"))),
-          getDocs(collection(db, "users"))
+          getDocs(query(collection(db, "users"), where("shopId", "==", shopId || "invalid")))
         ]);
         
         bList = bSnap1.docs.map((d) => ({ id: d.id, ...d.data() }));

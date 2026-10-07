@@ -2,12 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
-import { sh, colors, EmptyState, SharedSearchBar, SharedFilterSelect } from "./dashboardShared";
+import { sh, colors, EmptyState, SharedSearchBar, SharedFilterSelect, CustomMultiSelectDropdown } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
 import { Store, Star, Sparkles, X } from "lucide-react";
-
-export const NEEDS_OPTIONS = ["Oil Change", "Brake Repair", "Tire Service", "Engine Diagnostics", "AC Cleaning", "Battery Replacement", "Paint & Body", "General Maintenance", "Transmission", "Detailing", "Other"];
+import { STANDARD_SERVICES } from "../utils/servicesList";
 
 export default function ShopSelect() {
   const navigate = useNavigate();
@@ -16,6 +15,7 @@ export default function ShopSelect() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(location.state?.searchTerms || "");
   const [minRating, setMinRating] = useState(0);
+  const [activeServicesFilter, setActiveServicesFilter] = useState([]);
 
   const [showNeedsModal, setShowNeedsModal] = useState(false);
   const [selectedNeeds, setSelectedNeeds] = useState([]);
@@ -37,7 +37,14 @@ export default function ShopSelect() {
   useEffect(() => {
     const fetchShops = async () => {
       try {
-        const snap = await getDocs(collection(db, "shops"));
+        let q;
+        if (activeServicesFilter && activeServicesFilter.length > 0) {
+          const servicesToSearch = activeServicesFilter.slice(0, 10); // Firestore max 10 for 'in' / 'array-contains-any'
+          q = query(collection(db, "shops"), where("services", "array-contains-any", servicesToSearch));
+        } else {
+          q = collection(db, "shops");
+        }
+        const snap = await getDocs(q);
         let shopsData = snap.docs.map((d) => {
           const shop = { id: d.id, ...d.data() };
           return shop;
@@ -98,12 +105,17 @@ export default function ShopSelect() {
       }
     };
     fetchShops();
-  }, []);
+  }, [activeServicesFilter]);
 
   const filteredShops = shops.filter(shop => {
     if (shop.status === "restricted") return false;
-    const s = search.toLowerCase();
-    const matchSearch = (shop.name || "").toLowerCase().includes(s) || (shop.tagline || "").toLowerCase().includes(s);
+    const s = search.toLowerCase().trim();
+    const matchSearch = !s || 
+      (shop.name || "").toLowerCase().includes(s) || 
+      (shop.tagline || "").toLowerCase().includes(s) || 
+      (shop.services && Array.isArray(shop.services) && shop.services.some(svc => 
+        svc.toLowerCase().includes(s) || s.includes(svc.toLowerCase())
+      ));
     const safeRating = shop.rating && !isNaN(Number(shop.rating)) ? Number(shop.rating) : 0;
     const matchRating = safeRating >= minRating;
     return matchSearch && matchRating;
@@ -233,18 +245,15 @@ export default function ShopSelect() {
             <h2 style={{ fontSize: "22px", fontWeight: "800", color: colors.textPrimary, margin: "0 0 8px 0" }}>What do you need today?</h2>
             <p style={{ fontSize: "14px", color: colors.textSecondary, marginBottom: "24px", lineHeight: "1.5" }}>Select the services you're looking for, and we'll intelligently match you with the best-rated shops.</p>
             
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center", marginBottom: selectedNeeds.includes("Other") ? "16px" : "32px" }}>
-              {NEEDS_OPTIONS.map(need => {
-                const isSelected = selectedNeeds.includes(need);
-                return (
-                  <button key={need} onClick={() => {
-                    if (isSelected) setSelectedNeeds(selectedNeeds.filter(n => n !== need));
-                    else setSelectedNeeds([...selectedNeeds, need]);
-                  }} style={{ padding: "8px 16px", borderRadius: "20px", fontSize: "13px", fontWeight: "600", border: `1.5px solid ${isSelected ? colors.info : colors.border}`, background: isSelected ? colors.infoBg : "#fff", color: isSelected ? colors.info : colors.textSecondary, cursor: "pointer", transition: "all 0.2s" }}>
-                    {need}
-                  </button>
-                )
-              })}
+            <div style={{ marginBottom: "24px", textAlign: "left" }}>
+              <CustomMultiSelectDropdown
+                values={selectedNeeds}
+                onChange={setSelectedNeeds}
+                options={[...STANDARD_SERVICES.map(s => ({ value: s, label: s })), { value: "Other", label: "Other" }]}
+                placeholder="Select services..."
+                searchPlaceholder="Search services..."
+                style={{ width: "100%", padding: "16px", borderRadius: "16px", border: `1.5px solid ${colors.border}`, background: "#f8fafc", fontSize: "14px", fontWeight: "600" }}
+              />
             </div>
             
             {selectedNeeds.includes("Other") && (
@@ -263,10 +272,12 @@ export default function ShopSelect() {
             <button onClick={() => {
               setShowNeedsModal(false);
               const terms = selectedNeeds.filter(n => n !== "Other");
+              setActiveServicesFilter(terms);
               if (selectedNeeds.includes("Other") && otherText.trim()) {
-                terms.push(otherText.trim());
+                setSearch(otherText.trim());
+              } else {
+                setSearch("");
               }
-              setSearch(terms.join(" "));
             }} disabled={selectedNeeds.length === 0 || (selectedNeeds.includes("Other") && !otherText.trim())} style={{ width: "100%", padding: "16px", borderRadius: "16px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", fontSize: "15px", fontWeight: "800", border: "none", cursor: (selectedNeeds.length === 0 || (selectedNeeds.includes("Other") && !otherText.trim())) ? "not-allowed" : "pointer", opacity: (selectedNeeds.length === 0 || (selectedNeeds.includes("Other") && !otherText.trim())) ? 0.5 : 1, boxShadow: "0 4px 12px rgba(26,58,92,0.2)", transition: "opacity 0.2s" }}>
               Find Shop
             </button>
@@ -277,3 +288,7 @@ export default function ShopSelect() {
     </div>
   );
 }
+
+
+
+

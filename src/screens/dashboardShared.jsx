@@ -517,3 +517,133 @@ export function SharedFilterSelect({ value, onChange, options, style }) {
     />
   );
 }
+
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Multi-Select Dropdown Component
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+export function CustomMultiSelectDropdown({ values, onChange, options, style, placeholder, disabled, searchPlaceholder = "Search..." }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (ref.current && !ref.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const {
+    flex, flexShrink, flexGrow, flexBasis,
+    width, minWidth, maxWidth,
+    margin, marginTop, marginBottom, marginLeft, marginRight,
+    display,
+    ...innerStyle
+  } = style || {};
+
+  const wrapperStyle = {
+    position: "relative", fontFamily: "inherit",
+    display: display || (flex ? "flex" : "inline-block"),
+    flex, flexShrink, flexGrow, flexBasis,
+    width, minWidth, maxWidth,
+    margin, marginTop, marginBottom, marginLeft, marginRight,
+  };
+
+  const filteredOptions = options.filter(o => o.label.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  const displayText = values.length === 0 
+    ? (placeholder || "Select...") 
+    : values.length === 1 
+      ? options.find(o => String(o.value) === String(values[0]))?.label || values[0]
+      : `${values.length} selected`;
+
+  return (
+    <div ref={ref} style={wrapperStyle}>
+      <div 
+        onClick={() => { if (!disabled) setIsOpen(!isOpen); }}
+        style={{
+          padding: innerStyle.padding || "12px 36px 12px 14px",
+          borderRadius: innerStyle.borderRadius || "12px",
+          border: isOpen ? `1.5px solid ${colors.blue}` : (innerStyle.border || `1.5px solid ${colors.border}`),
+          fontSize: innerStyle.fontSize || "13px",
+          fontWeight: innerStyle.fontWeight || "600",
+          backgroundColor: disabled ? "#f3f4f6" : (innerStyle.backgroundColor || innerStyle.background || colors.white),
+          color: disabled ? "#9ca3af" : (values.length > 0 ? colors.textPrimary : colors.textMuted),
+          cursor: disabled ? "not-allowed" : "pointer",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          boxShadow: isOpen ? "0 4px 12px rgba(42,82,152,0.1)" : (innerStyle.boxShadow || "none"),
+          transition: "all 0.2s ease",
+          height: "100%",
+          boxSizing: "border-box"
+        }}
+      >
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {displayText}
+        </span>
+        <svg style={{ position: "absolute", right: "14px", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </div>
+
+      {isOpen && (
+        <div style={{
+          position: "absolute", top: "100%", left: 0, right: 0, marginTop: "6px",
+          backgroundColor: colors.white, borderRadius: "12px", border: `1px solid ${colors.border}`,
+          boxShadow: "0 10px 25px rgba(0,0,0,0.1)", zIndex: 100,
+          display: "flex", flexDirection: "column", overflow: "hidden"
+        }}>
+          <div style={{ padding: "10px", borderBottom: `1px solid ${colors.border}`, background: colors.white, zIndex: 2 }}>
+            <input 
+              type="text"
+              placeholder={searchPlaceholder}
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              onClick={e => e.stopPropagation()}
+              style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: `1px solid ${colors.border}`, fontSize: "13px", outline: "none", boxSizing: "border-box", background: "#f9fafb" }}
+            />
+          </div>
+          <div style={{ maxHeight: "220px", overflowY: "auto", padding: "6px", display: "flex", flexDirection: "column" }}>
+            {filteredOptions.length === 0 ? (
+              <div style={{ padding: "12px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>No results found</div>
+            ) : (
+              filteredOptions.map((opt, i) => {
+                const isSelected = values.includes(opt.value);
+                return (
+                  <div 
+                    key={i}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isSelected) {
+                        onChange(values.filter(v => v !== opt.value));
+                      } else {
+                        onChange([...values, opt.value]);
+                      }
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.bg}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                    style={{
+                      padding: "10px 14px", borderRadius: "8px", fontSize: innerStyle.fontSize || "13px",
+                      fontWeight: isSelected ? "700" : "500", color: isSelected ? colors.blue : colors.textPrimary,
+                      backgroundColor: isSelected ? colors.infoBg : "transparent", cursor: "pointer",
+                      transition: "background 0.1s ease", display: "flex", alignItems: "center", justifyContent: "space-between"
+                    }}
+                  >
+                    {opt.label}
+                    {isSelected && (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.blue} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+

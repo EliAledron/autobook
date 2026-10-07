@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
-import { sh, colors, SharedSearchBar, SharedFilterSelect } from "./dashboardShared";
+import { sh, colors, SharedSearchBar, SharedFilterSelect, CustomMultiSelectDropdown } from "./dashboardShared";
+import { STANDARD_SERVICES } from "../utils/servicesList";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
 import { Store, MapPin, CheckCircle2, Star } from "lucide-react";
@@ -22,11 +23,19 @@ export default function FindMechanic() {
   const [loadingShops, setLoadingShops] = useState(true);
   const [search, setSearch] = useState("");
   const [minRating, setMinRating] = useState(0);
+  const [selectedServices, setSelectedServices] = useState([]);
 
   useEffect(() => {
     const fetchShops = async () => {
       try {
-        const snap = await getDocs(collection(db, "shops"));
+        let q;
+        if (selectedServices && selectedServices.length > 0) {
+          const servicesToSearch = selectedServices.slice(0, 10); // Firestore max 10 for 'in' / 'array-contains-any'
+          q = query(collection(db, "shops"), where("services", "array-contains-any", servicesToSearch));
+        } else {
+          q = collection(db, "shops");
+        }
+        const snap = await getDocs(q);
         let shopsData = snap.docs.map((d) => {
           const shop = { id: d.id, ...d.data() };
           const sName = (shop.name || "").toUpperCase();
@@ -84,7 +93,7 @@ export default function FindMechanic() {
       setCustomerName(u.displayName || u.email || "Customer");
     });
     return () => unsub();
-  }, [navigate]);
+  }, [navigate, selectedServices]);
 
   const handlePreSubmit = () => {
     if (!requestAddress.trim() || !selected) return;
@@ -145,10 +154,20 @@ export default function FindMechanic() {
 
   const filteredShops = shops.filter(shop => {
     if (shop.status === "restricted") return false;
-    const s = search.toLowerCase();
-    const matchSearch = (shop.name || "").toLowerCase().includes(s) || (shop.tagline || "").toLowerCase().includes(s);
+    const s = search.toLowerCase().trim();
+    const matchSearch = !s || 
+      (shop.name || "").toLowerCase().includes(s) || 
+      (shop.tagline || "").toLowerCase().includes(s) || 
+      (shop.services && Array.isArray(shop.services) && shop.services.some(svc => 
+        svc.toLowerCase().includes(s) || s.includes(svc.toLowerCase())
+      ));
+
+    const matchServices = selectedServices.length === 0 || selectedServices.some(svc => 
+      shop.services && Array.isArray(shop.services) && shop.services.includes(svc)
+    );
+
     const matchRating = (shop.rating || 0) >= minRating;
-    return matchSearch && matchRating;
+    return matchSearch && matchRating && matchServices;
   });
 
   return (
@@ -172,21 +191,32 @@ export default function FindMechanic() {
         <div style={{ ...sh.sectionLabel, fontSize: "13px", color: colors.textPrimary, letterSpacing: "0.5px", marginBottom: "1rem" }}>Available shops</div>
 
         {/* SEARCH & FILTER */}
-        <div style={{ display: "flex", gap: "10px", marginBottom: "1.5rem" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "1.5rem" }}>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <CustomMultiSelectDropdown
+              values={selectedServices}
+              onChange={setSelectedServices}
+              options={STANDARD_SERVICES.map(s => ({ value: s, label: s }))}
+              placeholder="Filter by Services..."
+              searchPlaceholder="Search services..."
+              style={{ flex: 1, padding: "14px 36px 14px 16px", borderRadius: "24px", border: "1px solid transparent", backgroundColor: "#f1f5f9", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)" }}
+            />
+            <SharedFilterSelect
+              value={minRating}
+              onChange={(val) => setMinRating(Number(val))}
+              options={[
+                { label: "All Ratings", value: 0 },
+                { label: "4.5+ Stars", value: 4.5 },
+                { label: "4.0+ Stars", value: 4.0 },
+                { label: "3.0+ Stars", value: 3.0 },
+              ]}
+              style={{ width: "140px" }}
+            />
+          </div>
           <SharedSearchBar
             value={search}
             onChange={setSearch}
-            placeholder="Search shops or services..."
-          />
-          <SharedFilterSelect
-            value={minRating}
-            onChange={(val) => setMinRating(Number(val))}
-            options={[
-              { label: "All Ratings", value: 0 },
-              { label: "4.5+ Stars", value: 4.5 },
-              { label: "4.0+ Stars", value: 4.0 },
-              { label: "3.0+ Stars", value: 3.0 },
-            ]}
+            placeholder="Search shop names or tags..."
           />
         </div>
 
@@ -308,3 +338,8 @@ export default function FindMechanic() {
     </div>
   );
 }
+
+
+
+
+

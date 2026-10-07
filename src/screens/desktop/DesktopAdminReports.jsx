@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { collection, onSnapshot, query } from "firebase/firestore";
 import { db } from "../../firebase";
-import { colors } from "../dashboardShared";
+import { colors, CustomDropdown } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
 import { BarChart3, Users, Wrench, Calendar, ClipboardList, TrendingUp, Flame } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from "recharts";
@@ -192,15 +192,12 @@ export default function DesktopAdminReports() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
                   <h3 style={{ fontSize: "16px", fontWeight: "700", color: colors.textPrimary, margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
                     <Calendar size={18} color={colors.textSecondary} /> 
-                    <select 
-                      value={selectedYear} 
-                      onChange={e => setSelectedYear(Number(e.target.value))}
-                      style={{ padding: "4px 8px", borderRadius: "8px", border: `1px solid ${colors.border}`, fontSize: "14px", fontWeight: "700", outline: "none", cursor: "pointer", background: "#f8fafc" }}
-                    >
-                      {availableYears.map(y => (
-                        <option key={y} value={y}>{y}</option>
-                      ))}
-                    </select>
+                    <CustomDropdown
+                      value={selectedYear}
+                      onChange={val => setSelectedYear(Number(val))}
+                      options={availableYears.map(y => ({ value: y, label: y }))}
+                      style={{ minWidth: "90px", padding: "6px 36px 6px 12px", borderRadius: "10px", border: `1px solid ${colors.border}`, fontSize: "14px", fontWeight: "700", background: "#f8fafc" }}
+                    />
                     Trends
                   </h3>
                   {overallMax > 0 && (

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { sh, colors, getInitials, ErrorModal, SuccessModal } from "./dashboardShared";
+import { sh, colors, getInitials, ErrorModal, SuccessModal, CustomDropdown } from "./dashboardShared";
 import { doc, updateDoc, addDoc, setDoc, collection, serverTimestamp, getDocs, query, where, orderBy, getDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -9,6 +9,7 @@ import { Store, AlertTriangle, FileText, Check, Star, Edit, Flag, Calendar, Hear
 import { useUser } from "../UserContext";
 import AdminLayout from "../components/AdminLayout";
 import DesktopOnly from "../components/DesktopOnly";
+import { STANDARD_SERVICES } from "../utils/servicesList";
 
 function timeAgo(timestamp) {
   if (!timestamp) return "Just now";
@@ -240,16 +241,34 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
         
         <div style={{ marginBottom: "1.25rem" }}>
           <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Services Offered</div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center", padding: "10px", borderRadius: "14px", border: `1.5px solid ${colors.border}`, background: "#f9fafb" }}>
-            {services.map(s => (
-              <div key={s} style={{ background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", padding: "6px 12px", borderRadius: "10px", fontSize: "13px", fontWeight: "600", display: "flex", alignItems: "center", gap: "6px", boxShadow: "0 2px 6px rgba(42,82,152,0.2)" }}>
-                {s}
-                <button onClick={() => setServices(services.filter(x => x !== s))} style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: "16px", padding: 0, opacity: 0.8 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.8}>×</button>
-              </div>
-            ))}
+          
+          {services.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "12px", padding: "12px", borderRadius: "16px", border: `1.5px solid ${colors.border}`, background: "#f9fafb" }}>
+              {services.map(s => (
+                <div key={s} style={{ background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", padding: "6px 12px", borderRadius: "10px", fontSize: "13px", fontWeight: "600", display: "flex", alignItems: "center", gap: "6px", boxShadow: "0 2px 6px rgba(42,82,152,0.2)" }}>
+                  {s}
+                  <button onClick={() => setServices(services.filter(x => x !== s))} style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: "16px", padding: 0, opacity: 0.8 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.8}>&times;</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ marginBottom: "12px" }}>
+            <CustomDropdown
+              value=""
+              onChange={val => {
+                if (val && !services.includes(val)) setServices([...services, val]);
+              }}
+              options={STANDARD_SERVICES.filter(s => !services.includes(s)).map(s => ({ value: s, label: s }))}
+              placeholder="Select from standard list..."
+              style={{ width: "100%", padding: "16px 36px 16px 16px", borderRadius: "16px", border: `1.5px solid ${colors.border}`, background: "#f8fafc", fontSize: "14px", fontWeight: "500" }}
+            />
+          </div>
+          
+          <div style={{ display: "flex", gap: "8px" }}>
             <input
-              style={{ border: "none", background: "transparent", outline: "none", fontSize: "14px", color: colors.textPrimary, flex: 1, minWidth: "150px", padding: "4px 0", fontFamily: "inherit" }}
-              placeholder={services.length === 0 ? "e.g. Oil Change (press Enter)" : "Add another..."}
+              style={{ ...inputStyle, flex: 1 }}
+              placeholder="Or type custom service here"
               value={serviceInput}
               onChange={e => setServiceInput(e.target.value)}
               onKeyDown={e => {
@@ -263,6 +282,19 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
                 }
               }}
             />
+            <button 
+              onClick={() => {
+                const val = serviceInput.trim().replace(/,$/, '');
+                if (val && !services.includes(val)) {
+                  setServices([...services, val]);
+                  setServiceInput("");
+                }
+              }}
+              disabled={!serviceInput.trim()}
+              style={{ background: colors.blue, color: "#fff", border: "none", borderRadius: "16px", padding: "0 20px", fontWeight: "700", cursor: serviceInput.trim() ? "pointer" : "not-allowed", opacity: serviceInput.trim() ? 1 : 0.6, fontSize: "14px", whiteSpace: "nowrap" }}
+            >
+              Add Custom
+            </button>
           </div>
         </div>
 
