@@ -6,7 +6,8 @@ import { collection, query, where, getDocs, getDoc, orderBy, updateDoc, doc, add
 import { sh, colors, EmptyState, getInitials, SharedSearchBar, ErrorModal, SuccessModal } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
-import { CheckCircle2, Wrench, XCircle, Clock, ClipboardList, Store, Calendar, Car, X, RefreshCw, Star } from "lucide-react";
+import BookingIssueModal from "../components/BookingIssueModal";
+import { CheckCircle2, Wrench, XCircle, Clock, ClipboardList, Store, Calendar, Car, X, RefreshCw, Star, ShieldAlert } from "lucide-react";
 
 const STATUS_TABS = ["All", "Pending", "In Progress", "Completed", "Cancelled", "Archived"];
 
@@ -133,6 +134,7 @@ export default function BookingHistory() {
   const [search, setSearch] = useState("");
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [showIssueModal, setShowIssueModal] = useState(false);
 
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
@@ -707,6 +709,23 @@ export default function BookingHistory() {
               </div>
             )}
 
+            {/* Report an Issue with this Booking */}
+            <button
+              onClick={() => setShowIssueModal(true)}
+              style={{
+                width: "100%", padding: "14px",
+                background: "rgba(220, 38, 38, 0.06)", color: colors.danger,
+                fontSize: "14px", fontWeight: "700",
+                border: `1.5px solid rgba(220, 38, 38, 0.25)`, borderRadius: "16px",
+                cursor: "pointer", fontFamily: "inherit", marginBottom: "12px",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <ShieldAlert size={17} />
+              Report an Issue with this Booking
+            </button>
+
             <button onClick={() => setSelected(null)} style={{ ...sh.outlineBtn, padding: "16px", borderRadius: "16px", fontSize: "15px", border: "none", background: colors.bg, color: colors.textSecondary, fontWeight: "700" }}>Close</button>
           </div>
         </div>
@@ -807,6 +826,16 @@ export default function BookingHistory() {
         </div>
       )}
 
-          </div>
+      {showIssueModal && selected && (
+        <BookingIssueModal
+          booking={selected}
+          onClose={() => setShowIssueModal(false)}
+          onSuccess={() => {
+            setShowIssueModal(false);
+          }}
+        />
+      )}
+
+    </div>
   );
 }

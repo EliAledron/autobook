@@ -6,8 +6,9 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { sh, colors, getInitials, ErrorModal } from "./dashboardShared";
 import { useUser } from "../UserContext";
 import BackButton from "../components/BackButton";
-import { Save } from "lucide-react";
+import { Save, LifeBuoy } from "lucide-react";
 import ReviewAppModal from "../components/ReviewAppModal";
+import HelpSupportModal from "../components/HelpSupportModal";
 import { requestPushPermission } from "../utils/notifications";
 
 const CLOUDINARY_CLOUD = "dpwojan8w";
@@ -61,6 +62,7 @@ export default function Profile() {
   const [toast, setToast] = useState(false);
   const [error, setError] = useState("");
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
 
   const isAdmin = userProfile?.role?.toLowerCase() === "admin";
   if (isAdmin) return <DesktopAdminProfile />;
@@ -561,8 +563,16 @@ export default function Profile() {
             </button>
         )}
 
-                <div style={sh.sectionLabel}>Feedback</div>
-        <div className="profile-card" style={{ ...sh.card, padding: 0, borderRadius: "20px", border: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.03)", marginBottom: "32px" }}>
+        <div style={sh.sectionLabel}>Support & Feedback</div>
+        <div className="profile-card" style={{ ...sh.card, padding: 0, borderRadius: "20px", border: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.03)", marginBottom: "32px", overflow: "hidden" }}>
+          <button
+            className="profile-btn profile-outline-btn"
+            style={{ width: "100%", padding: "16px", fontSize: "15px", fontWeight: "700", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", background: "#fff", color: colors.navy, borderBottom: `1px solid ${colors.border}` }}
+            onClick={() => setShowSupportModal(true)}
+          >
+            <LifeBuoy size={20} color={colors.navy} />
+            Help & Customer Support
+          </button>
           <button
             className="profile-btn profile-outline-btn"
             style={{ width: "100%", padding: "16px", fontSize: "15px", fontWeight: "700", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", background: "transparent", color: colors.navy }}
@@ -634,6 +644,7 @@ export default function Profile() {
         {toast}
         </div>
       {showReviewModal && <ReviewAppModal onClose={() => setShowReviewModal(false)} userProfile={{id: uid, name: name, role: role}} />}
+      {showSupportModal && <HelpSupportModal onClose={() => setShowSupportModal(false)} userProfile={{id: uid, name: name, role: role, email: email}} />}
     </div>
   );
 }

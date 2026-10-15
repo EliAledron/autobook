@@ -6,7 +6,7 @@ import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { signOut } from "firebase/auth";
 import TopbarAvatar from "../screens/TopbarAvatar";
-import { Users, FileText, Wrench, AlertTriangle, MessageSquare, ShieldAlert, ClipboardList, LogOut, LayoutDashboard, Search, Bell, Store } from "lucide-react";
+import { Users, FileText, Wrench, AlertTriangle, MessageSquare, ShieldAlert, ClipboardList, LogOut, LayoutDashboard, Search, Bell, Store, LifeBuoy } from "lucide-react";
 import { colors } from "../screens/dashboardShared";
 import { useUser } from "../UserContext";
 
@@ -18,6 +18,7 @@ export default function AdminLayout({ children }) {
 
   const [pendingUsers, setPendingUsers] = useState(0);
   const [unreadAlerts, setUnreadAlerts] = useState(0);
+  const [openTickets, setOpenTickets] = useState(0);
   const [alertsList, setAlertsList] = useState([]);
   const [showNotif, setShowNotif] = useState(false);
 
@@ -28,9 +29,13 @@ export default function AdminLayout({ children }) {
       setPendingUsers(snap.docs.filter(d => (d.data().status || "pending") === "pending").length);
     }));
 
+    unsubscribers.push(onSnapshot(query(collection(db, "supportTickets"), where("status", "==", "open")), (snap) => {
+      setOpenTickets(snap.docs.length);
+    }));
+
     const qAlerts = query(
       collection(db, "adminAlerts"),
-      where("type", "in", ["new_user", "shop_report", "new_rating", "system_alert"])
+      where("type", "in", ["new_user", "shop_report", "new_rating", "system_alert", "support_ticket"])
     );
     unsubscribers.push(onSnapshot(qAlerts, (snap) => {
       const list = snap.docs.map(d => ({id: d.id, ...d.data()}));
@@ -53,6 +58,7 @@ export default function AdminLayout({ children }) {
     { label: "Active Shops", icon: <Store size={20} />, path: "/admin/shops" },
     { label: "System Reports", icon: <FileText size={20} />, path: "/admin/reports" },
     { label: "Reported Shops", icon: <ShieldAlert size={20} />, path: "/admin/reported-shops" },
+    { label: "Support Tickets", icon: <LifeBuoy size={20} />, path: "/admin/support", badge: openTickets },
     { label: "System Alerts", icon: <AlertTriangle size={20} />, path: "/admin/alerts", badge: unreadAlerts },
     { label: "Platform Reviews", icon: <MessageSquare size={20} />, path: "/admin/reviews" }
   ];

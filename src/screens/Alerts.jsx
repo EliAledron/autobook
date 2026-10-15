@@ -7,7 +7,7 @@ import { sh, colors, EmptyState } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
 
-import { CheckCircle2, XCircle, MapPin, Wrench, Megaphone, Bell, PartyPopper } from "lucide-react";
+import { CheckCircle2, XCircle, MapPin, Wrench, Megaphone, Bell, PartyPopper, LifeBuoy } from "lucide-react";
 
 const typeIcon = (type) => {
   switch (type) {
@@ -17,6 +17,7 @@ const typeIcon = (type) => {
     case "request_sent":      return <CheckCircle2 size={20} />;
     case "status_update":     return <Wrench size={20} />;
     case "request_update":    return <Megaphone size={20} />;
+    case "support_update":    return <LifeBuoy size={20} />;
     default:                  return <Bell size={20} />;
   }
 };
@@ -29,6 +30,7 @@ const typeBg = (type) => {
     case "request_sent":      return colors.successBg;
     case "status_update":     return colors.infoBg;
     case "request_update":    return colors.infoBg;
+    case "support_update":    return colors.infoBg;
     default:                  return colors.bg;
   }
 };

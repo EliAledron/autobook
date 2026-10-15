@@ -44,6 +44,23 @@ export default function Restricted() {
             <br/><br/>
             Please contact AutoBook Support to resolve this issue.
           </p>
+          <button
+            onClick={() => window.location.href = "mailto:support@autobook.com?subject=Account%20Restricted%20Inquiry"}
+            style={{
+              marginTop: "24px",
+              padding: "14px 28px",
+              borderRadius: "14px",
+              background: colors.navy,
+              color: "#fff",
+              border: "none",
+              fontWeight: "700",
+              fontSize: "14px",
+              cursor: "pointer",
+              boxShadow: "0 4px 14px rgba(26,58,92,0.2)"
+            }}
+          >
+            Contact AutoBook Support
+          </button>
         </div>
       </div>
     </div>
