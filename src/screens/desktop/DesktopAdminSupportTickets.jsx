@@ -4,7 +4,7 @@ import {
   addDoc, serverTimestamp, query, orderBy 
 } from "firebase/firestore";
 import { db } from "../../firebase";
-import { colors, ErrorModal, SuccessModal, ConfirmModal } from "../dashboardShared";
+import { colors, ErrorModal, SuccessModal, ConfirmModal, CustomDropdown } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
 import { useUser } from "../../UserContext";
 import { 
@@ -250,22 +250,29 @@ export default function DesktopAdminSupportTickets() {
 
             {/* SEARCH & CATEGORY */}
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <select
+              <CustomDropdown
                 value={categoryFilter}
-                onChange={e => setCategoryFilter(e.target.value)}
+                onChange={setCategoryFilter}
+                options={[
+                  { value: "all", label: "All Categories" },
+                  { value: "Booking Issue", label: "Booking Issue" },
+                  { value: "Shop & Service Dispute", label: "Shop Dispute" },
+                  { value: "Payment / Billing Question", label: "Payment / Billing" },
+                  { value: "Account & Login", label: "Account & Login" },
+                  { value: "App Bug or Technical Glitch", label: "Bug / Tech Glitch" },
+                  { value: "General Inquiry", label: "General Inquiry" },
+                ]}
                 style={{
-                  padding: "10px 14px", borderRadius: "12px", border: `1px solid ${colors.border}`,
-                  background: "#f8fafc", fontSize: "13px", color: colors.textPrimary, outline: "none"
+                  minWidth: "170px",
+                  padding: "10px 32px 10px 14px",
+                  borderRadius: "12px",
+                  border: `1px solid ${colors.border}`,
+                  backgroundColor: "#f8fafc",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  color: colors.textPrimary
                 }}
-              >
-                <option value="all">All Categories</option>
-                <option value="Booking Issue">Booking Issue</option>
-                <option value="Shop & Service Dispute">Shop Dispute</option>
-                <option value="Payment / Billing Question">Payment / Billing</option>
-                <option value="Account & Login">Account & Login</option>
-                <option value="App Bug or Technical Glitch">Bug / Tech Glitch</option>
-                <option value="General Inquiry">General Inquiry</option>
-              </select>
+              />
 
               <div style={{
                 display: "flex", alignItems: "center", gap: "10px",

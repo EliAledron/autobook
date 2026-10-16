@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db, auth } from "../firebase";
-import { colors, ErrorModal, SuccessModal } from "../screens/dashboardShared";
+import { colors, ErrorModal, SuccessModal, CustomDropdown } from "../screens/dashboardShared";
 import { X, AlertTriangle, Send, Store, Calendar, Car, ShieldAlert } from "lucide-react";
 
 const ISSUE_TYPES = [
@@ -173,19 +173,22 @@ export default function BookingIssueModal({ booking, onClose, onSuccess }) {
               <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" }}>
                 What went wrong? <span style={{ color: colors.danger }}>*</span>
               </label>
-              <select
+              <CustomDropdown
                 value={issueType}
-                onChange={e => setIssueType(e.target.value)}
+                onChange={setIssueType}
+                options={ISSUE_TYPES.map(t => ({ value: t, label: t }))}
+                placeholder="Select issue type..."
                 style={{
-                  width: "100%", padding: "12px 14px", borderRadius: "12px",
-                  border: `1px solid ${colors.border}`, background: "#f8fafc",
-                  fontSize: "14px", color: colors.textPrimary, outline: "none"
+                  width: "100%",
+                  padding: "13px 40px 13px 16px",
+                  borderRadius: "14px",
+                  border: `1.5px solid ${colors.border}`,
+                  backgroundColor: "#f8fafc",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  color: colors.textPrimary
                 }}
-              >
-                {ISSUE_TYPES.map((t, idx) => (
-                  <option key={idx} value={t}>{t}</option>
-                ))}
-              </select>
+              />
             </div>
 
             <div>

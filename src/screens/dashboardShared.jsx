@@ -423,6 +423,7 @@ export function CustomDropdown({ value, onChange, options, style, placeholder, d
     flex, flexShrink, flexGrow, flexBasis,
     width, minWidth, maxWidth,
     margin, marginTop, marginBottom, marginLeft, marginRight,
+    zIndex: isOpen ? 100 : 1,
   };
 
   return (
@@ -464,35 +465,48 @@ export function CustomDropdown({ value, onChange, options, style, placeholder, d
           borderRadius: "12px",
           border: `1px solid ${colors.border}`,
           boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-          zIndex: 100,
+          zIndex: 110,
           maxHeight: "220px",
           overflowY: "auto",
           padding: "6px",
           boxSizing: "border-box"
         }}>
-          {options.map((opt, i) => (
-            <div 
-              key={i}
-              onClick={() => {
-                onChange(opt.value);
-                setIsOpen(false);
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.bg}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-              style={{
-                padding: "10px 14px",
-                borderRadius: "8px",
-                fontSize: innerStyle.fontSize || "13px",
-                fontWeight: String(opt.value) === String(value) ? "700" : "500",
-                color: String(opt.value) === String(value) ? colors.blue : colors.textPrimary,
-                backgroundColor: String(opt.value) === String(value) ? colors.infoBg : "transparent",
-                cursor: "pointer",
-                transition: "background 0.1s ease"
-              }}
-            >
-              {opt.label}
-            </div>
-          ))}
+          {options.map((opt, i) => {
+            const isSelected = String(opt.value) === String(value);
+            return (
+              <div 
+                key={i}
+                onClick={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+                onMouseEnter={(e) => {
+                  if (!isSelected) e.currentTarget.style.backgroundColor = colors.bg;
+                }}
+                onMouseLeave={(e) => {
+                  if (!isSelected) e.currentTarget.style.backgroundColor = "transparent";
+                }}
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: "8px",
+                  fontSize: innerStyle.fontSize || "13px",
+                  fontWeight: isSelected ? "700" : "500",
+                  color: isSelected ? colors.blue : colors.textPrimary,
+                  backgroundColor: isSelected ? colors.infoBg : "transparent",
+                  cursor: "pointer",
+                  transition: "background 0.1s ease",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between"
+                }}
+              >
+                <span>{opt.label}</span>
+                {isSelected && (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={colors.blue} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -551,6 +565,7 @@ export function CustomMultiSelectDropdown({ values, onChange, options, style, pl
     flex, flexShrink, flexGrow, flexBasis,
     width, minWidth, maxWidth,
     margin, marginTop, marginBottom, marginLeft, marginRight,
+    zIndex: isOpen ? 100 : 1,
   };
 
   const filteredOptions = options.filter(o => o.label.toLowerCase().includes(searchTerm.toLowerCase()));

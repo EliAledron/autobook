@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { collection, addDoc, serverTimestamp, query, where, onSnapshot } from "firebase/firestore";
 import { db, auth } from "../firebase";
-import { colors, sh, ErrorModal, SuccessModal } from "../screens/dashboardShared";
+import { colors, sh, ErrorModal, SuccessModal, CustomDropdown } from "../screens/dashboardShared";
 import { 
   X, Search, HelpCircle, Send, ChevronDown, ChevronUp, 
   LifeBuoy, MessageSquare, AlertTriangle, CheckCircle2, Clock, FileText 
@@ -417,19 +417,22 @@ export default function HelpSupportModal({ onClose, userProfile, defaultTab = "f
                   <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" }}>
                     Issue Category
                   </label>
-                  <select
+                  <CustomDropdown
                     value={category}
-                    onChange={e => setCategory(e.target.value)}
+                    onChange={setCategory}
+                    options={TICKET_CATEGORIES.map(cat => ({ value: cat, label: cat }))}
+                    placeholder="Select an issue category..."
                     style={{
-                      width: "100%", padding: "12px 14px", borderRadius: "12px",
-                      border: `1px solid ${colors.border}`, background: "#f8fafc",
-                      fontSize: "14px", color: colors.textPrimary, outline: "none"
+                      width: "100%",
+                      padding: "13px 40px 13px 16px",
+                      borderRadius: "14px",
+                      border: `1.5px solid ${colors.border}`,
+                      backgroundColor: "#f8fafc",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      color: colors.textPrimary
                     }}
-                  >
-                    {TICKET_CATEGORIES.map((cat, i) => (
-                      <option key={i} value={cat}>{cat}</option>
-                    ))}
-                  </select>
+                  />
                 </div>
 
                 <div>
