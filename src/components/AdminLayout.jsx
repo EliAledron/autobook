@@ -6,7 +6,7 @@ import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { signOut } from "firebase/auth";
 import TopbarAvatar from "../screens/TopbarAvatar";
-import { Users, FileText, Wrench, AlertTriangle, MessageSquare, ShieldAlert, ClipboardList, LogOut, LayoutDashboard, Search, Bell, Store, LifeBuoy } from "lucide-react";
+import { Users, FileText, Wrench, AlertTriangle, MessageSquare, ShieldAlert, ClipboardList, LogOut, LayoutDashboard, Search, Bell, Store, LifeBuoy, Star } from "lucide-react";
 import { colors } from "../screens/dashboardShared";
 import { useUser } from "../UserContext";
 
@@ -60,7 +60,7 @@ export default function AdminLayout({ children }) {
     { label: "Reported Shops", icon: <ShieldAlert size={20} />, path: "/admin/reported-shops" },
     { label: "Support Tickets", icon: <LifeBuoy size={20} />, path: "/admin/support", badge: openTickets },
     { label: "System Alerts", icon: <AlertTriangle size={20} />, path: "/admin/alerts", badge: unreadAlerts },
-    { label: "Platform Reviews", icon: <MessageSquare size={20} />, path: "/admin/reviews" }
+    { label: "Reviews & Ratings", icon: <Star size={20} />, path: "/admin/reviews" }
   ];
 
   return (

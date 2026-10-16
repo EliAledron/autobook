@@ -57,17 +57,17 @@ export default function ShopSelect() {
             try {
               const bQuery = query(collection(db, "bookings"), where("shopId", "==", shop.id));
               const bSnap = await getDocs(bQuery);
-              let ratedBookings = bSnap.docs.map(d => d.data()).filter(b => b.rating && !isNaN(Number(b.rating)) && Number(b.rating) > 0);
+              let ratedBookings = bSnap.docs.map(d => d.data()).filter(b => b.rating && !isNaN(Number(b.rating)) && Number(b.rating) > 0 && !b.reviewHidden && b.reviewStatus !== "archived");
               if (ratedBookings.length === 0 && shop.name) {
                 const nQuery = query(collection(db, "bookings"), where("shopName", "==", shop.name));
                 const nSnap = await getDocs(nQuery);
-                ratedBookings = nSnap.docs.map(d => d.data()).filter(b => b.rating && !isNaN(Number(b.rating)) && Number(b.rating) > 0);
+                ratedBookings = nSnap.docs.map(d => d.data()).filter(b => b.rating && !isNaN(Number(b.rating)) && Number(b.rating) > 0 && !b.reviewHidden && b.reviewStatus !== "archived");
               }
 
               let directReviews = [];
               try {
                 const rSnap = await getDocs(collection(db, "shops", shop.id, "reviews"));
-                directReviews = rSnap.docs.map(d => d.data()).filter(r => r.rating && !isNaN(Number(r.rating)) && Number(r.rating) > 0);
+                directReviews = rSnap.docs.map(d => d.data()).filter(r => r.rating && !isNaN(Number(r.rating)) && Number(r.rating) > 0 && !r.reviewHidden && r.status !== "archived" && r.reviewStatus !== "archived");
               } catch(e) {}
               
               const allReviews = [...ratedBookings, ...directReviews];

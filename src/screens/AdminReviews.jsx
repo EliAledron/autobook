@@ -93,7 +93,7 @@ export default function AdminReviews() {
       const bSnap = await getDocs(bQuery);
       
       const bList = bSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const ratedBookings = bList.filter(b => b.rating && b.rating > 0);
+      const ratedBookings = bList.filter(b => b.rating && b.rating > 0 && !b.reviewHidden && b.reviewStatus !== "archived");
       
       // Sort newest reviews first
       ratedBookings.sort((a, b) => {

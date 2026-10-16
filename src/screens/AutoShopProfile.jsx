@@ -393,11 +393,11 @@ export default function AutoShopProfile() {
         let ratedBookings = [];
         if (sId) {
           const bSnap = await getDocs(query(collection(db, "bookings"), where("shopId", "==", sId)));
-          ratedBookings = bSnap.docs.map(d => d.data()).filter(b => b.rating && !isNaN(Number(b.rating)) && Number(b.rating) > 0);
+          ratedBookings = bSnap.docs.map(d => d.data()).filter(b => b.rating && !isNaN(Number(b.rating)) && Number(b.rating) > 0 && !b.reviewHidden && b.reviewStatus !== "archived");
         }
         if (ratedBookings.length === 0 && (dbShop.name || shop.name)) {
           const nSnap = await getDocs(query(collection(db, "bookings"), where("shopName", "==", dbShop.name || shop.name)));
-          ratedBookings = nSnap.docs.map(d => d.data()).filter(b => b.rating && !isNaN(Number(b.rating)) && Number(b.rating) > 0);
+          ratedBookings = nSnap.docs.map(d => d.data()).filter(b => b.rating && !isNaN(Number(b.rating)) && Number(b.rating) > 0 && !b.reviewHidden && b.reviewStatus !== "archived");
         }
 
         if (ratedBookings.length > 0) {
