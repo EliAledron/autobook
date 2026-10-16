@@ -112,6 +112,20 @@ export default function DesktopAdminReviews() {
     : "0.0";
   const criticalCount = allReviews.filter(r => r.rating <= 2).length;
 
+  const currentSourceReviews = sourceFilter === "shop" 
+    ? shopReviews 
+    : sourceFilter === "platform" 
+    ? platformReviews 
+    : allReviews;
+
+  const starBreakdown = {
+    5: currentSourceReviews.filter(r => Math.round(Number(r.rating)) === 5).length,
+    4: currentSourceReviews.filter(r => Math.round(Number(r.rating)) === 4).length,
+    3: currentSourceReviews.filter(r => Math.round(Number(r.rating)) === 3).length,
+    2: currentSourceReviews.filter(r => Math.round(Number(r.rating)) === 2).length,
+    1: currentSourceReviews.filter(r => Math.round(Number(r.rating)) === 1).length,
+  };
+
   // Filtered reviews
   const filteredReviews = allReviews.filter(r => {
     // Archived filter
@@ -264,6 +278,95 @@ export default function DesktopAdminReviews() {
               <div style={{ fontSize: "12px", fontWeight: "700", color: colors.danger, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" }}>Low Ratings (1–2★)</div>
               <div style={{ fontSize: "28px", fontWeight: "800", color: colors.danger }}>{criticalCount}</div>
               <div style={{ fontSize: "12px", color: colors.textMuted, marginTop: "4px" }}>Potential complaints or issues</div>
+            </div>
+          </div>
+
+          {/* RATING DISTRIBUTION BREAKDOWN CARD */}
+          <div style={{
+            background: "#fff",
+            padding: "20px 24px",
+            borderRadius: "18px",
+            border: `1px solid ${colors.border}`,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
+            marginBottom: "24px",
+            display: "flex",
+            alignItems: "center",
+            gap: "32px",
+            flexWrap: "wrap"
+          }}>
+            <div style={{ minWidth: "170px", borderRight: `1px solid ${colors.border}`, paddingRight: "24px" }}>
+              <div style={{ fontSize: "11px", fontWeight: "800", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>
+                Rating Breakdown
+              </div>
+              <div style={{ fontSize: "12px", color: colors.textMuted }}>
+                {sourceFilter === "shop" ? "Auto Shop Services" : sourceFilter === "platform" ? "Platform Feedback" : "All Review Sources"}
+              </div>
+              <div style={{ marginTop: "10px", display: "flex", alignItems: "baseline", gap: "6px" }}>
+                <span style={{ fontSize: "28px", fontWeight: "900", color: colors.navy }}>
+                  {currentSourceReviews.length > 0
+                    ? (currentSourceReviews.reduce((sum, r) => sum + Number(r.rating), 0) / currentSourceReviews.length).toFixed(1)
+                    : "0.0"}
+                </span>
+                <span style={{ fontSize: "13px", fontWeight: "700", color: colors.textMuted }}>/ 5.0</span>
+                <Star size={16} fill="#f59e0b" color="#f59e0b" style={{ marginLeft: "2px" }} />
+              </div>
+              <div style={{ fontSize: "11.5px", color: colors.textMuted, marginTop: "2px" }}>
+                {currentSourceReviews.length} total rating{currentSourceReviews.length !== 1 ? "s" : ""}
+              </div>
+            </div>
+
+            {/* 5★ to 1★ Distribution Bars */}
+            <div style={{ flex: 1, minWidth: "260px", display: "flex", flexDirection: "column", gap: "7px" }}>
+              {[5, 4, 3, 2, 1].map(star => {
+                const count = starBreakdown[star] || 0;
+                const pct = currentSourceReviews.length > 0 ? Math.round((count / currentSourceReviews.length) * 100) : 0;
+                const isSelected = starFilter === String(star);
+
+                return (
+                  <div
+                    key={star}
+                    onClick={() => {
+                      if (count > 0) {
+                        setStarFilter(isSelected ? "all" : String(star));
+                      }
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      cursor: count > 0 ? "pointer" : "default",
+                      padding: "2px 8px",
+                      borderRadius: "8px",
+                      background: isSelected ? "rgba(37,99,235,0.08)" : "transparent",
+                      transition: "all 0.15s ease"
+                    }}
+                    title={count > 0 ? `Click to filter table by ${star} star reviews` : "No reviews for this rating"}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "3px", width: "42px", flexShrink: 0 }}>
+                      <span style={{ fontSize: "12.5px", fontWeight: isSelected ? "800" : "600", color: isSelected ? colors.blue : colors.textPrimary }}>{star}</span>
+                      <Star size={12} fill="#f59e0b" color="#f59e0b" />
+                    </div>
+
+                    <div style={{ flex: 1, height: "9px", background: "#f1f5f9", borderRadius: "999px", overflow: "hidden" }}>
+                      <div style={{
+                        height: "100%",
+                        width: `${pct}%`,
+                        background: isSelected
+                          ? colors.blue
+                          : star <= 2
+                          ? "linear-gradient(90deg, #ef4444 0%, #f87171 100%)"
+                          : "linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%)",
+                        borderRadius: "999px",
+                        transition: "width 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
+                      }} />
+                    </div>
+
+                    <div style={{ width: "75px", textAlign: "right", fontSize: "12px", color: isSelected ? colors.blue : colors.textMuted, fontWeight: isSelected ? "700" : "500", flexShrink: 0 }}>
+                      {count} <span style={{ opacity: 0.7 }}>({pct}%)</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

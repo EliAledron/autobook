@@ -344,6 +344,7 @@ export default function AutoShopProfile() {
   const [reviewText, setReviewText] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [selectedStarFilter, setSelectedStarFilter] = useState(0);
   
   // Report Modal State
   const [showReportModal, setShowReportModal] = useState(false);
@@ -566,6 +567,23 @@ export default function AutoShopProfile() {
   const displayServices = shop.services?.length > 0 
     ? shop.services 
     : ["Oil Change", "Brake Inspection", "Tire Rotation", "Aircon Cleaning", "Battery Replacement", "General Checkup"];
+
+  const totalReviewsCount = reviews.length;
+  const starCounts = {
+    5: reviews.filter(r => Math.round(Number(r.rating)) === 5).length,
+    4: reviews.filter(r => Math.round(Number(r.rating)) === 4).length,
+    3: reviews.filter(r => Math.round(Number(r.rating)) === 3).length,
+    2: reviews.filter(r => Math.round(Number(r.rating)) === 2).length,
+    1: reviews.filter(r => Math.round(Number(r.rating)) === 1).length,
+  };
+
+  const dynamicAvgRating = totalReviewsCount > 0
+    ? reviews.reduce((sum, r) => sum + Number(r.rating), 0) / totalReviewsCount
+    : (shop?.rating && !isNaN(Number(shop.rating)) ? Number(shop.rating) : 0);
+
+  const filteredReviews = selectedStarFilter > 0
+    ? reviews.filter(r => Math.round(Number(r.rating)) === selectedStarFilter)
+    : reviews;
 
   const content = (
     <div style={sh.page}>
@@ -805,13 +823,220 @@ export default function AutoShopProfile() {
 
         {activeTab === "Reviews" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            
+            {/* VISUAL STAR RATING BREAKDOWN CARD */}
+            <div style={{
+              background: colors.white,
+              borderRadius: "20px",
+              padding: "24px",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
+              border: `1px solid ${colors.border}`,
+              display: "flex",
+              flexDirection: "column",
+              gap: "20px"
+            }}>
+              <div style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: "28px",
+                flexWrap: "wrap"
+              }}>
+                {/* Overall Score */}
+                <div style={{
+                  textAlign: "center",
+                  minWidth: "130px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  paddingRight: "16px",
+                  borderRight: `1px solid ${colors.border}`
+                }}>
+                  <div style={{ fontSize: "48px", fontWeight: "900", color: colors.navy, lineHeight: 1 }}>
+                    {dynamicAvgRating > 0 ? dynamicAvgRating.toFixed(1) : "0.0"}
+                  </div>
+                  <div style={{ display: "flex", gap: "3px", margin: "10px 0 6px" }}>
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <Star
+                        key={s}
+                        size={17}
+                        fill={s <= Math.round(dynamicAvgRating) ? "#f59e0b" : "none"}
+                        color={s <= Math.round(dynamicAvgRating) ? "#f59e0b" : "#d1d5db"}
+                      />
+                    ))}
+                  </div>
+                  <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "600" }}>
+                    {totalReviewsCount} {totalReviewsCount === 1 ? "review" : "reviews"}
+                  </div>
+                </div>
 
+                {/* 5★ to 1★ Distribution Bars */}
+                <div style={{ flex: 1, minWidth: "240px", display: "flex", flexDirection: "column", gap: "7px" }}>
+                  {[5, 4, 3, 2, 1].map(star => {
+                    const count = starCounts[star] || 0;
+                    const pct = totalReviewsCount > 0 ? Math.round((count / totalReviewsCount) * 100) : 0;
+                    const isSelected = selectedStarFilter === star;
+
+                    return (
+                      <div
+                        key={star}
+                        onClick={() => count > 0 && setSelectedStarFilter(isSelected ? 0 : star)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                          cursor: count > 0 ? "pointer" : "default",
+                          padding: "3px 8px",
+                          borderRadius: "8px",
+                          background: isSelected ? "rgba(37,99,235,0.08)" : "transparent",
+                          transition: "all 0.15s ease"
+                        }}
+                        title={count > 0 ? `Click to filter by ${star} star reviews` : "No reviews for this rating"}
+                      >
+                        {/* Star label */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "3px", width: "42px", flexShrink: 0 }}>
+                          <span style={{ fontSize: "13px", fontWeight: isSelected ? "800" : "600", color: isSelected ? colors.blue : colors.textPrimary }}>{star}</span>
+                          <Star size={13} fill="#f59e0b" color="#f59e0b" />
+                        </div>
+
+                        {/* Progress track */}
+                        <div style={{ flex: 1, height: "10px", background: "#f1f5f9", borderRadius: "999px", overflow: "hidden", position: "relative" }}>
+                          <div style={{
+                            height: "100%",
+                            width: `${pct}%`,
+                            background: isSelected ? colors.blue : "linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%)",
+                            borderRadius: "999px",
+                            transition: "width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease"
+                          }} />
+                        </div>
+
+                        {/* Count & Percentage */}
+                        <div style={{ width: "70px", textAlign: "right", fontSize: "12px", color: isSelected ? colors.blue : colors.textMuted, fontWeight: isSelected ? "700" : "500", flexShrink: 0 }}>
+                          {count} <span style={{ opacity: 0.7 }}>({pct}%)</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Interactive Filter Chips */}
+              {totalReviewsCount > 0 && (
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  flexWrap: "wrap",
+                  borderTop: `1px solid ${colors.border}`,
+                  paddingTop: "14px"
+                }}>
+                  <span style={{ fontSize: "12px", fontWeight: "700", color: colors.textSecondary, marginRight: "2px" }}>Filter:</span>
+                  <button
+                    onClick={() => setSelectedStarFilter(0)}
+                    style={{
+                      border: selectedStarFilter === 0 ? "none" : `1px solid ${colors.border}`,
+                      background: selectedStarFilter === 0 ? colors.navy : "#f8fafc",
+                      color: selectedStarFilter === 0 ? "#fff" : colors.textSecondary,
+                      padding: "5px 12px",
+                      borderRadius: "10px",
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    All ({totalReviewsCount})
+                  </button>
+
+                  {[5, 4, 3, 2, 1].map(star => {
+                    const count = starCounts[star] || 0;
+                    const isSelected = selectedStarFilter === star;
+                    return (
+                      <button
+                        key={star}
+                        onClick={() => setSelectedStarFilter(isSelected ? 0 : star)}
+                        style={{
+                          border: isSelected ? "none" : `1px solid ${colors.border}`,
+                          background: isSelected ? colors.blue : "#f8fafc",
+                          color: isSelected ? "#fff" : count > 0 ? colors.textPrimary : colors.textMuted,
+                          padding: "5px 12px",
+                          borderRadius: "10px",
+                          fontSize: "12px",
+                          fontWeight: isSelected ? "700" : "600",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          opacity: count === 0 && !isSelected ? 0.5 : 1,
+                          transition: "all 0.15s ease"
+                        }}
+                      >
+                        <span>{star}</span>
+                        <Star size={11} fill={isSelected ? "#fff" : "#f59e0b"} color={isSelected ? "#fff" : "#f59e0b"} />
+                        <span>({count})</span>
+                      </button>
+                    );
+                  })}
+
+                  {selectedStarFilter > 0 && (
+                    <button
+                      onClick={() => setSelectedStarFilter(0)}
+                      style={{
+                        marginLeft: "auto",
+                        border: "none",
+                        background: "transparent",
+                        color: colors.danger,
+                        fontSize: "12px",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        textDecoration: "underline"
+                      }}
+                    >
+                      Clear Filter
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Reviews List */}
-            {reviews.length === 0 ? (
-              <div style={{ background: colors.white, borderRadius: "20px", padding: "32px 16px", textAlign: "center", color: colors.textMuted, border: `1px solid ${colors.border}` }}>No reviews yet.</div>
+            {filteredReviews.length === 0 ? (
+              <div style={{ background: colors.white, borderRadius: "20px", padding: "36px 16px", textAlign: "center", color: colors.textMuted, border: `1px solid ${colors.border}` }}>
+                {selectedStarFilter > 0 ? (
+                  <div>
+                    <div style={{ fontWeight: "700", color: colors.textPrimary, marginBottom: "8px", fontSize: "15px" }}>
+                      No {selectedStarFilter}-star reviews found
+                    </div>
+                    <div style={{ fontSize: "13px", color: colors.textSecondary, marginBottom: "14px" }}>
+                      There are currently no reviews matching this rating filter.
+                    </div>
+                    <button
+                      onClick={() => setSelectedStarFilter(0)}
+                      style={{
+                        border: "none",
+                        background: colors.navy,
+                        color: "#fff",
+                        padding: "8px 18px",
+                        borderRadius: "12px",
+                        fontSize: "13px",
+                        fontWeight: "700",
+                        cursor: "pointer"
+                      }}
+                    >
+                      Show All Reviews
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <Star fill="none" color={colors.textMuted} size={40} style={{ margin: "0 auto 10px" }} />
+                    <div style={{ fontWeight: "700", color: colors.textPrimary, marginBottom: "4px" }}>No reviews yet</div>
+                    <div style={{ fontSize: "13px", color: colors.textSecondary }}>When customers complete a service and leave feedback, it will appear here.</div>
+                  </div>
+                )}
+              </div>
             ) : (
-              reviews.map(r => (
+              filteredReviews.map(r => (
                 <div key={r.id} style={{ background: colors.white, borderRadius: "20px", padding: "20px", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}` }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
