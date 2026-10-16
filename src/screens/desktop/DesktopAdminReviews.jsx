@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { collection, onSnapshot, updateDoc, doc, query, where } from "firebase/firestore";
+import { collection, onSnapshot, updateDoc, doc, query, where, getDocs, writeBatch, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebase";
 import { colors, ConfirmModal, SuccessModal, ErrorModal, CustomDropdown } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
 import { 
   Star, Archive, Search, MessageSquare, RotateCcw, Store, 
-  Smartphone, Filter, Eye, AlertCircle, CheckCircle2, X, ExternalLink, User 
+  Smartphone, Filter, Eye, AlertCircle, CheckCircle2, X, ExternalLink, User,
+  ShieldAlert, Flag
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -13,11 +14,12 @@ export default function DesktopAdminReviews() {
   const navigate = useNavigate();
   const [platformReviews, setPlatformReviews] = useState([]);
   const [shopReviews, setShopReviews] = useState([]);
+  const [reportsList, setReportsList] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Filters
   const [search, setSearch] = useState("");
-  const [sourceFilter, setSourceFilter] = useState("all"); // "all" | "shop" | "platform"
+  const [sourceFilter, setSourceFilter] = useState("all"); // "all" | "shop" | "platform" | "disputed"
   const [starFilter, setStarFilter] = useState("all"); // "all" | "5" | "4" | "3" | "2" | "1"
   const [showArchived, setShowArchived] = useState(false);
 
@@ -25,6 +27,8 @@ export default function DesktopAdminReviews() {
   const [selectedReview, setSelectedReview] = useState(null);
   const [reviewToArchive, setReviewToArchive] = useState(null);
   const [reviewToRestore, setReviewToRestore] = useState(null);
+  const [disputeToDismiss, setDisputeToDismiss] = useState(null);
+  const [disputeToUphold, setDisputeToUphold] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -32,6 +36,7 @@ export default function DesktopAdminReviews() {
   useEffect(() => {
     let unsubPlatform = () => {};
     let unsubBookings = () => {};
+    let unsubReports = () => {};
 
     try {
       // 1. Listen to Platform App Reviews
@@ -46,6 +51,8 @@ export default function DesktopAdminReviews() {
           shopName: "AutoBook Platform",
           shopId: null,
           serviceType: null,
+          isReported: !!d.data().isReported,
+          lastReportReason: d.data().lastReportReason || null,
           status: d.data().status || "active",
           createdAt: d.data().createdAt,
         }));
@@ -72,6 +79,8 @@ export default function DesktopAdminReviews() {
               serviceType: data.serviceType || "Automotive Service",
               bookingDate: data.date,
               vehicleLabel: data.vehicleLabel,
+              isReported: !!data.isReported,
+              lastReportReason: data.lastReportReason || null,
               status: data.reviewStatus || (data.reviewHidden ? "archived" : "active"),
               createdAt: data.ratedAt || data.createdAt,
             };
@@ -84,6 +93,14 @@ export default function DesktopAdminReviews() {
         console.warn("Bookings snapshot error:", err);
         setLoading(false);
       });
+
+      // 3. Listen to Review Reports / Disputes
+      unsubReports = onSnapshot(collection(db, "reviewReports"), (snap) => {
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        setReportsList(list);
+      }, (err) => {
+        console.warn("Review reports snapshot error:", err);
+      });
     } catch (e) {
       console.error("Reviews listener setup failed:", e);
       setLoading(false);
@@ -92,11 +109,29 @@ export default function DesktopAdminReviews() {
     return () => {
       unsubPlatform();
       unsubBookings();
+      unsubReports();
     };
   }, []);
 
-  // Merge and sort all reviews newest first
-  const allReviews = [...platformReviews, ...shopReviews].sort((a, b) => {
+  // Reports lookup map by reviewId
+  const reportsByReviewId = {};
+  reportsList.forEach(rep => {
+    if (!reportsByReviewId[rep.reviewId]) reportsByReviewId[rep.reviewId] = [];
+    reportsByReviewId[rep.reviewId].push(rep);
+  });
+
+  // Merge and sort all reviews newest first with reports enriched
+  const allReviews = [...platformReviews, ...shopReviews].map(r => {
+    const reps = reportsByReviewId[r.id] || [];
+    const hasPendingReport = reps.some(rep => rep.status === "pending");
+    return {
+      ...r,
+      reports: reps,
+      isReported: r.isReported || hasPendingReport,
+      reportReason: r.lastReportReason || reps.find(rep => rep.status === "pending")?.reason || reps[0]?.reason,
+      reportDetails: reps.find(rep => rep.status === "pending")?.details || reps[0]?.details,
+    };
+  }).sort((a, b) => {
     const tA = a.createdAt?.seconds || 0;
     const tB = b.createdAt?.seconds || 0;
     return tB - tA;
@@ -111,11 +146,15 @@ export default function DesktopAdminReviews() {
     ? (shopReviews.reduce((sum, r) => sum + r.rating, 0) / shopReviews.length).toFixed(1) 
     : "0.0";
   const criticalCount = allReviews.filter(r => r.rating <= 2).length;
+  const disputedReviews = allReviews.filter(r => r.isReported && r.status !== "archived");
+  const disputedCount = disputedReviews.length;
 
   const currentSourceReviews = sourceFilter === "shop" 
     ? shopReviews 
     : sourceFilter === "platform" 
     ? platformReviews 
+    : sourceFilter === "disputed"
+    ? disputedReviews
     : allReviews;
 
   const starBreakdown = {
@@ -135,8 +174,12 @@ export default function DesktopAdminReviews() {
       if (r.status === "archived") return false;
     }
 
-    // Source filter
-    if (sourceFilter !== "all" && r.source !== sourceFilter) return false;
+    // Source / Dispute filter
+    if (sourceFilter === "disputed") {
+      if (!r.isReported) return false;
+    } else if (sourceFilter !== "all" && r.source !== sourceFilter) {
+      return false;
+    }
 
     // Star filter
     if (starFilter !== "all" && Math.round(r.rating) !== Number(starFilter)) return false;
@@ -148,7 +191,8 @@ export default function DesktopAdminReviews() {
       (r.customerName || "").toLowerCase().includes(s) ||
       (r.comment || "").toLowerCase().includes(s) ||
       (r.shopName || "").toLowerCase().includes(s) ||
-      (r.serviceType || "").toLowerCase().includes(s)
+      (r.serviceType || "").toLowerCase().includes(s) ||
+      (r.reportReason || "").toLowerCase().includes(s)
     );
   });
 
@@ -208,6 +252,83 @@ export default function DesktopAdminReviews() {
     }
   };
 
+  // Dismiss dispute handler (reject dispute, review remains active)
+  const executeDismissDispute = async () => {
+    if (!disputeToDismiss) return;
+    setActionLoading(true);
+    try {
+      const repQuery = query(collection(db, "reviewReports"), where("reviewId", "==", disputeToDismiss.id));
+      const repSnap = await getDocs(repQuery);
+      if (!repSnap.empty) {
+        const batch = writeBatch(db);
+        repSnap.forEach(d => {
+          batch.update(doc(db, "reviewReports", d.id), { status: "dismissed", resolvedAt: serverTimestamp() });
+        });
+        await batch.commit();
+      }
+
+      const targetCol = disputeToDismiss.source === "shop" ? "bookings" : "reviews";
+      await updateDoc(doc(db, targetCol, disputeToDismiss.id), {
+        isReported: false,
+        lastReportDismissedAt: serverTimestamp()
+      });
+
+      setSuccessMsg("Dispute dismissed. The review will remain active.");
+      if (selectedReview?.id === disputeToDismiss.id) {
+        setSelectedReview(prev => prev ? { ...prev, isReported: false, reports: [] } : null);
+      }
+    } catch (e) {
+      console.error(e);
+      setErrorMsg("Failed to dismiss dispute: " + e.message);
+    } finally {
+      setActionLoading(false);
+      setDisputeToDismiss(null);
+    }
+  };
+
+  // Uphold dispute handler (approve dispute, archive review)
+  const executeUpholdDispute = async () => {
+    if (!disputeToUphold) return;
+    setActionLoading(true);
+    try {
+      const repQuery = query(collection(db, "reviewReports"), where("reviewId", "==", disputeToUphold.id));
+      const repSnap = await getDocs(repQuery);
+      if (!repSnap.empty) {
+        const batch = writeBatch(db);
+        repSnap.forEach(d => {
+          batch.update(doc(db, "reviewReports", d.id), { status: "resolved", resolution: "archived", resolvedAt: serverTimestamp() });
+        });
+        await batch.commit();
+      }
+
+      if (disputeToUphold.source === "shop") {
+        await updateDoc(doc(db, "bookings", disputeToUphold.id), {
+          reviewHidden: true,
+          reviewStatus: "archived",
+          isReported: false,
+          disputeResolution: "archived"
+        });
+      } else {
+        await updateDoc(doc(db, "reviews", disputeToUphold.id), {
+          status: "archived",
+          isReported: false,
+          disputeResolution: "archived"
+        });
+      }
+
+      setSuccessMsg("Dispute upheld. Review archived and removed from public shop profiles.");
+      if (selectedReview?.id === disputeToUphold.id) {
+        setSelectedReview(prev => prev ? { ...prev, status: "archived", isReported: false } : null);
+      }
+    } catch (e) {
+      console.error(e);
+      setErrorMsg("Failed to uphold dispute: " + e.message);
+    } finally {
+      setActionLoading(false);
+      setDisputeToUphold(null);
+    }
+  };
+
   return (
     <>
       <SuccessModal message={successMsg} onClose={() => setSuccessMsg("")} />
@@ -233,6 +354,26 @@ export default function DesktopAdminReviews() {
         confirmText="Restore" 
       />
 
+      <ConfirmModal 
+        isOpen={!!disputeToDismiss} 
+        title="Dismiss Review Dispute" 
+        message="Are you sure you want to dismiss this dispute? The review will remain active and visible on the platform." 
+        onConfirm={executeDismissDispute} 
+        onCancel={() => setDisputeToDismiss(null)} 
+        type="info" 
+        confirmText="Dismiss Dispute" 
+      />
+
+      <ConfirmModal 
+        isOpen={!!disputeToUphold} 
+        title="Uphold Dispute & Archive Review" 
+        message="Are you sure you want to uphold this dispute? The review will be archived immediately and hidden from public shop profiles and ratings." 
+        onConfirm={executeUpholdDispute} 
+        onCancel={() => setDisputeToUphold(null)} 
+        type="danger" 
+        confirmText="Uphold & Archive" 
+      />
+
       <RoleBasedWrapper title="Reviews & Ratings">
         <div style={{ maxWidth: "1240px", margin: "0 auto", padding: "32px", fontFamily: "'Inter', sans-serif" }}>
           
@@ -249,7 +390,7 @@ export default function DesktopAdminReviews() {
           </div>
 
           {/* STATS OVERVIEW CARDS */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "28px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "16px", marginBottom: "28px" }}>
             <div style={{ background: "#fff", padding: "20px", borderRadius: "18px", border: `1px solid ${colors.border}`, boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
               <div style={{ fontSize: "12px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" }}>Total Reviews</div>
               <div style={{ fontSize: "28px", fontWeight: "800", color: colors.navy }}>{totalCount}</div>
@@ -278,6 +419,27 @@ export default function DesktopAdminReviews() {
               <div style={{ fontSize: "12px", fontWeight: "700", color: colors.danger, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" }}>Low Ratings (1–2★)</div>
               <div style={{ fontSize: "28px", fontWeight: "800", color: colors.danger }}>{criticalCount}</div>
               <div style={{ fontSize: "12px", color: colors.textMuted, marginTop: "4px" }}>Potential complaints or issues</div>
+            </div>
+
+            <div
+              onClick={() => setSourceFilter(sourceFilter === "disputed" ? "all" : "disputed")}
+              style={{
+                background: sourceFilter === "disputed" ? "#fef2f2" : "#fff",
+                padding: "20px",
+                borderRadius: "18px",
+                border: sourceFilter === "disputed" ? `2px solid ${colors.danger}` : `1px solid ${colors.border}`,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
+                cursor: "pointer",
+                transition: "all 0.15s ease"
+              }}
+            >
+              <div style={{ fontSize: "12px", fontWeight: "700", color: colors.danger, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
+                <ShieldAlert size={14} /> Disputed ({disputedCount})
+              </div>
+              <div style={{ fontSize: "28px", fontWeight: "800", color: colors.danger }}>{disputedCount}</div>
+              <div style={{ fontSize: "12px", color: colors.textMuted, marginTop: "4px" }}>
+                {disputedCount > 0 ? "Click to view flagged reviews" : "No active disputes"}
+              </div>
             </div>
           </div>
 
@@ -382,7 +544,8 @@ export default function DesktopAdminReviews() {
               {[
                 { id: "all", label: "All Reviews", count: totalCount },
                 { id: "shop", label: "Shop Reviews", count: shopReviews.length, icon: <Store size={14} /> },
-                { id: "platform", label: "App Reviews", count: platformReviews.length, icon: <Smartphone size={14} /> }
+                { id: "platform", label: "App Reviews", count: platformReviews.length, icon: <Smartphone size={14} /> },
+                { id: "disputed", label: "Disputed", count: disputedCount, icon: <ShieldAlert size={14} color={disputedCount > 0 ? colors.danger : undefined} /> }
               ].map(tab => {
                 const isActive = sourceFilter === tab.id;
                 return (
@@ -531,6 +694,18 @@ export default function DesktopAdminReviews() {
                           <span style={{ background: colors.dangerBg, color: colors.danger, padding: "2px 6px", borderRadius: "6px", fontSize: "10px", fontWeight: "800", textTransform: "uppercase" }}>
                             Low Rating
                           </span>
+                        )}
+                        {r.isReported && (
+                          <div style={{ marginTop: "4px" }}>
+                            <span style={{
+                              background: colors.dangerBg, color: colors.danger,
+                              padding: "2px 6px", borderRadius: "6px",
+                              fontSize: "10px", fontWeight: "800", textTransform: "uppercase",
+                              display: "inline-flex", alignItems: "center", gap: "3px"
+                            }}>
+                              <ShieldAlert size={10} /> Disputed
+                            </span>
+                          </div>
                         )}
                       </td>
 
@@ -689,8 +864,13 @@ export default function DesktopAdminReviews() {
               }}>
                 {selectedReview.source === "shop" ? "Auto Shop Review" : "Platform Review"}
               </span>
+              {selectedReview.isReported && (
+                <span style={{ background: colors.dangerBg, color: colors.danger, fontSize: "11px", fontWeight: "800", textTransform: "uppercase", padding: "4px 10px", borderRadius: "8px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                  <ShieldAlert size={12} /> Disputed
+                </span>
+              )}
               {selectedReview.status === "archived" && (
-                <span style={{ background: colors.dangerBg, color: colors.danger, fontSize: "11px", fontWeight: "800", textTransform: "uppercase", padding: "4px 10px", borderRadius: "8px" }}>
+                <span style={{ background: "#f3f4f6", color: colors.textSecondary, fontSize: "11px", fontWeight: "800", textTransform: "uppercase", padding: "4px 10px", borderRadius: "8px" }}>
                   Archived / Hidden
                 </span>
               )}
@@ -714,6 +894,33 @@ export default function DesktopAdminReviews() {
             }}>
               "{selectedReview.comment || "No written comment provided."}"
             </div>
+
+            {/* DISPUTE REPORT DETAILS */}
+            {(selectedReview.isReported || (selectedReview.reports && selectedReview.reports.length > 0)) && (
+              <div style={{
+                background: "#fef2f2",
+                border: "1.5px solid #fecaca",
+                borderRadius: "16px",
+                padding: "16px",
+                marginBottom: "20px"
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", color: colors.danger, fontWeight: "800", fontSize: "13px" }}>
+                  <ShieldAlert size={16} /> Disputed Review Report
+                </div>
+                <div style={{ fontSize: "13px", color: colors.textPrimary, marginBottom: "6px" }}>
+                  <strong style={{ color: colors.danger }}>Reason:</strong> {selectedReview.reportReason || selectedReview.reports?.[0]?.reason || "Reported by user"}
+                </div>
+                {(selectedReview.reportDetails || selectedReview.reports?.[0]?.details) && (
+                  <div style={{ fontSize: "12.5px", color: colors.textSecondary, marginBottom: "8px", fontStyle: "italic", background: "#fff", padding: "8px 12px", borderRadius: "8px", border: "1px solid #fee2e2" }}>
+                    "{selectedReview.reportDetails || selectedReview.reports?.[0]?.details}"
+                  </div>
+                )}
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11.5px", color: colors.textMuted }}>
+                  <span>Reported by: <strong>{selectedReview.reports?.[0]?.reporterName || "User"}</strong> ({selectedReview.reports?.[0]?.reporterRole || "Reporter"})</span>
+                  <span>{selectedReview.reports?.[0]?.createdAt?.seconds ? new Date(selectedReview.reports[0].createdAt.seconds * 1000).toLocaleDateString() : ""}</span>
+                </div>
+              </div>
+            )}
 
             {/* METADATA */}
             <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "13px", marginBottom: "24px" }}>
@@ -759,7 +966,39 @@ export default function DesktopAdminReviews() {
                 </button>
               )}
               
-              {selectedReview.status === "archived" ? (
+              {selectedReview.isReported && selectedReview.status !== "archived" ? (
+                <>
+                  <button
+                    onClick={() => {
+                      setDisputeToDismiss(selectedReview);
+                      setSelectedReview(null);
+                    }}
+                    style={{
+                      flex: 1, padding: "12px", borderRadius: "12px",
+                      background: "#f8fafc", border: `1.5px solid ${colors.border}`,
+                      color: colors.textPrimary, fontWeight: "700", fontSize: "13px",
+                      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
+                    }}
+                  >
+                    <CheckCircle2 size={15} color={colors.success} /> Dismiss Dispute
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setDisputeToUphold(selectedReview);
+                      setSelectedReview(null);
+                    }}
+                    style={{
+                      flex: 1, padding: "12px", borderRadius: "12px",
+                      background: colors.dangerBg, border: `1.5px solid ${colors.danger}`,
+                      color: colors.danger, fontWeight: "700", fontSize: "13px",
+                      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
+                    }}
+                  >
+                    <ShieldAlert size={15} /> Uphold & Archive
+                  </button>
+                </>
+              ) : selectedReview.status === "archived" ? (
                 <button
                   onClick={() => {
                     setReviewToRestore(selectedReview);

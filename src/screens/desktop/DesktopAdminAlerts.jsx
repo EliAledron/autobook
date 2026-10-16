@@ -16,7 +16,7 @@ export default function DesktopAdminAlerts() {
     // Only fetch alerts meant for global platform admins
     const q = query(
       collection(db, "adminAlerts"), 
-      where("type", "in", ["new_user", "shop_report", "new_rating", "system_alert"])
+      where("type", "in", ["new_user", "shop_report", "new_rating", "system_alert", "review_report"])
     );
     
     const unsub = onSnapshot(q, (snap) => {
@@ -58,7 +58,7 @@ export default function DesktopAdminAlerts() {
 
   const getIcon = (type) => {
     if (type === "new_rating") return <Star size={20} color={colors.warning} />;
-    if (type === "shop_report" || type === "report") return <ShieldAlert size={20} color={colors.danger} />;
+    if (type === "shop_report" || type === "report" || type === "review_report") return <ShieldAlert size={20} color={colors.danger} />;
     if (type === "new_user") return <Info size={20} color={colors.info} />;
     return <AlertTriangle size={20} color={colors.textSecondary} />;
   };

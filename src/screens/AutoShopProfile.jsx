@@ -10,6 +10,7 @@ import { useUser } from "../UserContext";
 import AdminLayout from "../components/AdminLayout";
 import DesktopOnly from "../components/DesktopOnly";
 import { STANDARD_SERVICES } from "../utils/servicesList";
+import ReportReviewModal from "../components/ReportReviewModal";
 
 function timeAgo(timestamp) {
   if (!timestamp) return "Just now";
@@ -345,6 +346,7 @@ export default function AutoShopProfile() {
   const [reviewRating, setReviewRating] = useState(5);
   const [submittingReview, setSubmittingReview] = useState(false);
   const [selectedStarFilter, setSelectedStarFilter] = useState(0);
+  const [reviewToReport, setReviewToReport] = useState(null);
   
   // Report Modal State
   const [showReportModal, setShowReportModal] = useState(false);
@@ -1048,12 +1050,48 @@ export default function AutoShopProfile() {
                         <div style={{ fontSize: "12px", color: colors.textMuted }}>{timeAgo(r.createdAt)}</div>
                       </div>
                     </div>
-                    <div style={{ color: "#f59e0b", fontSize: "14px", fontWeight: "700", display: "flex", gap: "2px" }}>
-                      {[1, 2, 3, 4, 5].map(star => (
-                        <span key={star} style={{ color: star <= r.rating ? "#f59e0b" : "#e5e7eb", display: "flex", alignItems: "center" }}>
-                          <Star fill="currentColor" size={14} />
-                        </span>
-                      ))}
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <div style={{ color: "#f59e0b", fontSize: "14px", fontWeight: "700", display: "flex", gap: "2px" }}>
+                        {[1, 2, 3, 4, 5].map(star => (
+                          <span key={star} style={{ color: star <= r.rating ? "#f59e0b" : "#e5e7eb", display: "flex", alignItems: "center" }}>
+                            <Star fill="currentColor" size={14} />
+                          </span>
+                        ))}
+                      </div>
+                      {uid && (
+                        <button
+                          onClick={() => setReviewToReport({
+                            ...r,
+                            source: "shop",
+                            shopId: shop?.id || shopId,
+                            shopName: shop?.name || "Auto Shop",
+                          })}
+                          title="Report this review"
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: colors.textMuted,
+                            cursor: "pointer",
+                            padding: "4px 6px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            fontSize: "12px",
+                            borderRadius: "6px",
+                            transition: "all 0.15s ease"
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.color = colors.danger;
+                            e.currentTarget.style.background = "rgba(239, 68, 68, 0.08)";
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.color = colors.textMuted;
+                            e.currentTarget.style.background = "none";
+                          }}
+                        >
+                          <Flag size={13} />
+                        </button>
+                      )}
                     </div>
                   </div>
                   {r.text && (
@@ -1067,6 +1105,16 @@ export default function AutoShopProfile() {
           </div>
         )}
       </div>
+
+      {reviewToReport && (
+        <ReportReviewModal
+          isOpen={!!reviewToReport}
+          review={reviewToReport}
+          currentUser={currentUser}
+          onClose={() => setReviewToReport(null)}
+          onSuccess={(msg) => setSuccessMsg(msg)}
+        />
+      )}
 
       {showEditModal && (
         <ShopEditModal

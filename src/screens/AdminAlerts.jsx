@@ -20,6 +20,7 @@ const typeIcon = (type) => {
     case "new_user":               return <User size={18} />;
     case "new_rating":             return <Star fill="currentColor" size={18} />;
     case "shop_report":            return <Flag fill="currentColor" size={18} />;
+    case "review_report":          return <Flag fill="currentColor" size={18} />;
     default:                       return <Bell size={18} />;
   }
 };
@@ -36,6 +37,7 @@ const typeBg = (type) => {
     case "visit_request":          return colors.warningBg;
     case "new_rating":             return colors.warningBg;
     case "shop_report":            return colors.dangerBg;
+    case "review_report":          return colors.dangerBg;
     default:                       return colors.bg;
   }
 };
@@ -52,6 +54,7 @@ const typeColor = (type) => {
     case "visit_request":          return colors.warning;
     case "new_rating":             return colors.warning;
     case "shop_report":            return colors.danger;
+    case "review_report":          return colors.danger;
     default:                       return colors.textMuted;
   }
 };
@@ -125,7 +128,7 @@ export default function AdminAlerts() {
       }
 
       const q = isAdmin
-        ? query(collection(db, "adminAlerts"), where("type", "in", ["new_user", "shop_report"]))
+        ? query(collection(db, "adminAlerts"), where("type", "in", ["new_user", "shop_report", "review_report"]))
         : query(collection(db, "adminAlerts"), where("shopId", "==", shopId || ""));
       const snap = await getDocs(q);
       const sorted = snap.docs

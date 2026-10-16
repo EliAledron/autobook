@@ -35,7 +35,7 @@ export default function AdminLayout({ children }) {
 
     const qAlerts = query(
       collection(db, "adminAlerts"),
-      where("type", "in", ["new_user", "shop_report", "new_rating", "system_alert", "support_ticket"])
+      where("type", "in", ["new_user", "shop_report", "new_rating", "system_alert", "support_ticket", "review_report"])
     );
     unsubscribers.push(onSnapshot(qAlerts, (snap) => {
       const list = snap.docs.map(d => ({id: d.id, ...d.data()}));

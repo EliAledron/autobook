@@ -4,11 +4,11 @@ import { collection, getDocs, doc, getDoc, updateDoc, query, where, writeBatch }
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import RoleBasedWrapper from "../components/RoleBasedWrapper";
-import { sh, colors, getInitials, EmptyState } from "./dashboardShared";
+import { sh, colors, getInitials, EmptyState, SuccessModal } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
 import BackButton from "../components/BackButton";
-import { Star, Wrench } from "lucide-react";
+import { Star, Wrench, Flag } from "lucide-react";
 
 function timeAgo(timestamp) {
   if (!timestamp) return "Just now";
@@ -29,6 +29,7 @@ function timeAgo(timestamp) {
 
 import DesktopAdminReviews from "./desktop/DesktopAdminReviews";
 import { useUser } from "../UserContext";
+import ReportReviewModal from "../components/ReportReviewModal";
 
 export default function AdminReviews() {
   const { userProfile } = useUser();
@@ -41,6 +42,8 @@ export default function AdminReviews() {
   const [loading, setLoading] = useState(true);
   const [avgRating, setAvgRating] = useState(0);
   const [selectedStarFilter, setSelectedStarFilter] = useState(0);
+  const [reviewToReport, setReviewToReport] = useState(null);
+  const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -335,12 +338,52 @@ export default function AdminReviews() {
                           <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "2px" }}>{timeAgo(r.ratedAt || r.createdAt)}</div>
                         </div>
                       </div>
-                      <div style={{ display: "flex", gap: "2px" }}>
-                        {[1, 2, 3, 4, 5].map(star => (
-                          <span key={star} style={{ color: r.rating >= star ? "#f59e0b" : "#e2e8f0", fontSize: "16px", display: "flex", alignItems: "center" }}>
-                            <Star fill="currentColor" size={16} />
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <div style={{ display: "flex", gap: "2px" }}>
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <span key={star} style={{ color: r.rating >= star ? "#f59e0b" : "#e2e8f0", fontSize: "16px", display: "flex", alignItems: "center" }}>
+                              <Star fill="currentColor" size={16} />
+                            </span>
+                          ))}
+                        </div>
+                        {r.isReported ? (
+                          <span style={{ fontSize: "11px", fontWeight: "700", color: colors.danger, background: colors.dangerBg, padding: "3px 8px", borderRadius: "6px" }}>
+                            Disputed
                           </span>
-                        ))}
+                        ) : (
+                          <button
+                            onClick={() => setReviewToReport({
+                              ...r,
+                              source: "shop",
+                              shopId: shopData?.id || currentUser?.shopId,
+                              shopName: shopData?.name || currentUser?.shopName || "Auto Shop"
+                            })}
+                            title="Dispute or report this review"
+                            style={{
+                              background: "none",
+                              border: "none",
+                              color: colors.textMuted,
+                              cursor: "pointer",
+                              padding: "4px 6px",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              fontSize: "12px",
+                              borderRadius: "6px",
+                              transition: "all 0.15s ease"
+                            }}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.color = colors.danger;
+                              e.currentTarget.style.background = "rgba(239, 68, 68, 0.08)";
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.color = colors.textMuted;
+                              e.currentTarget.style.background = "none";
+                            }}
+                          >
+                            <Flag size={13} />
+                          </button>
+                        )}
                       </div>
                     </div>
                     
@@ -368,6 +411,18 @@ export default function AdminReviews() {
           </>
         )}
       </div>
+
+      <SuccessModal message={successMsg} onClose={() => setSuccessMsg("")} />
+
+      {reviewToReport && (
+        <ReportReviewModal
+          isOpen={!!reviewToReport}
+          review={reviewToReport}
+          currentUser={currentUser}
+          onClose={() => setReviewToReport(null)}
+          onSuccess={(msg) => setSuccessMsg(msg)}
+        />
+      )}
     </RoleBasedWrapper>
   );
 }
