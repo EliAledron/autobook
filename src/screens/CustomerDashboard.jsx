@@ -8,7 +8,15 @@ import { doc, getDoc, collection, query, where, getDocs, orderBy, addDoc, server
 import { sh, colors, getGreeting, EmptyState } from "./dashboardShared";
 import TopbarAvatar from "./TopbarAvatar";
 import CarLoader from "./CarLoader";
-import { Droplet, Settings, ShieldAlert, Snowflake, AlertTriangle, Calendar, Wrench, Sparkles, X } from "lucide-react";
+import { usePushNotifications } from "../hooks/usePushNotifications";
+import { 
+  Droplet, Settings, ShieldAlert, Snowflake, AlertTriangle, 
+  Calendar, Wrench, Sparkles, X, Gauge, BookOpen, Plus, 
+  ArrowUpDown, CheckCircle2, ShieldCheck, Activity 
+} from "lucide-react";
+import LogServiceModal from "../components/LogServiceModal";
+import ServicePassportModal from "../components/ServicePassportModal";
+import UpdateMileageModal from "../components/UpdateMileageModal";
 
 // ─── Quick Action SVG Icons ────────────────────────────────────────────────────
 const IcoBook    = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>;
@@ -46,11 +54,6 @@ const keyframes = `
   .customer-list-item {
     transition: all 0.15s ease-in-out;
   }
-  
-  
-  
-  
-  
   ::-webkit-scrollbar { display: none; }
 `;
 
@@ -84,42 +87,135 @@ const SectionTitle = ({ title, badge, action }) => (
 );
 
 const MAINTENANCE_RULES = [
-  { key: "oil",     label: "Oil Change",       icon: <Droplet size={22} />,    intervalDays: 180, keywords: ["oil"] },
-  { key: "tire",    label: "Tire Rotation",    icon: <Settings size={22} />,   intervalDays: 365, keywords: ["tire"] },
-  { key: "brake",   label: "Brake Inspection", icon: <ShieldAlert size={22} />,intervalDays: 365, keywords: ["brake"] },
-  { key: "aircon",  label: "Aircon Cleaning",  icon: <Snowflake size={22} />,  intervalDays: 365, keywords: ["aircon", "air con", "ac "] },
-  { key: "battery", label: "Battery Check",    icon: <AlertTriangle size={22} />, intervalDays: 730, keywords: ["battery"] },
-  { key: "checkup", label: "General Checkup",  icon: <Wrench size={22} />,     intervalDays: 365, keywords: ["checkup", "general", "pms"] },
+  { key: "oil",     label: "Oil Change",       icon: <Droplet size={22} />,     intervalDays: 180, intervalKm: 5000,  keywords: ["oil"] },
+  { key: "tire",    label: "Tire Rotation",    icon: <Settings size={22} />,    intervalDays: 365, intervalKm: 10000, keywords: ["tire"] },
+  { key: "brake",   label: "Brake Inspection", icon: <ShieldAlert size={22} />, intervalDays: 365, intervalKm: 15000, keywords: ["brake"] },
+  { key: "aircon",  label: "Aircon Cleaning",  icon: <Snowflake size={22} />,   intervalDays: 365, intervalKm: 20000, keywords: ["aircon", "air con", "ac "] },
+  { key: "battery", label: "Battery Check",    icon: <AlertTriangle size={22} />,intervalDays: 730, intervalKm: 40000, keywords: ["battery"] },
+  { key: "checkup", label: "General Checkup",  icon: <Wrench size={22} />,      intervalDays: 365, intervalKm: 10000, keywords: ["checkup", "general", "pms"] },
 ];
 
-const getLastServiceDate = (bookings, keywords, vehicleId) => {
-  const completed = bookings.filter(b => {
-    if ((b.status || "").toLowerCase() !== "completed") return false;
-    if (vehicleId && b.vehicleId && b.vehicleId !== vehicleId) return false;
+const getLastServiceRecord = (bookings, serviceLogs, keywords, serviceKey, vehicleId) => {
+  const matches = [];
+
+  (bookings || []).forEach((b) => {
+    if ((b.status || "").toLowerCase() !== "completed") return;
+    if (vehicleId && b.vehicleId && b.vehicleId !== vehicleId) return;
     const sType = (b.serviceType || "").toLowerCase();
-    return keywords.some(kw => sType.includes(kw.toLowerCase()));
+    if (keywords.some((kw) => sType.includes(kw.toLowerCase()))) {
+      const date = b.date ? new Date(b.date) : (b.createdAt?.seconds ? new Date(b.createdAt.seconds * 1000) : null);
+      if (date && !isNaN(date.getTime())) {
+        matches.push({
+          date,
+          mileage: b.mileage ? Number(b.mileage) : null,
+          shopName: b.shopName || "AutoBook Verified",
+          isManual: false,
+          notes: b.notes || "",
+        });
+      }
+    }
   });
-  if (completed.length === 0) return null;
-  completed.sort((a, b) => {
-    const tA = a.date ? new Date(a.date).getTime() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0);
-    const tB = b.date ? new Date(b.date).getTime() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0);
-    return tB - tA;
+
+  (serviceLogs || []).forEach((s) => {
+    if (vehicleId && s.vehicleId && s.vehicleId !== vehicleId) return;
+    const sKey = (s.serviceKey || "").toLowerCase();
+    const sType = (s.serviceType || "").toLowerCase();
+    const isKeyMatch = serviceKey && sKey === serviceKey.toLowerCase();
+    const isKeywordMatch = keywords.some((kw) => sType.includes(kw.toLowerCase()) || sKey.includes(kw.toLowerCase()));
+    if (isKeyMatch || isKeywordMatch) {
+      const date = s.date ? new Date(s.date) : (s.createdAt?.seconds ? new Date(s.createdAt.seconds * 1000) : null);
+      if (date && !isNaN(date.getTime())) {
+        matches.push({
+          date,
+          mileage: s.mileage ? Number(s.mileage) : null,
+          shopName: s.shopName || "Self-Logged",
+          cost: s.cost ? Number(s.cost) : null,
+          isManual: true,
+          notes: s.notes || "",
+        });
+      }
+    }
   });
-  const best = completed[0];
-  return best.date ? new Date(best.date) : (best.createdAt?.seconds ? new Date(best.createdAt.seconds * 1000) : null);
+
+  if (matches.length === 0) return null;
+  matches.sort((a, b) => b.date.getTime() - a.date.getTime());
+  return matches[0];
 };
 
-import { usePushNotifications } from "../hooks/usePushNotifications";
 export default function CustomerDashboard() {
   usePushNotifications();
   const navigate = useNavigate();
   const [animate, setAnimate] = useState(false);
   const [user, setUser] = useState(null);
   const [bookings, setBookings] = useState([]);
+  const [serviceLogs, setServiceLogs] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [selectedVehicleId, setSelectedVehicleId] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  // Roadmap Modals & Controls
+  const [logModalOpen, setLogModalOpen] = useState(false);
+  const [logPrefilledService, setLogPrefilledService] = useState("");
+  const [passportModalOpen, setPassportModalOpen] = useState(false);
+  const [mileageModalOpen, setMileageModalOpen] = useState(false);
+  const [sortByUrgency, setSortByUrgency] = useState(true);
+
+  const loadDashboardData = async (uid) => {
+    let fetchedBookings = [];
+    let fetchedLogs = [];
+    let fetchedVehicles = [];
+
+    try {
+      const bQuery = query(
+        collection(db, "bookings"),
+        where("customerId", "==", uid),
+        orderBy("createdAt", "desc")
+      );
+      const bSnap = await getDocs(bQuery);
+      fetchedBookings = bSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setBookings(fetchedBookings);
+    } catch (e) {
+      console.error("Failed to load bookings:", e);
+    }
+
+    try {
+      const sQuery = query(
+        collection(db, "serviceLogs"),
+        where("ownerId", "==", uid)
+      );
+      const sSnap = await getDocs(sQuery);
+      fetchedLogs = sSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setServiceLogs(fetchedLogs);
+    } catch (e) {
+      console.error("Failed to load service logs:", e);
+    }
+
+    try {
+      const vSnap = await getDocs(query(collection(db, "vehicles"), where("ownerId", "==", uid)));
+      fetchedVehicles = vSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setVehicles(fetchedVehicles);
+      if (fetchedVehicles.length > 0) {
+        setSelectedVehicleId(prev => (prev && fetchedVehicles.some(v => v.id === prev) ? prev : fetchedVehicles[0].id));
+      }
+    } catch (e) {
+      console.error("Failed to load vehicles:", e);
+    }
+
+    try {
+      const nQuery = query(
+        collection(db, "notifications"),
+        where("userId", "==", uid),
+        where("read", "==", false)
+      );
+      const nSnap = await getDocs(nQuery);
+      setUnreadCount(nSnap.size);
+    } catch (e) {
+      setUnreadCount(0);
+    }
+
+    return { bookings: fetchedBookings, serviceLogs: fetchedLogs, vehicles: fetchedVehicles };
+  };
 
   useEffect(() => {
     if (loading) return;
@@ -133,89 +229,75 @@ export default function CustomerDashboard() {
       if (!firebaseUser) { navigate("/"); return; }
       
       let userData = {};
-      const snap = await getDoc(doc(db, "users", firebaseUser.uid));
-      if (snap.exists()) {
-        userData = snap.data();
-        setUser({ id: snap.id, ...userData });
+      try {
+        const snap = await getDoc(doc(db, "users", firebaseUser.uid));
+        if (snap.exists()) {
+          userData = snap.data();
+          setUser({ id: snap.id, ...userData });
+        }
+      } catch (e) {
+        console.error("Failed to load user:", e);
       }
 
-      try {
-        const bQuery = query(
-          collection(db, "bookings"),
-          where("customerId", "==", firebaseUser.uid),
-          orderBy("createdAt", "desc")
-        );
-        const bSnap = await getDocs(bQuery);
-        const fetchedBookings = bSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setBookings(fetchedBookings);
+      const { bookings: fetchedBookings, serviceLogs: fetchedLogs } = await loadDashboardData(firebaseUser.uid);
 
-        // --- FREE TIER BROWSER PUSH NOTIFICATIONS ---
-        const now = Date.now();
-        let updatesNeeded = false;
-        const userUpdates = {};
+      // --- PUSH NOTIFICATIONS ---
+      const now = Date.now();
+      let updatesNeeded = false;
+      const userUpdates = {};
 
-        MAINTENANCE_RULES.forEach(rule => {
-          const lastDate = getLastServiceDate(fetchedBookings, rule.keywords, null);
-          if (lastDate) {
-            const daysSince = Math.floor((now - lastDate.getTime()) / (1000 * 3600 * 24));
-            const progress = Math.min(100, Math.max(0, Math.round((daysSince / rule.intervalDays) * 100)));
+      MAINTENANCE_RULES.forEach((rule) => {
+        const lastRecord = getLastServiceRecord(fetchedBookings, fetchedLogs, rule.keywords, rule.key, null);
+        if (lastRecord?.date) {
+          const daysSince = Math.floor((now - lastRecord.date.getTime()) / (1000 * 3600 * 24));
+          const progress = Math.min(100, Math.max(0, Math.round((daysSince / rule.intervalDays) * 100)));
 
-            if (progress >= 90) {
-              const lastNotified = userData.lastMaintenanceAlerts?.[rule.key];
-              const daysSinceLastAlert = lastNotified ? Math.floor((now - lastNotified) / (1000 * 3600 * 24)) : Infinity;
+          if (progress >= 90) {
+            const lastNotified = userData.lastMaintenanceAlerts?.[rule.key];
+            const daysSinceLastAlert = lastNotified ? Math.floor((now - lastNotified) / (1000 * 3600 * 24)) : Infinity;
 
-              if (daysSinceLastAlert > 30) {
-                const alertTitle = `${rule.label} Due Soon!`;
-                const alertBody = `Your ${rule.label} progress is at ${progress}%. It's recommended to book a service soon.`;
+            if (daysSinceLastAlert > 30) {
+              const alertTitle = `${rule.label} Due Soon!`;
+              const alertBody = `Your ${rule.label} wear progress is at ${progress}%. It's recommended to schedule a service soon.`;
 
-                // 1. Add to App Alerts
-                addDoc(collection(db, "notifications"), { userId: firebaseUser.uid, title: alertTitle, message: alertBody, type: "status_update", read: false, createdAt: serverTimestamp() });
+              addDoc(collection(db, "notifications"), {
+                userId: firebaseUser.uid,
+                title: alertTitle,
+                message: alertBody,
+                type: "status_update",
+                read: false,
+                createdAt: serverTimestamp(),
+              });
 
-                // 2. Trigger FREE Native System Push Notification (Mobile Safe)
-                try {
-                  if ("Notification" in window && window.Notification) {
-                    if (Notification.permission === "granted") {
-                      new Notification(alertTitle, { body: alertBody });
-                    } else if (Notification.permission !== "denied") {
-                      Notification.requestPermission().then(permission => {
-                        if (permission === "granted") new Notification(alertTitle, { body: alertBody });
-                      }).catch(() => {}); // Catch older mobile browser promise rejections
-                    }
+              try {
+                if ("Notification" in window && window.Notification) {
+                  if (Notification.permission === "granted") {
+                    new Notification(alertTitle, { body: alertBody });
+                  } else if (Notification.permission !== "denied") {
+                    Notification.requestPermission().then(permission => {
+                      if (permission === "granted") new Notification(alertTitle, { body: alertBody });
+                    }).catch(() => {});
                   }
-                } catch (err) {
-                  console.log("System notifications restricted in this mobile view.");
                 }
-
-                if (!userUpdates.lastMaintenanceAlerts) userUpdates.lastMaintenanceAlerts = { ...userData.lastMaintenanceAlerts };
-                userUpdates.lastMaintenanceAlerts[rule.key] = now;
-                updatesNeeded = true;
+              } catch (err) {
+                console.log("System notifications restricted in this mobile view.");
               }
+
+              if (!userUpdates.lastMaintenanceAlerts) userUpdates.lastMaintenanceAlerts = { ...userData.lastMaintenanceAlerts };
+              userUpdates.lastMaintenanceAlerts[rule.key] = now;
+              updatesNeeded = true;
             }
           }
-        });
+        }
+      });
 
-        if (updatesNeeded) await updateDoc(doc(db, "users", firebaseUser.uid), userUpdates);
-        // --- END FREE TIER ---
-
-        // Fetch customer's registered vehicles
+      if (updatesNeeded) {
         try {
-          const vSnap = await getDocs(query(collection(db, "vehicles"), where("ownerId", "==", firebaseUser.uid)));
-          const fetchedVehicles = vSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-          setVehicles(fetchedVehicles);
-          if (fetchedVehicles.length > 0) setSelectedVehicleId(fetchedVehicles[0].id);
-        } catch (e) { setVehicles([]); }
-
-      } catch (e) { setBookings([]); }
-
-      try {
-        const nQuery = query(
-          collection(db, "notifications"),
-          where("userId", "==", firebaseUser.uid),
-          where("read", "==", false)
-        );
-        const nSnap = await getDocs(nQuery);
-        setUnreadCount(nSnap.size);
-      } catch (e) { setUnreadCount(0); }
+          await updateDoc(doc(db, "users", firebaseUser.uid), userUpdates);
+        } catch (e) {
+          console.error("Failed to update user alerts:", e);
+        }
+      }
 
       setLoading(false);
     });
@@ -232,6 +314,145 @@ export default function CustomerDashboard() {
     completed: bookings.filter((b) => (b.status || "").toLowerCase() === "completed").length,
     cancelled: bookings.filter((b) => (b.status || "").toLowerCase() === "cancelled").length,
   };
+
+  // Currently active vehicle for Roadmap calculations
+  const activeVehicle = vehicles.find((v) => v.id === selectedVehicleId) || vehicles[0] || null;
+  const currentOdometer = activeVehicle?.mileage ? Number(activeVehicle.mileage) : null;
+
+  // Process all maintenance rules with dual time & mileage wear tracking
+  const evaluatedRules = MAINTENANCE_RULES.map((rule) => {
+    const lastRecord = getLastServiceRecord(bookings, serviceLogs, rule.keywords, rule.key, activeVehicle?.id);
+    const hasRecord = !!lastRecord;
+
+    const daysSince = hasRecord ? Math.floor((Date.now() - lastRecord.date.getTime()) / (1000 * 3600 * 24)) : null;
+    const daysProgress = hasRecord ? Math.min(100, Math.max(0, Math.round((daysSince / rule.intervalDays) * 100))) : 0;
+    const daysRemaining = hasRecord ? rule.intervalDays - daysSince : null;
+
+    // Mileage wear calculation
+    const lastMileage = lastRecord?.mileage ? Number(lastRecord.mileage) : null;
+    const hasMileageTracking = currentOdometer !== null && lastMileage !== null && currentOdometer >= lastMileage;
+    const kmSince = hasMileageTracking ? (currentOdometer - lastMileage) : null;
+    const kmProgress = hasMileageTracking ? Math.min(100, Math.max(0, Math.round((kmSince / rule.intervalKm) * 100))) : null;
+    const kmRemaining = hasMileageTracking ? (rule.intervalKm - kmSince) : null;
+
+    // Dual wear progress (whichever is higher determines urgency)
+    const progress = kmProgress !== null ? Math.max(daysProgress, kmProgress) : daysProgress;
+
+    // Status and urgency determination
+    const isOverdue = hasRecord && (daysRemaining <= 0 || (kmRemaining !== null && kmRemaining <= 0) || progress >= 100);
+    const isDueSoon = hasRecord && !isOverdue && progress >= 70;
+    const isGood = hasRecord && !isOverdue && !isDueSoon;
+
+    let statusText = "No record yet";
+    let color = colors.textMuted;
+    let bgColor = colors.bg;
+    let urgencyRank = 4; // 1 = overdue, 2 = due soon, 3 = good, 4 = no record
+
+    if (hasRecord) {
+      if (isOverdue) {
+        statusText = "Overdue Service";
+        color = colors.danger;
+        bgColor = colors.dangerBg;
+        urgencyRank = 1;
+      } else if (isDueSoon) {
+        statusText = "Due Soon";
+        color = colors.warning;
+        bgColor = colors.warningBg;
+        urgencyRank = 2;
+      } else {
+        statusText = "Good Condition";
+        color = colors.success;
+        bgColor = colors.successBg;
+        urgencyRank = 3;
+      }
+    }
+
+    // Friendly dual estimate string
+    let remainingEstimate = "—";
+    if (hasRecord) {
+      if (isOverdue) {
+        const overdueDays = daysRemaining <= 0 ? Math.abs(daysRemaining) : null;
+        const overdueKm = kmRemaining !== null && kmRemaining <= 0 ? Math.abs(kmRemaining) : null;
+        if (overdueDays !== null && overdueKm !== null) {
+          remainingEstimate = `Overdue by ${overdueDays}d or ${overdueKm.toLocaleString()} km`;
+        } else if (overdueDays !== null) {
+          remainingEstimate = `Overdue by ${overdueDays} days`;
+        } else if (overdueKm !== null) {
+          remainingEstimate = `Overdue by ${overdueKm.toLocaleString()} km`;
+        } else {
+          remainingEstimate = "Overdue";
+        }
+      } else {
+        const timePart = daysRemaining > 30 ? `~${Math.floor(daysRemaining / 30)} mo (${daysRemaining}d)` : `${daysRemaining} days`;
+        if (kmRemaining !== null && kmRemaining > 0) {
+          remainingEstimate = `Due in ${timePart} or ${kmRemaining.toLocaleString()} km`;
+        } else {
+          remainingEstimate = `Due in ${timePart}`;
+        }
+      }
+    }
+
+    return {
+      ...rule,
+      lastRecord,
+      hasRecord,
+      daysSince,
+      daysRemaining,
+      kmSince,
+      kmRemaining,
+      progress,
+      isOverdue,
+      isDueSoon,
+      isGood,
+      statusText,
+      color,
+      bgColor,
+      urgencyRank,
+      remainingEstimate,
+    };
+  });
+
+  // Calculate Health Score for the active vehicle
+  const recordsWithData = evaluatedRules.filter((r) => r.hasRecord);
+  const overdueCount = evaluatedRules.filter((r) => r.isOverdue).length;
+  const dueSoonCount = evaluatedRules.filter((r) => r.isDueSoon).length;
+  const goodCount = evaluatedRules.filter((r) => r.isGood).length;
+  const noRecordCount = evaluatedRules.filter((r) => !r.hasRecord).length;
+
+  let healthScore = null;
+  let healthLabel = "No Service Data";
+  let healthColor = colors.textMuted;
+  let healthBg = colors.bg;
+
+  if (recordsWithData.length > 0) {
+    const rawScore = 100 - (overdueCount * 25 + dueSoonCount * 12);
+    healthScore = Math.max(15, Math.min(100, rawScore));
+
+    if (healthScore >= 80) {
+      healthLabel = "Optimal Condition";
+      healthColor = colors.success;
+      healthBg = colors.successBg;
+    } else if (healthScore >= 55) {
+      healthLabel = "Attention Recommended";
+      healthColor = colors.warning;
+      healthBg = colors.warningBg;
+    } else {
+      healthLabel = "Service Required";
+      healthColor = colors.danger;
+      healthBg = colors.dangerBg;
+    }
+  }
+
+  // Smart Sorting by Urgency:
+  // If enabled, overdue items bubble to top, then due soon, then good, then untracked.
+  const displayRules = sortByUrgency
+    ? [...evaluatedRules].sort((a, b) => {
+        if (a.urgencyRank !== b.urgencyRank) {
+          return a.urgencyRank - b.urgencyRank;
+        }
+        return b.progress - a.progress;
+      })
+    : evaluatedRules;
 
   return (
     <div style={sh.page}>
@@ -404,7 +625,7 @@ export default function CustomerDashboard() {
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 17H3v-5l2-5h14l2 5v5h-2"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>
           </div>
           <div style={{ fontSize: "15px", fontWeight: "800", color: colors.textPrimary, marginBottom: "6px" }}>No vehicle registered yet</div>
-          <div style={{ fontSize: "13px", color: colors.textSecondary, marginBottom: "20px", lineHeight: "1.5" }}>Add your vehicle to get a personalized maintenance roadmap based on your actual service history.</div>
+          <div style={{ fontSize: "13px", color: colors.textSecondary, marginBottom: "20px", lineHeight: "1.5" }}>Add your vehicle to get a personalized maintenance roadmap based on your actual service history and odometer.</div>
           <button onClick={() => navigate("/customer/vehicles")} style={{ padding: "12px 28px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", border: "none", borderRadius: "14px", fontWeight: "700", fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}>
             Add My Vehicle
           </button>
@@ -431,115 +652,472 @@ export default function CustomerDashboard() {
                       transition: "all 0.2s",
                     }}
                   >
-                    {label}
+                    {label} {v.mileage ? `(${Number(v.mileage).toLocaleString()} km)` : ""}
                   </button>
                 );
               })}
             </div>
           )}
 
-          {/* Vehicle label above roadmap */}
-          {(() => {
-            const v = vehicles.find(v => v.id === selectedVehicleId) || vehicles[0];
-            const label = [v?.year, v?.make, v?.model].filter(Boolean).join(" ") || v?.plate || "Your Vehicle";
-            return (
-              <div style={{ fontSize: "12px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "1rem" }}>
-                Tracking: <span style={{ color: colors.navy }}>{label}</span>
+          {/* OVERALL VEHICLE HEALTH SCORE HERO CARD */}
+          <div
+            style={{
+              background: colors.white,
+              borderRadius: "24px",
+              padding: "22px 20px",
+              border: `1px solid ${colors.border}`,
+              boxShadow: "0 6px 24px rgba(0,0,0,0.04)",
+              marginBottom: "1.25rem",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            {/* Background subtle glow */}
+            <div
+              style={{
+                position: "absolute",
+                top: "-40px",
+                right: "-40px",
+                width: "160px",
+                height: "160px",
+                borderRadius: "50%",
+                background: healthColor,
+                opacity: 0.1,
+                filter: "blur(40px)",
+                pointerEvents: "none",
+              }}
+            />
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", flexWrap: "wrap", marginBottom: "16px", position: "relative", zIndex: 1 }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                  <Activity size={18} color={healthColor} />
+                  <span style={{ fontSize: "12px", fontWeight: "800", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.8px" }}>
+                    Vehicle Health Index
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "10px" }}>
+                  <div style={{ fontSize: "28px", fontWeight: "900", color: colors.textPrimary, letterSpacing: "-0.5px" }}>
+                    {healthScore !== null ? `${healthScore}%` : "—"}
+                  </div>
+                  <div style={{ fontSize: "14px", fontWeight: "800", color: healthColor }}>
+                    {healthLabel}
+                  </div>
+                </div>
               </div>
-            );
-          })()}
 
+              {/* Status pills breakdown */}
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                {overdueCount > 0 && (
+                  <span style={{ fontSize: "12px", fontWeight: "800", background: colors.dangerBg, color: colors.danger, padding: "4px 10px", borderRadius: "12px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                    <AlertTriangle size={13} /> {overdueCount} Overdue
+                  </span>
+                )}
+                {dueSoonCount > 0 && (
+                  <span style={{ fontSize: "12px", fontWeight: "800", background: colors.warningBg, color: colors.warning, padding: "4px 10px", borderRadius: "12px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                    <ShieldAlert size={13} /> {dueSoonCount} Due Soon
+                  </span>
+                )}
+                {goodCount > 0 && (
+                  <span style={{ fontSize: "12px", fontWeight: "800", background: colors.successBg, color: colors.success, padding: "4px 10px", borderRadius: "12px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                    <CheckCircle2 size={13} /> {goodCount} Optimal
+                  </span>
+                )}
+                {noRecordCount > 0 && (
+                  <span style={{ fontSize: "12px", fontWeight: "700", background: colors.bg, color: colors.textMuted, padding: "4px 10px", borderRadius: "12px" }}>
+                    {noRecordCount} Untracked
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Actions Row: Odometer, Log Service, Service Passport */}
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "10px",
+                paddingTop: "14px",
+                borderTop: `1px solid ${colors.border}`,
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
+              {/* Odometer quick display & update */}
+              <div
+                onClick={() => setMileageModalOpen(true)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  background: "#f8fafc",
+                  padding: "8px 14px",
+                  borderRadius: "12px",
+                  border: `1px solid ${colors.border}`,
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                }}
+                title="Click to update odometer"
+              >
+                <Gauge size={16} color={colors.navy} />
+                <span style={{ fontSize: "13px", fontWeight: "700", color: colors.textPrimary }}>
+                  {currentOdometer !== null ? `${currentOdometer.toLocaleString()} km` : "Set Odometer"}
+                </span>
+                <span style={{ fontSize: "11px", fontWeight: "800", color: colors.blue, background: colors.infoBg, padding: "2px 6px", borderRadius: "6px" }}>
+                  Update
+                </span>
+              </div>
+
+              {/* Action buttons */}
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                <button
+                  onClick={() => {
+                    setLogPrefilledService("");
+                    setLogModalOpen(true);
+                  }}
+                  style={{
+                    padding: "8px 14px",
+                    background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`,
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "12px",
+                    fontSize: "12px",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    boxShadow: "0 2px 8px rgba(42,82,152,0.2)",
+                  }}
+                >
+                  <Plus size={14} /> Log Past Service
+                </button>
+
+                <button
+                  onClick={() => setPassportModalOpen(true)}
+                  style={{
+                    padding: "8px 14px",
+                    background: "#f1f5f9",
+                    color: colors.navy,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: "12px",
+                    fontSize: "12px",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <BookOpen size={14} /> Service Passport
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Controls bar: Tracking label + Urgency Sort Toggle */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "8px" }}>
+            <div style={{ fontSize: "12px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              Tracking: <span style={{ color: colors.navy }}>{[activeVehicle?.year, activeVehicle?.make, activeVehicle?.model].filter(Boolean).join(" ") || activeVehicle?.plate || "Your Vehicle"}</span>
+            </div>
+
+            <button
+              onClick={() => setSortByUrgency(!sortByUrgency)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                background: sortByUrgency ? "rgba(37,99,235,0.08)" : colors.bg,
+                color: sortByUrgency ? colors.blue : colors.textSecondary,
+                border: sortByUrgency ? `1px solid ${colors.blue}` : `1px solid ${colors.border}`,
+                padding: "6px 12px",
+                borderRadius: "10px",
+                fontSize: "12px",
+                fontWeight: "700",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+              title="Toggle urgency sorting"
+            >
+              <ArrowUpDown size={13} />
+              {sortByUrgency ? "Sorted by Urgency" : "Default Order"}
+            </button>
+          </div>
+
+          {/* ROADMAP CARDS LIST */}
           <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "1.5rem" }}>
-            {MAINTENANCE_RULES.map(rule => {
-              const actualLastDate = getLastServiceDate(bookings, rule.keywords, selectedVehicleId);
-              const hasRecord = !!actualLastDate;
-
-              const daysSince = hasRecord ? Math.floor((Date.now() - actualLastDate.getTime()) / (1000 * 3600 * 24)) : null;
-              const progress = hasRecord ? Math.min(100, Math.max(0, Math.round((daysSince / rule.intervalDays) * 100))) : 0;
-              const daysRemaining = hasRecord ? rule.intervalDays - daysSince : null;
-
-              let statusText = "No record yet";
-              let color = colors.textMuted;
-              let bgColor = colors.bg;
-              let estimatedText = "—";
-
-              if (hasRecord) {
-                if (progress < 60) {
-                  statusText = "Good condition";
-                  color = colors.success;
-                  bgColor = colors.successBg;
-                } else if (progress < 90) {
-                  statusText = "Due soon";
-                  color = colors.warning;
-                  bgColor = colors.warningBg;
-                } else {
-                  statusText = "Service recommended";
-                  color = colors.danger;
-                  bgColor = colors.dangerBg;
-                }
-
-                if (daysRemaining > 30) {
-                  estimatedText = `Due in ~${Math.floor(daysRemaining / 30)} mo`;
-                } else if (daysRemaining > 0) {
-                  estimatedText = `Due in ${daysRemaining} days`;
-                } else {
-                  estimatedText = "Overdue";
-                }
-              }
+            {displayRules.map((rule) => {
+              const {
+                hasRecord, lastRecord, progress, color, bgColor, statusText,
+                remainingEstimate, isOverdue, isDueSoon
+              } = rule;
 
               return (
-                <div key={rule.key} className="customer-card" style={{ background: colors.white, borderRadius: "24px", padding: "20px", border: `1px solid ${hasRecord ? colors.border : colors.border}`, display: "flex", flexDirection: "column", gap: "16px", boxShadow: "0 8px 24px rgba(0,0,0,0.04)", position: "relative", overflow: "hidden" }}>
+                <div
+                  key={rule.key}
+                  className="customer-card"
+                  style={{
+                    background: colors.white,
+                    borderRadius: "24px",
+                    padding: "20px",
+                    border: `1.5px solid ${isOverdue ? colors.danger + "40" : isDueSoon ? colors.warning + "40" : colors.border}`,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "14px",
+                    boxShadow: isOverdue ? "0 8px 24px rgba(220,38,38,0.08)" : "0 8px 24px rgba(0,0,0,0.04)",
+                    position: "relative",
+                    overflow: "hidden",
+                  }}
+                >
                   {/* Status glow */}
-                  <div style={{ position: "absolute", top: "-20px", right: "-20px", width: "100px", height: "100px", background: bgColor, borderRadius: "50%", filter: "blur(40px)", opacity: 0.6, zIndex: 0 }} />
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "-20px",
+                      right: "-20px",
+                      width: "100px",
+                      height: "100px",
+                      background: bgColor,
+                      borderRadius: "50%",
+                      filter: "blur(40px)",
+                      opacity: 0.6,
+                      zIndex: 0,
+                    }}
+                  />
 
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", position: "relative", zIndex: 1 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                      <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: hasRecord ? bgColor : colors.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", flexShrink: 0, border: `1px solid ${hasRecord ? color + "30" : colors.border}`, color: hasRecord ? color : colors.textMuted }}>
+                      <div
+                        style={{
+                          width: "48px",
+                          height: "48px",
+                          borderRadius: "16px",
+                          background: hasRecord ? bgColor : colors.bg,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "22px",
+                          flexShrink: 0,
+                          border: `1px solid ${hasRecord ? color + "30" : colors.border}`,
+                          color: hasRecord ? color : colors.textMuted,
+                        }}
+                      >
                         {rule.icon}
                       </div>
                       <div>
-                        <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary, marginBottom: "4px", letterSpacing: "-0.2px" }}>{rule.label}</div>
-                        <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "600", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                          <span style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary, letterSpacing: "-0.2px" }}>
+                            {rule.label}
+                          </span>
+                          {hasRecord && lastRecord.isManual ? (
+                            <span style={{ fontSize: "10px", fontWeight: "700", background: "#f1f5f9", color: colors.textSecondary, padding: "2px 6px", borderRadius: "6px" }}>
+                              Self-Logged
+                            </span>
+                          ) : hasRecord ? (
+                            <span style={{ fontSize: "10px", fontWeight: "700", background: colors.successBg, color: colors.success, padding: "2px 6px", borderRadius: "6px", display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                              <ShieldCheck size={11} /> AutoBook
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "600", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginTop: "2px" }}>
                           <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
                             <Calendar size={12} />
-                            {hasRecord ? `Last: ${actualLastDate.toLocaleDateString()}` : "No service logged yet"}
+                            {hasRecord ? `Last: ${lastRecord.date.toLocaleDateString()}` : "No service logged yet"}
                           </span>
+                          {lastRecord?.mileage && (
+                            <>
+                              <span style={{ color: colors.border }}>·</span>
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: colors.navy }}>
+                                <Gauge size={11} /> @ {lastRecord.mileage.toLocaleString()} km
+                              </span>
+                            </>
+                          )}
                           {hasRecord && (
                             <>
-                              <span style={{ color: colors.border }}>|</span>
-                              <span style={{ color }}>{estimatedText}</span>
+                              <span style={{ color: colors.border }}>·</span>
+                              <span style={{ color, fontWeight: "700" }}>{remainingEstimate}</span>
                             </>
                           )}
                         </div>
                       </div>
                     </div>
+
                     <div style={{ fontSize: "11px", fontWeight: "700", color: hasRecord ? color : colors.textMuted, background: hasRecord ? bgColor : colors.bg, padding: "4px 10px", borderRadius: "20px", whiteSpace: "nowrap", border: `1px solid ${hasRecord ? color + "30" : colors.border}` }}>
-                      {`Every ${rule.intervalDays >= 365 ? Math.round(rule.intervalDays / 365) + "yr" : rule.intervalDays / 30 + "mo"}`}
+                      {`Every ${rule.intervalDays >= 365 ? Math.round(rule.intervalDays / 365) + "yr" : rule.intervalDays / 30 + "mo"} or ${rule.intervalKm.toLocaleString()} km`}
                     </div>
                   </div>
 
+                  {/* Wear progress bar */}
                   <div style={{ position: "relative", zIndex: 1 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
                       <span style={{ fontSize: "13px", fontWeight: "700", color: colors.textPrimary }}>Wear Progress</span>
-                      <span style={{ fontSize: "13px", fontWeight: "800", color: hasRecord ? color : colors.textMuted }}>{hasRecord ? `${progress}%` : "—"}</span>
+                      <span style={{ fontSize: "13px", fontWeight: "800", color: hasRecord ? color : colors.textMuted }}>
+                        {hasRecord ? `${progress}%` : "—"}
+                      </span>
                     </div>
                     <div style={{ width: "100%", height: "10px", background: colors.bg, borderRadius: "5px", overflow: "hidden", border: `1px solid ${colors.border}` }}>
-                      <div style={{ width: `${progress}%`, height: "100%", background: hasRecord ? color : colors.border, borderRadius: "5px", transition: "width 1s cubic-bezier(0.4, 0, 0.2, 1)" }} />
+                      <div
+                        style={{
+                          width: `${Math.min(100, progress)}%`,
+                          height: "100%",
+                          background: hasRecord ? color : colors.border,
+                          borderRadius: "5px",
+                          transition: "width 1s cubic-bezier(0.4, 0, 0.2, 1)",
+                        }}
+                      />
                     </div>
-                    <div style={{ textAlign: "right", marginTop: "6px", fontSize: "11px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                      Status: <span style={{ color: hasRecord ? color : colors.textMuted }}>{statusText}</span>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "6px" }}>
+                      <span style={{ fontSize: "11px", color: colors.textMuted }}>
+                        {hasRecord ? remainingEstimate : "Start tracking by logging or booking"}
+                      </span>
+                      <span style={{ fontSize: "11px", fontWeight: "700", color: hasRecord ? color : colors.textMuted, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                        {statusText}
+                      </span>
                     </div>
                   </div>
 
-                  {!hasRecord ? (
-                    <button onClick={() => navigate("/customer/shop-select", { state: { prefilledService: rule.label } })} style={{ position: "relative", zIndex: 1, width: "100%", padding: "12px", borderRadius: "14px", border: `1px solid ${colors.border}`, background: colors.bg, color: colors.textSecondary, fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
-                      Book First {rule.label}
-                    </button>
-                  ) : progress >= 90 && (
-                    <button onClick={() => navigate("/customer/shop-select", { state: { prefilledService: rule.label } })} style={{ position: "relative", zIndex: 1, width: "100%", padding: "14px", borderRadius: "14px", border: "none", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", fontSize: "14px", fontWeight: "800", cursor: "pointer", marginTop: "4px", transition: "all 0.2s", boxShadow: "0 4px 12px rgba(42,82,152,0.2)", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }} onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"} onMouseLeave={e => e.currentTarget.style.transform = "none"}>
-                      <AlertTriangle size={14} /> Schedule {rule.label} Now
-                    </button>
-                  )}
+                  {/* Actions for this card */}
+                  <div style={{ display: "flex", gap: "10px", position: "relative", zIndex: 1, marginTop: "2px" }}>
+                    {!hasRecord ? (
+                      <>
+                        <button
+                          onClick={() => navigate("/customer/shop-select", { state: { prefilledService: rule.label } })}
+                          style={{
+                            flex: 1,
+                            padding: "12px",
+                            borderRadius: "14px",
+                            border: `1px solid ${colors.border}`,
+                            background: colors.bg,
+                            color: colors.textSecondary,
+                            fontSize: "13px",
+                            fontWeight: "700",
+                            cursor: "pointer",
+                            fontFamily: "inherit",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          Book First {rule.label}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setLogPrefilledService(rule.label);
+                            setLogModalOpen(true);
+                          }}
+                          style={{
+                            padding: "12px 14px",
+                            borderRadius: "14px",
+                            border: `1px solid ${colors.border}`,
+                            background: "#fff",
+                            color: colors.navy,
+                            fontSize: "13px",
+                            fontWeight: "700",
+                            cursor: "pointer",
+                            fontFamily: "inherit",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          <Plus size={14} /> Log Past Service
+                        </button>
+                      </>
+                    ) : progress >= 70 ? (
+                      <>
+                        <button
+                          onClick={() => navigate("/customer/shop-select", { state: { prefilledService: rule.label } })}
+                          style={{
+                            flex: 1,
+                            padding: "14px",
+                            borderRadius: "14px",
+                            border: "none",
+                            background: `linear-gradient(135deg, ${isOverdue ? "#b91c1c" : colors.navy}, ${isOverdue ? "#ef4444" : colors.blue})`,
+                            color: "#fff",
+                            fontSize: "14px",
+                            fontWeight: "800",
+                            cursor: "pointer",
+                            boxShadow: isOverdue ? "0 4px 14px rgba(239,68,68,0.3)" : "0 4px 12px rgba(42,82,152,0.2)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          <AlertTriangle size={15} /> Schedule {rule.label} Now
+                        </button>
+                        <button
+                          onClick={() => {
+                            setLogPrefilledService(rule.label);
+                            setLogModalOpen(true);
+                          }}
+                          style={{
+                            padding: "14px",
+                            borderRadius: "14px",
+                            border: `1px solid ${colors.border}`,
+                            background: colors.bg,
+                            color: colors.textSecondary,
+                            fontSize: "13px",
+                            fontWeight: "700",
+                            cursor: "pointer",
+                            fontFamily: "inherit",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                          }}
+                          title="Already had this done elsewhere? Log it here."
+                        >
+                          <Plus size={14} /> Log
+                        </button>
+                      </>
+                    ) : (
+                      <div style={{ display: "flex", width: "100%", justifyContent: "flex-end", gap: "8px" }}>
+                        <button
+                          onClick={() => {
+                            setLogPrefilledService(rule.label);
+                            setLogModalOpen(true);
+                          }}
+                          style={{
+                            padding: "8px 14px",
+                            borderRadius: "10px",
+                            border: `1px solid ${colors.border}`,
+                            background: "#fff",
+                            color: colors.textSecondary,
+                            fontSize: "12px",
+                            fontWeight: "700",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                          }}
+                        >
+                          <Plus size={13} /> Log Service
+                        </button>
+                        <button
+                          onClick={() => navigate("/customer/shop-select", { state: { prefilledService: rule.label } })}
+                          style={{
+                            padding: "8px 14px",
+                            borderRadius: "10px",
+                            border: `1px solid ${colors.border}`,
+                            background: colors.bg,
+                            color: colors.navy,
+                            fontSize: "12px",
+                            fontWeight: "700",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                          }}
+                        >
+                          Book Early
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -588,6 +1166,43 @@ export default function CustomerDashboard() {
         </div>
       </div>
 
+      {/* ROADMAP MODALS */}
+      <LogServiceModal
+        isOpen={logModalOpen}
+        onClose={() => setLogModalOpen(false)}
+        vehicles={vehicles}
+        selectedVehicleId={selectedVehicleId || vehicles[0]?.id}
+        prefilledService={logPrefilledService}
+        currentMileage={activeVehicle?.mileage || ""}
+        userId={user?.id || auth.currentUser?.uid}
+        onServiceLogged={() => {
+          if (auth.currentUser) loadDashboardData(auth.currentUser.uid);
+        }}
+      />
+
+      <ServicePassportModal
+        isOpen={passportModalOpen}
+        onClose={() => setPassportModalOpen(false)}
+        vehicle={activeVehicle}
+        serviceLogs={serviceLogs}
+        bookings={bookings}
+        onRefresh={() => {
+          if (auth.currentUser) loadDashboardData(auth.currentUser.uid);
+        }}
+        onLogNew={() => {
+          setLogPrefilledService("");
+          setLogModalOpen(true);
+        }}
+      />
+
+      <UpdateMileageModal
+        isOpen={mileageModalOpen}
+        onClose={() => setMileageModalOpen(false)}
+        vehicle={activeVehicle}
+        onUpdated={() => {
+          if (auth.currentUser) loadDashboardData(auth.currentUser.uid);
+        }}
+      />
     </div>
   );
 }

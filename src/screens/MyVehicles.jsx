@@ -8,7 +8,7 @@ import { sh, colors, EmptyState, ErrorModal } from "./dashboardShared";
 import BackButton from "../components/BackButton";
 import { Camera, Car, FileText } from "lucide-react";
 
-const emptyVehicle = () => ({ make: "", model: "", year: "", plate: "", color: "", photoURL: "", photoFile: null, localPreview: null, permitURL: "", permitFile: null, permitPreview: null });
+const emptyVehicle = () => ({ make: "", model: "", year: "", plate: "", color: "", mileage: "", photoURL: "", photoFile: null, localPreview: null, permitURL: "", permitFile: null, permitPreview: null });
 
 const COLORS_LIST = ["White", "Black", "Silver", "Gray", "Red", "Blue", "Green", "Yellow", "Orange", "Brown", "Other"];
 
@@ -92,6 +92,7 @@ export default function MyVehicles() {
         year: form.year.trim(),
         plate: form.plate.trim().toUpperCase(),
         color: form.color,
+        mileage: form.mileage ? parseInt(form.mileage, 10) : null,
         photoURL: finalPhotoURL,
         permitURL: finalPermitURL,
         updatedAt: serverTimestamp(),
@@ -115,7 +116,7 @@ export default function MyVehicles() {
   };
 
   const handleEdit = (v) => {
-    setForm({ ...v, photoFile: null, localPreview: null, permitFile: null, permitPreview: null });
+    setForm({ ...v, mileage: v.mileage || "", photoFile: null, localPreview: null, permitFile: null, permitPreview: null });
     setEditingId(v.id);
     setShowForm(true);
     setError("");
@@ -273,6 +274,17 @@ export default function MyVehicles() {
                 </div>
               </div>
 
+              <div style={{ marginBottom: "16px" }}>
+                <div style={{ fontSize: "11px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Current Mileage / Odometer (km)</div>
+                <input
+                  type="number"
+                  style={{ ...inputStyle, marginBottom: 0 }}
+                  placeholder="e.g. 45000 (optional)"
+                  value={form.mileage}
+                  onChange={(e) => setForm((f) => ({ ...f, mileage: e.target.value }))}
+                />
+              </div>
+
               {/* Color picker */}
               <div style={{ fontSize: "11px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px" }}>Color</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
@@ -336,7 +348,7 @@ export default function MyVehicles() {
                         {v.year} {v.make} {v.model}
                       </div>
                       <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>
-                        {v.plate} {v.color ? `· ${v.color}` : ""}
+                        {v.plate} {v.color ? `· ${v.color}` : ""} {v.mileage ? `· ${Number(v.mileage).toLocaleString()} km` : ""}
                       </div>
                     </div>
                     <div style={{ display: "flex", gap: "10px" }}>
