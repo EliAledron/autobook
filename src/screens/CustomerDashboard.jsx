@@ -857,7 +857,6 @@ export default function CustomerDashboard() {
               return (
                 <div
                   key={rule.key}
-                  className="customer-card"
                   style={{
                     background: colors.white,
                     borderRadius: "24px",
@@ -869,6 +868,7 @@ export default function CustomerDashboard() {
                     boxShadow: isOverdue ? "0 8px 24px rgba(220,38,38,0.08)" : "0 8px 24px rgba(0,0,0,0.04)",
                     position: "relative",
                     overflow: "hidden",
+                    cursor: "default",
                   }}
                 >
                   {/* Status glow */}
