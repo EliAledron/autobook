@@ -514,8 +514,13 @@ export default function BookingHistory() {
                       <Store size={14} /> {b.shopName || "AutoBook"}
                     </div>
                     <div style={{ fontSize: "13px", color: colors.textSecondary, display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                      <Calendar size={14} /> {b.date || "No date"} {b.time && `• ${b.time}`}
+                      <Calendar size={14} /> {b.date || "No date"} {b.dropOffTime || b.time ? `• Drop-off: ${b.dropOffTime || b.time}` : ""}
                     </div>
+                    {(b.estimatedCompletionTime || b.expectedReadyTime) && (
+                      <div style={{ fontSize: "12px", color: b.delayNote ? "#b45309" : colors.info, fontWeight: "700", display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                        <Clock size={13} /> Est. Ready: ~{b.estimatedCompletionTime || b.expectedReadyTime} {b.delayNote && "(Delay reported)"}
+                      </div>
+                    )}
                     {b.vehicleLabel && (
                       <div style={{ fontSize: "13px", color: colors.textSecondary, display: "flex", alignItems: "center", gap: "8px" }}>
                         <Car size={14} /> {b.vehicleLabel}
@@ -564,6 +569,22 @@ export default function BookingHistory() {
 
             <BookingStepper status={selected.status} />
 
+            {selected.delayNote && (
+              <div style={{ background: "#fef3c7", border: "1.5px solid #fde68a", borderRadius: "16px", padding: "16px", marginBottom: "1.5rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#b45309", fontSize: "13px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" }}>
+                  <Clock size={16} /> Notice From Mechanic
+                </div>
+                <div style={{ fontSize: "14px", color: "#92400e", fontWeight: "600", lineHeight: "1.4" }}>
+                  "{selected.delayNote}"
+                </div>
+                {selected.estimatedCompletionTime && (
+                  <div style={{ fontSize: "12px", color: "#b45309", marginTop: "8px", fontWeight: "700" }}>
+                    Updated Estimated Ready Time: ~{selected.estimatedCompletionTime}
+                  </div>
+                )}
+              </div>
+            )}
+
             {selected.receiptSent && (
               <div style={{ background: "#f0fdf4", border: "1.5px dashed #22c55e", borderRadius: "16px", padding: "20px", marginBottom: "24px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#16a34a", fontSize: "14px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>
@@ -600,7 +621,8 @@ export default function BookingHistory() {
               ["Shop", selected.shopName],
               ["Service Type", selected.serviceType],
               ["Date", selected.date],
-              ["Time", selected.time],
+              ["Drop-off / Arrival Time", selected.dropOffTime || selected.time],
+              ["Estimated Completion", (selected.estimatedCompletionTime || selected.expectedReadyTime) ? `~${selected.estimatedCompletionTime || selected.expectedReadyTime}${selected.estimatedDuration ? ` (${selected.estimatedDuration})` : ""}` : null],
               ["Vehicle", selected.vehicleLabel || "Not specified"],
               ["Notes", selected.notes || "None"],
             ].map(([label, value]) => value && (

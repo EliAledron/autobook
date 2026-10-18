@@ -6,8 +6,8 @@ import { collection, addDoc, getDocs, getDoc, doc, query, where, serverTimestamp
 import { sh, colors, CustomDropdown, ErrorModal } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
-import { Car, Wrench, Camera, Calendar } from 'lucide-react';
-
+import { Car, Wrench, Camera, Calendar, Clock, Users, Info, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
+import { getServiceDuration, calculateReadyTime, getConcurrentBookingsAtSlot, ALL_TIME_SLOTS } from "../utils/serviceDurations";
 
 const CLOUDINARY_CLOUD = "dpwojan8w";
 const CLOUDINARY_PRESET = "autobook_uploads";
@@ -40,6 +40,7 @@ export default function BookService() {
   const [customerName, setCustomerName] = useState("");
   const [vehicles, setVehicles] = useState([]);
   const [shopBookings, setShopBookings] = useState([]);
+  const [shopMechanics, setShopMechanics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
@@ -66,6 +67,11 @@ export default function BookService() {
   const startDay = new Date(year, month, 1).getDay();
   const days = Array(startDay).fill(null).concat(Array.from({ length: daysInMon }, (_, i) => i + 1));
   const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+  // Dynamic capacity & service duration estimates
+  const shopCapacity = Math.max(1, shopMechanics.length > 0 ? shopMechanics.length : (shop?.bayCount || shop?.mechanicCount || 2));
+  const durationInfo = getServiceDuration(customService);
+  const calculatedReadyTime = time ? calculateReadyTime(time, durationInfo.durationMin) : "";
 
   useEffect(() => {
     if (!shop) { navigate("/customer/shop-select"); return; }
@@ -102,6 +108,14 @@ export default function BookService() {
         setShopBookings(bList);
       } catch (e) { console.error("Failed to load shop bookings", e); }
 
+      try {
+        const mSnap = await getDocs(query(collection(db, "shopMechanics"), where("shopId", "==", shop.id)));
+        const mList = mSnap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((m) => m.available !== false);
+        setShopMechanics(mList);
+      } catch (e) {
+        setShopMechanics([]);
+      }
+
       setLoading(false);
     });
     return () => unsub();
@@ -112,7 +126,7 @@ export default function BookService() {
     if (!vehicleId && vehicles.length > 0) { setError("Please select a vehicle."); return; }
     if (!vehicleId && vehicles.length === 0) { setError("Please add a vehicle first."); return; }
     if (!date) { setError("Please select a date."); return; }
-    if (!time) { setError("Please select a time."); return; }
+    if (!time) { setError("Please select a preferred drop-off time."); return; }
     setError("");
     setShowConfirm(true);
   };
@@ -125,11 +139,13 @@ export default function BookService() {
     const vehicle = vehicles.find((v) => v.id === vehicleId);
 
     try {
-      // Real-time concurrency check to prevent double bookings race condition
-      const existingSnap = await getDocs(query(collection(db, "bookings"), where("shopId", "==", shop.id), where("date", "==", date), where("time", "==", time)));
+      // Real-time concurrency check across shop's mechanics/bays
+      const existingSnap = await getDocs(query(collection(db, "bookings"), where("shopId", "==", shop.id), where("date", "==", date)));
       const activeBookings = existingSnap.docs.map(d => d.data()).filter(b => (b.status || "Pending").toLowerCase() !== "cancelled");
-      if (activeBookings.length > 0) {
-        setError("Sorry, this time slot was just booked by another customer. Please choose a different time.");
+      const concurrentAtSlot = getConcurrentBookingsAtSlot(activeBookings, time);
+      
+      if (concurrentAtSlot >= shopCapacity) {
+        setError(`Sorry, all ${shopCapacity} mechanic bays are booked for ${time}. Please choose another drop-off time.`);
         setSaving(false);
         return;
       }
@@ -150,6 +166,11 @@ export default function BookService() {
         issueImageUrl: imageUrl,
         date,
         time,
+        dropOffTime: time,
+        estimatedDuration: durationInfo.display,
+        estimatedMinutes: durationInfo.durationMin,
+        expectedReadyTime: calculatedReadyTime,
+        estimatedCompletionTime: calculatedReadyTime,
         notes: notes.trim(),
         status: "Pending",
         createdAt: serverTimestamp(),
@@ -158,7 +179,7 @@ export default function BookService() {
       await addDoc(collection(db, "adminAlerts"), {
         type: "booking_created",
         title: "New Booking!",
-        message: `${customerName} booked ${finalService} at ${shop.name} for ${date} at ${time}.`,
+        message: `${customerName} booked ${finalService} at ${shop.name} for ${date} (Drop-off: ${time}, Est: ~${calculatedReadyTime}).`,
         shopId: shop.id,
         read: false,
         createdAt: serverTimestamp(),
@@ -167,7 +188,7 @@ export default function BookService() {
       await addDoc(collection(db, "notifications"), {
         userId: uid,
         title: "Booking Confirmed!",
-        message: `Your booking for ${finalService} at ${shop.name} on ${date} at ${time} has been received.`,
+        message: `Your booking for ${finalService} at ${shop.name} is confirmed for ${date}. Preferred drop-off arrival is ${time} (Est. ready by: ~${calculatedReadyTime}).`,
         type: "booking_confirmed",
         read: false,
         createdAt: serverTimestamp(),
@@ -331,6 +352,22 @@ export default function BookService() {
                 </button>
               ))}
             </div>
+
+            {customService && (
+              <div style={{ marginTop: "14px", padding: "12px 14px", borderRadius: "14px", background: "#f0f9ff", border: "1px solid #bae6fd", display: "flex", flexDirection: "column", gap: "6px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: "700", color: "#0369a1" }}>
+                    <Clock size={14} /> Est. Duration: <strong>{durationInfo.display}</strong>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: "700", color: "#0284c7" }}>
+                    <Users size={14} /> Shop Capacity: <strong>{shopCapacity} active bay{shopCapacity > 1 ? "s" : ""}</strong>
+                  </div>
+                </div>
+                <div style={{ fontSize: "11px", color: "#0c4a6e", lineHeight: "1.4" }}>
+                  ℹ️ Selected time is your vehicle drop-off arrival. Mechanics work concurrently across bays.
+                </div>
+              </div>
+            )}
           </div>
           
           {/* UPLOAD PHOTO */}
@@ -419,7 +456,7 @@ export default function BookService() {
                   const isPast = checkDate < today;
                   const isSelected = date === dateStr;
                   
-                  const maxCapacity = shop?.dailyCapacity || 8;
+                  const maxCapacity = shop?.dailyCapacity || Math.max(8, shopCapacity * 5);
                   const almostFullThreshold = Math.max(1, Math.floor(maxCapacity * 0.7));
 
                   const dayBookingsCount = shopBookings.filter(b => b.date === dateStr).length;
@@ -456,56 +493,101 @@ export default function BookService() {
           </div>
 
           <div>
-            <div style={{ fontSize: "11px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>Select Time *</div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+              <div style={{ fontSize: "11px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Preferred Drop-off / Arrival Time *
+              </div>
+              <span style={{ fontSize: "11px", fontWeight: "700", color: colors.info, display: "flex", alignItems: "center", gap: "4px" }}>
+                <Users size={12} /> {shopCapacity} bay{shopCapacity > 1 ? "s" : ""}
+              </span>
+            </div>
+            <div style={{ fontSize: "12px", color: colors.textSecondary, marginBottom: "14px", lineHeight: "1.4" }}>
+              Choose what time you'll bring your car to the shop. Mechanics work concurrently across bays; slots fill up as bays become occupied.
+            </div>
+
             <div>
               {(() => {
-                const allSlots = ["08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM"];
-                const today = new Date();
-                const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-                
-                const alreadyBookedTimes = shopBookings
-                  .filter((b) => b.date === date)
-                  .map((b) => b.time);
-                
-                const filteredSlots = allSlots.filter((t) => {
-                  if (alreadyBookedTimes.includes(t)) return false; // Filter out already booked slots
-                  
-                  if (date !== todayStr) return true;
-                  const [timePart, modifier] = t.split(" ");
-                  let [hours, minutes] = timePart.split(":");
-                  hours = parseInt(hours, 10);
-                  if (modifier === "PM" && hours !== 12) hours += 12;
-                  if (modifier === "AM" && hours === 12) hours = 0;
-                  
-                  const slotTime = new Date();
-                  slotTime.setHours(hours, parseInt(minutes, 10), 0, 0);
-                  return slotTime > today;
-                });
-
-                if (filteredSlots.length === 0) {
-                  return <div style={{ fontSize: "13px", color: colors.textSecondary, padding: "12px 0" }}>No more available times for today.</div>;
+                if (!date) {
+                  return (
+                    <div style={{ fontSize: "13px", color: colors.textMuted, padding: "16px", background: "#f8fafc", borderRadius: "12px", textAlign: "center", border: `1px dashed ${colors.border}` }}>
+                      Please select a date first to view available drop-off arrival times.
+                    </div>
+                  );
                 }
 
-                const morningSlots = filteredSlots.filter(t => t.includes("AM") || t.startsWith("12:00 PM"));
-                const afternoonSlots = filteredSlots.filter(t => t.includes("PM") && !t.startsWith("12:00 PM"));
+                const today = new Date();
+                const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                const dayBookings = shopBookings.filter(b => b.date === date);
 
-                const renderSlotBtn = (t) => {
+                const slotData = ALL_TIME_SLOTS.map((t) => {
+                  let isPast = false;
+                  if (date === todayStr) {
+                    const [timePart, modifier] = t.split(" ");
+                    let [hours, minutes] = timePart.split(":");
+                    hours = parseInt(hours, 10);
+                    if (modifier === "PM" && hours !== 12) hours += 12;
+                    if (modifier === "AM" && hours === 12) hours = 0;
+
+                    const slotTime = new Date();
+                    slotTime.setHours(hours, parseInt(minutes, 10), 0, 0);
+                    isPast = slotTime <= today;
+                  }
+
+                  const concurrentCount = getConcurrentBookingsAtSlot(dayBookings, t);
+                  const spotsLeft = Math.max(0, shopCapacity - concurrentCount);
+                  const isFull = spotsLeft <= 0;
+
+                  return { slot: t, isPast, isFull, spotsLeft };
+                });
+
+                const activeSlots = slotData.filter(s => !s.isPast);
+
+                if (activeSlots.length === 0) {
+                  return <div style={{ fontSize: "13px", color: colors.textSecondary, padding: "12px 0" }}>No drop-off times available for this date.</div>;
+                }
+
+                const morningSlots = slotData.filter(s => s.slot.includes("AM") || s.slot.startsWith("12:00 PM"));
+                const afternoonSlots = slotData.filter(s => s.slot.includes("PM") && !s.slot.startsWith("12:00 PM"));
+
+                const renderSlotBtn = ({ slot: t, isPast, isFull, spotsLeft }) => {
                   const isSelected = time === t;
+                  const disabled = isPast || isFull;
+
                   return (
                     <button
                       key={t}
+                      type="button"
+                      disabled={disabled}
                       onClick={() => setTime(t)}
                       style={{
-                        padding: "10px", borderRadius: "10px", fontSize: "13px",
-                        fontWeight: "700", cursor: "pointer", fontFamily: "inherit",
-                        background: isSelected ? `linear-gradient(135deg, ${colors.navy}, ${colors.blue})` : colors.bg,
-                        color: isSelected ? "#fff" : colors.textPrimary,
-                        border: isSelected ? "none" : `1px solid ${colors.border}`,
+                        padding: "8px 6px", borderRadius: "12px", fontSize: "12px",
+                        fontWeight: "700", cursor: disabled ? "not-allowed" : "pointer", fontFamily: "inherit",
+                        background: isSelected 
+                          ? `linear-gradient(135deg, ${colors.navy}, ${colors.blue})` 
+                          : (disabled ? "#f1f5f9" : colors.bg),
+                        color: isSelected 
+                          ? "#fff" 
+                          : (disabled ? colors.textMuted : colors.textPrimary),
+                        border: isSelected 
+                          ? "none" 
+                          : `1px solid ${disabled ? "#e2e8f0" : colors.border}`,
                         boxShadow: isSelected ? "0 4px 12px rgba(26,58,92,0.25)" : "none",
-                        transition: "all 0.2s ease", width: "100%", textAlign: "center"
+                        opacity: disabled ? 0.55 : 1,
+                        transition: "all 0.2s ease", width: "100%", textAlign: "center",
+                        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                        gap: "2px", minHeight: "52px"
                       }}
                     >
-                      {t}
+                      <span style={{ fontSize: "13px", fontWeight: "800" }}>{t}</span>
+                      {isPast ? (
+                        <span style={{ fontSize: "9px", fontWeight: "700", color: colors.textMuted }}>Passed</span>
+                      ) : isFull ? (
+                        <span style={{ fontSize: "9px", fontWeight: "800", color: colors.danger, textTransform: "uppercase" }}>Full</span>
+                      ) : spotsLeft === 1 ? (
+                        <span style={{ fontSize: "9px", fontWeight: "800", color: isSelected ? "#fed7aa" : "#ea580c" }}>1 bay left</span>
+                      ) : (
+                        <span style={{ fontSize: "9px", fontWeight: "700", color: isSelected ? "rgba(255,255,255,0.85)" : "#059669" }}>{spotsLeft} bays open</span>
+                      )}
                     </button>
                   );
                 };
@@ -514,16 +596,16 @@ export default function BookService() {
                   <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     {morningSlots.length > 0 && (
                       <div>
-                        <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "600", marginBottom: "10px" }}>Morning</div>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: "8px" }}>
+                        <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "600", marginBottom: "8px" }}>Morning Drop-off</div>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(95px, 1fr))", gap: "8px" }}>
                           {morningSlots.map(renderSlotBtn)}
                         </div>
                       </div>
                     )}
                     {afternoonSlots.length > 0 && (
                       <div>
-                        <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "600", marginBottom: "10px" }}>Afternoon</div>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: "8px" }}>
+                        <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "600", marginBottom: "8px" }}>Afternoon Drop-off</div>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(95px, 1fr))", gap: "8px" }}>
                           {afternoonSlots.map(renderSlotBtn)}
                         </div>
                       </div>
@@ -532,6 +614,27 @@ export default function BookService() {
                 );
               })()}
             </div>
+
+            {/* DYNAMIC SCHEDULE SUMMARY CARD */}
+            {date && time && (
+              <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: "16px", padding: "16px", marginTop: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "6px" }}>
+                  <span style={{ fontSize: "12px", color: "#166534", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <Car size={15} /> Drop-off Arrival:
+                  </span>
+                  <span style={{ fontSize: "13px", color: "#14532d", fontWeight: "800" }}>{date} at {time}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "6px" }}>
+                  <span style={{ fontSize: "12px", color: "#166534", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <Clock size={15} /> Est. Ready By:
+                  </span>
+                  <span style={{ fontSize: "13px", color: "#14532d", fontWeight: "800" }}>~{calculatedReadyTime} ({durationInfo.display})</span>
+                </div>
+                <div style={{ fontSize: "11px", color: "#15803d", marginTop: "4px", lineHeight: "1.4", borderTop: "1px dashed #86efac", paddingTop: "8px" }}>
+                  💡 <strong>Live Progress Updates:</strong> Mechanics service your car during this window. If a job finishes earlier or requires extra time, you'll be notified in real-time.
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -545,12 +648,28 @@ export default function BookService() {
       {/* CONFIRMATION MODAL */}
       {showConfirm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 120, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowConfirm(false)}>
-          <div style={{ background: colors.white, borderRadius: "24px", width: "90%", maxWidth: "340px", padding: "24px", textAlign: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: colors.white, borderRadius: "24px", width: "90%", maxWidth: "360px", padding: "24px", textAlign: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
             <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: colors.infoBg, color: colors.info, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}><Calendar size={28} /></div>
-            <h3 style={{ margin: "0 0 8px", fontSize: "18px", color: colors.textPrimary, fontWeight: "800" }}>Confirm Booking</h3>
-            <p style={{ margin: "0 0 24px", fontSize: "13px", color: colors.textSecondary, lineHeight: "1.5" }}>
-              Are you sure you want to book <strong>{customService}</strong> at <strong>{shop?.shortName || shop?.name}</strong> on {date} at {time}?
+            <h3 style={{ margin: "0 0 8px", fontSize: "18px", color: colors.textPrimary, fontWeight: "800" }}>Confirm Appointment</h3>
+            <p style={{ margin: "0 0 16px", fontSize: "13px", color: colors.textSecondary, lineHeight: "1.5" }}>
+              Please review your drop-off and service details at <strong>{shop?.shortName || shop?.name}</strong>:
             </p>
+
+            <div style={{ background: "#f8fafc", borderRadius: "14px", padding: "12px 14px", textAlign: "left", marginBottom: "20px", display: "flex", flexDirection: "column", gap: "8px", border: `1px solid ${colors.border}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
+                <span style={{ color: colors.textSecondary, fontWeight: "600" }}>Service:</span>
+                <span style={{ color: colors.textPrimary, fontWeight: "700" }}>{customService}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
+                <span style={{ color: colors.textSecondary, fontWeight: "600" }}>Drop-off Arrival:</span>
+                <span style={{ color: colors.textPrimary, fontWeight: "700" }}>{date} · {time}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
+                <span style={{ color: colors.textSecondary, fontWeight: "600" }}>Est. Ready:</span>
+                <span style={{ color: colors.info, fontWeight: "800" }}>~{calculatedReadyTime} ({durationInfo.display})</span>
+              </div>
+            </div>
+
             <div style={{ display: "flex", gap: "12px" }}>
               <button onClick={() => setShowConfirm(false)} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: colors.bg, border: `1px solid ${colors.border}`, color: colors.textSecondary, fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "14px" }}>Cancel</button>
               <button onClick={handleSubmit} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, border: "none", color: "#fff", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "14px", boxShadow: "0 4px 12px rgba(26,58,92,0.2)" }}>Confirm</button>

@@ -8,7 +8,7 @@ import {
 import { sh, colors, EmptyState } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
-import { Wrench, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Wrench, CheckCircle2, XCircle, Clock, AlertTriangle, Calendar, Car } from "lucide-react";
 
 const STATUS_TABS = ["All", "Pending", "In Progress", "Completed", "Cancelled"];
 
@@ -55,6 +55,10 @@ export default function MechanicBookings() {
   const [selected, setSelected] = useState(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
+  const [showDelayModal, setShowDelayModal] = useState(false);
+  const [newReadyTime, setNewReadyTime] = useState("");
+  const [delayReason, setDelayReason] = useState("");
+  const [updatingTime, setUpdatingTime] = useState(false);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
 
@@ -118,6 +122,51 @@ export default function MechanicBookings() {
       showToast("Failed to update. Try again.");
     }
     setSaving(false);
+  };
+
+  const handleUpdateReadyTime = async () => {
+    if (!selected) return;
+    if (!newReadyTime.trim()) {
+      showToast("Please provide an estimated completion time.");
+      return;
+    }
+
+    setUpdatingTime(true);
+    try {
+      const updates = {
+        estimatedCompletionTime: newReadyTime.trim(),
+        delayNote: delayReason.trim() || null,
+        lastDelayedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      await updateDoc(doc(db, "bookings", selected.id), updates);
+
+      const customerId = selected?.customerId || selected?.userId;
+      if (customerId) {
+        await addDoc(collection(db, "notifications"), {
+          userId: customerId,
+          title: "Service Time Updated ⏱️",
+          message: `Your mechanic updated the estimated ready time for ${selected.serviceType || "your service"} to ~${newReadyTime.trim()}.${delayReason.trim() ? ` Note: "${delayReason.trim()}"` : ""}`,
+          type: "time_updated",
+          bookingId: selected.id,
+          read: false,
+          createdAt: serverTimestamp(),
+        });
+        try {
+          await sendPushNotification(customerId, "Service Time Updated ⏱️", `Estimated completion is now ~${newReadyTime.trim()}`);
+        } catch (err) {}
+      }
+
+      setBookings(prev => prev.map(b => b.id === selected.id ? { ...b, ...updates } : b));
+      setSelected(prev => ({ ...prev, ...updates }));
+      setShowDelayModal(false);
+      showToast("Ready time updated & customer notified!");
+    } catch (e) {
+      console.error("Error updating ready time:", e);
+      showToast("Failed to update ready time.");
+    }
+    setUpdatingTime(false);
   };
 
   const filtered = bookings.filter(b => {
@@ -220,7 +269,24 @@ export default function MechanicBookings() {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: "14px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>{b.serviceType || "Service"}</div>
                   <div style={{ fontSize: "12px", color: colors.textSecondary }}>{b.customerName || "Customer"} · {b.shopName || ""}</div>
-                  <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "2px" }}>{b.date || timeAgo(b.createdAt) || "—"}</div>
+                  <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "2px", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                    <span>{b.date || timeAgo(b.createdAt) || "—"}</span>
+                    <span>•</span>
+                    <span>Drop-off: <strong>{b.dropOffTime || b.time || "—"}</strong></span>
+                    {(b.estimatedCompletionTime || b.expectedReadyTime) && (
+                      <>
+                        <span>•</span>
+                        <span style={{ color: b.delayNote ? "#b45309" : colors.info, fontWeight: "700" }}>
+                          Est: ~{b.estimatedCompletionTime || b.expectedReadyTime}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  {b.delayNote && (
+                    <div style={{ fontSize: "10px", color: "#b45309", background: "#fef3c7", padding: "2px 8px", borderRadius: "6px", marginTop: "4px", display: "inline-block", fontWeight: "700" }}>
+                      ⚠️ Delay: {b.delayNote}
+                    </div>
+                  )}
                 </div>
                 <span style={{ ...statusStyle(b.status), padding: "4px 10px", borderRadius: "8px", fontSize: "11px" }}>{b.status || "Pending"}</span>
               </div>
@@ -248,7 +314,10 @@ export default function MechanicBookings() {
               ["Customer", selected.customerName || "—"],
               ["Shop", selected.shopName || "—"],
               ["Vehicle", selected.vehicleLabel || "—"],
-
+              ["Drop-off Time", (selected.dropOffTime || selected.time) ? `${selected.date || ""} at ${selected.dropOffTime || selected.time}` : "—"],
+              ["Est. Duration", selected.estimatedDuration || "Standard (~1 – 2 hrs)"],
+              ["Est. Ready Time", selected.estimatedCompletionTime || selected.expectedReadyTime ? `~${selected.estimatedCompletionTime || selected.expectedReadyTime}` : "—"],
+              ["Customer Notes", selected.notes || "None"],
             ].map(([label, value]) => (
               <div key={label} style={{ marginBottom: "0.85rem" }}>
                 <div style={{ fontSize: "11px", color: colors.textMuted, fontWeight: "600", textTransform: "uppercase", marginBottom: "3px" }}>{label}</div>
@@ -256,7 +325,37 @@ export default function MechanicBookings() {
               </div>
             ))}
 
+            {selected.delayNote && (
+              <div style={{ background: "#fef3c7", border: "1px solid #fde68a", borderRadius: "14px", padding: "12px 14px", marginBottom: "1rem" }}>
+                <div style={{ fontSize: "11px", fontWeight: "800", color: "#b45309", textTransform: "uppercase", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <AlertTriangle size={14} /> Reported Delay / Notice
+                </div>
+                <div style={{ fontSize: "13px", color: "#92400e", marginTop: "4px", fontWeight: "600", lineHeight: "1.4" }}>
+                  "{selected.delayNote}"
+                </div>
+              </div>
+            )}
+
             <div style={{ marginTop: "1.5rem", display: "flex", flexDirection: "column", gap: "10px" }}>
+              {["pending", "in progress"].includes((selected.status || "").toLowerCase()) && (
+                <button
+                  onClick={() => {
+                    setNewReadyTime(selected.estimatedCompletionTime || selected.expectedReadyTime || "");
+                    setDelayReason(selected.delayNote || "");
+                    setShowDelayModal(true);
+                  }}
+                  style={{
+                    width: "100%", padding: "12px", background: "#f0f9ff", color: "#0369a1",
+                    fontSize: "13px", fontWeight: "700", border: `1.5px solid #bae6fd`,
+                    borderRadius: "14px", cursor: "pointer", fontFamily: "inherit",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                    transition: "all 0.2s"
+                  }}
+                >
+                  <Clock size={16} /> Update Ready Time / Report Delay
+                </button>
+              )}
+
               {(selected.status || "Pending").toLowerCase() === "pending" && (
                 <button
                   onClick={() => updateStatus(selected.id, "In Progress")}
@@ -281,6 +380,103 @@ export default function MechanicBookings() {
                 </div>
               )}
               <button onClick={() => setSelected(null)} style={{ ...sh.outlineBtn, borderRadius: "14px", padding: "14px" }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* UPDATE READY TIME / REPORT DELAY MODAL */}
+      {showDelayModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 120, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }} onClick={() => setShowDelayModal(false)}>
+          <div style={{ background: colors.white, borderRadius: "24px", width: "100%", maxWidth: "380px", padding: "24px", boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+              <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.info }}>
+                <Clock size={20} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: "17px", fontWeight: "800", color: colors.navy }}>Update Ready Time</h3>
+                <div style={{ fontSize: "12px", color: colors.textSecondary }}>Notify the customer in real-time</div>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "14px" }}>
+              <div style={{ fontSize: "11px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", marginBottom: "6px" }}>
+                Estimated Ready Time <span style={{ color: colors.danger }}>*</span>
+              </div>
+              <input
+                type="text"
+                placeholder="e.g. 11:30 AM or 03:00 PM"
+                value={newReadyTime}
+                onChange={e => setNewReadyTime(e.target.value)}
+                style={{
+                  width: "100%", padding: "12px 14px", borderRadius: "12px",
+                  border: `1.5px solid ${colors.border}`, fontSize: "14px", fontWeight: "600",
+                  outline: "none", boxSizing: "border-box", background: "#f8fafc"
+                }}
+              />
+              <div style={{ display: "flex", gap: "6px", marginTop: "8px", flexWrap: "wrap" }}>
+                {["+30 mins", "+1 hour", "+2 hours"].map(preset => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => {
+                      const base = selected?.estimatedCompletionTime || selected?.expectedReadyTime || selected?.dropOffTime || selected?.time || "10:00 AM";
+                      const mins = preset.includes("30") ? 30 : preset.includes("1") ? 60 : 120;
+                      const parts = base.split(" ");
+                      if (parts.length >= 2) {
+                        let [h, m] = parts[0].split(":").map(Number);
+                        if (parts[1] === "PM" && h !== 12) h += 12;
+                        if (parts[1] === "AM" && h === 12) h = 0;
+                        const total = h * 60 + (m || 0) + mins;
+                        let eh = Math.floor(total / 60);
+                        const em = total % 60;
+                        const mod = eh >= 12 ? "PM" : "AM";
+                        if (eh > 12) eh -= 12;
+                        if (eh === 0) eh = 12;
+                        setNewReadyTime(`${eh}:${String(em).padStart(2, "0")} ${mod}`);
+                      }
+                    }}
+                    style={{
+                      background: colors.bg, border: `1px solid ${colors.border}`, borderRadius: "8px",
+                      padding: "4px 10px", fontSize: "11px", fontWeight: "700", color: colors.navy, cursor: "pointer"
+                    }}
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "20px" }}>
+              <div style={{ fontSize: "11px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", marginBottom: "6px" }}>
+                Reason / Note for Customer (Optional)
+              </div>
+              <textarea
+                placeholder="e.g. Extra time needed for brake rotor resurfacing, or waiting on parts delivery..."
+                value={delayReason}
+                onChange={e => setDelayReason(e.target.value)}
+                style={{
+                  width: "100%", padding: "10px 14px", borderRadius: "12px",
+                  border: `1.5px solid ${colors.border}`, fontSize: "13px",
+                  outline: "none", boxSizing: "border-box", minHeight: "70px", resize: "vertical", background: "#f8fafc"
+                }}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button
+                onClick={() => setShowDelayModal(false)}
+                style={{ flex: 1, padding: "12px", borderRadius: "12px", background: colors.bg, border: `1px solid ${colors.border}`, color: colors.textSecondary, fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "13px" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateReadyTime}
+                disabled={updatingTime}
+                style={{ flex: 1, padding: "12px", borderRadius: "12px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, border: "none", color: "#fff", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", fontSize: "13px", boxShadow: "0 4px 12px rgba(26,58,92,0.2)" }}
+              >
+                {updatingTime ? "Updating..." : "Save & Notify"}
+              </button>
             </div>
           </div>
         </div>

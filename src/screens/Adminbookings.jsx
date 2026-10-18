@@ -1198,7 +1198,9 @@ export default function AdminBookings() {
               ["Customer Name", getCustomerName(selected)],
               ["Service Type", selected.serviceType || "N/A"],
               ["Date", selected.date || "N/A"],
-              ["Time", selected.time || "N/A"],
+              ["Drop-off Time", selected.dropOffTime || selected.time || "N/A"],
+              ["Est. Duration", selected.estimatedDuration || "Standard (~1 – 2 hrs)"],
+              ["Est. Ready Time", (selected.estimatedCompletionTime || selected.expectedReadyTime) ? `~${selected.estimatedCompletionTime || selected.expectedReadyTime}` : "—"],
               ["Notes", selected.notes || "None"],
             ].map(([label, value]) => (
               <div key={label} style={{ marginBottom: "0.75rem" }}>
@@ -1206,6 +1208,13 @@ export default function AdminBookings() {
                 <div style={{ fontSize: "14px", color: colors.textPrimary }}>{value}</div>
               </div>
             ))}
+
+            {selected.delayNote && (
+              <div style={{ background: "#fef3c7", border: "1px solid #fde68a", borderRadius: "14px", padding: "10px 14px", marginBottom: "1rem" }}>
+                <div style={{ fontSize: "11px", fontWeight: "800", color: "#b45309", textTransform: "uppercase" }}>⚠️ Reported Delay / Notice</div>
+                <div style={{ fontSize: "13px", color: "#92400e", marginTop: "2px", fontWeight: "600" }}>"{selected.delayNote}"</div>
+              </div>
+            )}
 
             {/* ASSIGN MECHANIC */}
             <div style={{ marginBottom: "1.25rem", padding: !selected.mechanicId ? "16px" : "0", background: !selected.mechanicId ? colors.warningBg : "transparent", borderRadius: "16px", border: !selected.mechanicId ? `2px dashed ${colors.warning}` : "none" }}>
