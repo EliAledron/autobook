@@ -9,9 +9,9 @@ import {
 import { db, auth } from "../firebase";
 import { sh, colors, getGreeting, getInitials, CustomDropdown, ErrorModal } from "./dashboardShared";
 import TopbarAvatar from "./TopbarAvatar";
-import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
-import { Check, Megaphone } from "lucide-react";
+import { Check, Megaphone, ShieldAlert, AlertTriangle } from "lucide-react";
+import { calculateShopRating, getReportPenalty } from "../utils/ratingUtils";
 
 // ─── Quick Action SVG Icons ────────────────────────────────────────────────────
 const IcoUsers    = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.87"/></svg>;
@@ -228,6 +228,7 @@ export default function OwnerDashboard({ user }) {
   const [unreadReviewAlertsCount, setUnreadReviewAlertsCount] = useState(0);
   const [newCarParts, setNewCarParts] = useState(0);
   const [shopData, setShopData] = useState(null);
+  const [shopReportCount, setShopReportCount] = useState(0);
 
   const [selMonth, setSelMonth] = useState(new Date().getMonth());
   const [selYear, setSelYear] = useState(new Date().getFullYear());
@@ -344,8 +345,9 @@ export default function OwnerDashboard({ user }) {
               const repSnap = await getDocs(query(collection(db, "adminAlerts"), where("type", "==", "shop_report"), where("shopId", "==", shopId)));
               reportCount = repSnap.size;
             } catch(e) {}
+            setShopReportCount(reportCount);
 
-            let avg = data.rating || 0;
+            let avg = data.rawRating || data.rating || 0;
             let reviewCount = data.reviews || 0;
 
             if (ratedBookings.length > 0) {
@@ -353,20 +355,30 @@ export default function OwnerDashboard({ user }) {
               reviewCount = ratedBookings.length;
             }
 
-            if (avg > 0 && reportCount > 0) {
-              avg = Math.max(0.5, avg - (reportCount * 0.5));
-            }
+            const adjustedRating = calculateShopRating(avg, reportCount);
 
             if (reviewCount > 0 || reportCount > 0) {
-              if (data.rating !== avg || data.reviews !== reviewCount) {
-                await updateDoc(doc(db, "shops", shopId), { rating: avg, reviews: reviewCount });
+              if (data.rating !== adjustedRating || data.reviews !== reviewCount) {
+                await updateDoc(doc(db, "shops", shopId), { rating: adjustedRating, reviews: reviewCount, reportCount, rawRating: Math.round(avg * 10) / 10 });
               }
-              data.rating = avg;
+              data.rating = adjustedRating;
               data.reviews = reviewCount;
+              data.reportCount = reportCount;
+              data.rawRating = Math.round(avg * 10) / 10;
             }
             setShopData(data);
           }
         } catch (e) { console.error("Failed to load shop:", e); }
+      }
+
+      // ── Real-time Shop Reports listener for penalty tracking ──
+      if (shopId) {
+        const repQ = query(collection(db, "adminAlerts"), where("type", "==", "shop_report"), where("shopId", "==", shopId));
+        unsubscribers.push(
+          onSnapshot(repQ, (snap) => {
+            setShopReportCount(snap.size);
+          })
+        );
       }
 
       // ── Users listener ──
@@ -632,6 +644,8 @@ export default function OwnerDashboard({ user }) {
       return { name, count, priority, suggestedStock };
     });
 
+  const penaltyDetails = getReportPenalty(shopReportCount);
+
   return (
     <div style={sh.page}>
       <style>{keyframes}</style>
@@ -764,7 +778,81 @@ export default function OwnerDashboard({ user }) {
           )}
         </div>
 
-        {/* ALERT BANNERS — priority ordered: pending approvals → system alerts → pending bookings → car parts */}
+        {/* ALERT BANNERS — priority ordered: report penalty → approaching penalty → pending approvals → system alerts → pending bookings → car parts */}
+        {!isAdmin && penaltyDetails.isPenalized && (
+          <div 
+            className="owner-card" 
+            onClick={() => navigate("/admin/reviews")} 
+            style={{ 
+              background: "#fef2f2", 
+              borderRadius: "16px", 
+              padding: "16px", 
+              marginBottom: "12px", 
+              display: "flex", 
+              alignItems: "center", 
+              gap: "14px", 
+              cursor: "pointer", 
+              boxShadow: "0 4px 20px rgba(239,68,68,0.08)", 
+              border: `1.5px solid #fca5a5` 
+            }}
+          >
+            <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", color: colors.danger, flexShrink: 0 }}>
+              <ShieldAlert size={22} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "3px" }}>
+                <span style={{ fontSize: "15px", fontWeight: "800", color: "#991b1b" }}>
+                  Rating Penalty Active (-{penaltyDetails.penalty.toFixed(1)}★)
+                </span>
+                <span style={{ fontSize: "11px", fontWeight: "700", background: colors.danger, color: "#fff", padding: "2px 8px", borderRadius: "10px" }}>
+                  {shopReportCount} Customer Reports
+                </span>
+              </div>
+              <div style={{ fontSize: "13px", color: "#b91c1c", fontWeight: "500", lineHeight: 1.4 }}>
+                Your shop has received {shopReportCount} active customer reports, triggering an automatic -{penaltyDetails.penalty.toFixed(1)}★ rating deduction. Please resolve customer complaints or contact support to request report dismissals.
+              </div>
+            </div>
+            <div style={{ color: "#b91c1c", fontSize: "20px" }}>›</div>
+          </div>
+        )}
+
+        {!isAdmin && penaltyDetails.isApproaching && (
+          <div 
+            className="owner-card" 
+            onClick={() => navigate("/admin/reviews")} 
+            style={{ 
+              background: "#fffbeb", 
+              borderRadius: "16px", 
+              padding: "16px", 
+              marginBottom: "12px", 
+              display: "flex", 
+              alignItems: "center", 
+              gap: "14px", 
+              cursor: "pointer", 
+              boxShadow: "0 4px 20px rgba(245,158,11,0.08)", 
+              border: `1.5px solid #fde68a` 
+            }}
+          >
+            <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", color: "#d97706", flexShrink: 0 }}>
+              <AlertTriangle size={22} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "3px" }}>
+                <span style={{ fontSize: "15px", fontWeight: "800", color: "#92400e" }}>
+                  Approaching Rating Penalty Threshold
+                </span>
+                <span style={{ fontSize: "11px", fontWeight: "700", background: "#d97706", color: "#fff", padding: "2px 8px", borderRadius: "10px" }}>
+                  {shopReportCount}/10 Reports
+                </span>
+              </div>
+              <div style={{ fontSize: "13px", color: "#b45309", fontWeight: "500", lineHeight: 1.4 }}>
+                Your shop has {shopReportCount} customer reports ({penaltyDetails.reportsUntilNext} away from the 10-report threshold). Reaching 10 reports will trigger an automatic -0.5★ rating deduction.
+              </div>
+            </div>
+            <div style={{ color: "#b45309", fontSize: "20px" }}>›</div>
+          </div>
+        )}
+
         {isAdmin && pendingUsers.length > 0 && (
           <div className="owner-card" onClick={() => navigate("/admin/users")} style={{ background: colors.white, borderRadius: "16px", padding: "16px", marginBottom: "12px", display: "flex", alignItems: "center", gap: "14px", cursor: "pointer", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}` }}>
             <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: colors.dangerBg, display: "flex", alignItems: "center", justifyContent: "center" }}><PulseDot color={colors.danger} size={12} /></div>

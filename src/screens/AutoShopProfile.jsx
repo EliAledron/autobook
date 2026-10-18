@@ -11,6 +11,7 @@ import AdminLayout from "../components/AdminLayout";
 import DesktopOnly from "../components/DesktopOnly";
 import { STANDARD_SERVICES } from "../utils/servicesList";
 import ReportReviewModal from "../components/ReportReviewModal";
+import { calculateShopRating, getReportPenalty, recalculateAndSyncShopRating } from "../utils/ratingUtils";
 
 function timeAgo(timestamp) {
   if (!timestamp) return "Just now";
@@ -352,6 +353,7 @@ export default function AutoShopProfile() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reporting, setReporting] = useState(false);
+  const [reportCount, setReportCount] = useState(0);
   const [loadingShop, setLoadingShop] = useState(!location.state?.shop && !!shopId);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -389,8 +391,18 @@ export default function AutoShopProfile() {
           }
         }
 
+        // Fetch active report count for tiered penalty
+        let currentReports = 0;
+        if (sId) {
+          try {
+            const repSnap = await getDocs(query(collection(db, "adminAlerts"), where("type", "==", "shop_report"), where("shopId", "==", sId)));
+            currentReports = repSnap.size;
+          } catch(e) {}
+        }
+        setReportCount(currentReports);
+
         // Resolve dynamic rating based on bookings
-        let finalRating = dbShop.rating || shop.rating || 0;
+        let rawBaseRating = dbShop.rawRating || dbShop.rating || shop.rating || 0;
         let finalReviews = dbShop.reviews || shop.reviews || 0;
 
         let ratedBookings = [];
@@ -404,9 +416,11 @@ export default function AutoShopProfile() {
         }
 
         if (ratedBookings.length > 0) {
-          finalRating = ratedBookings.reduce((sum, b) => sum + Number(b.rating), 0) / ratedBookings.length;
+          rawBaseRating = ratedBookings.reduce((sum, b) => sum + Number(b.rating), 0) / ratedBookings.length;
           finalReviews = ratedBookings.length;
         }
+
+        const finalRating = calculateShopRating(rawBaseRating, currentReports);
 
         // Map rated bookings to review objects so they appear in the UI
         const bookingReviews = ratedBookings.map(b => ({
@@ -520,6 +534,14 @@ export default function AutoShopProfile() {
           read: false,
           createdAt: serverTimestamp(),
         });
+
+        const syncResult = await recalculateAndSyncShopRating(db, shop.id);
+        if (syncResult) {
+          setReportCount(syncResult.reportCount);
+          setShop(prev => prev ? ({ ...prev, rating: syncResult.rating, reviews: syncResult.reviews }) : null);
+        } else {
+          setReportCount(prev => prev + 1);
+        }
       }
       setShowReportModal(false);
       setReportReason("");
@@ -579,9 +601,12 @@ export default function AutoShopProfile() {
     1: reviews.filter(r => Math.round(Number(r.rating)) === 1).length,
   };
 
-  const dynamicAvgRating = totalReviewsCount > 0
+  const rawAvgRating = totalReviewsCount > 0
     ? reviews.reduce((sum, r) => sum + Number(r.rating), 0) / totalReviewsCount
-    : (shop?.rating && !isNaN(Number(shop.rating)) ? Number(shop.rating) : 0);
+    : (shop?.rawRating || (shop?.rating && !isNaN(Number(shop.rating)) ? Number(shop.rawRating || shop.rating) : 0));
+
+  const dynamicAvgRating = calculateShopRating(rawAvgRating, reportCount);
+  const penaltyInfo = getReportPenalty(reportCount);
 
   const filteredReviews = selectedStarFilter > 0
     ? reviews.filter(r => Math.round(Number(r.rating)) === selectedStarFilter)
@@ -641,12 +666,17 @@ export default function AutoShopProfile() {
                 </div>
               )}
               
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
                 <Star fill="currentColor" size={16} style={{ color: "#f59e0b" }} />
                 <span style={{ fontSize: "14px", fontWeight: "700", color: "#fff" }}>
-                  {shop.rating && !isNaN(Number(shop.rating)) && Number(shop.rating) > 0 ? Number(shop.rating).toFixed(1) : "New"}
+                  {dynamicAvgRating > 0 ? dynamicAvgRating.toFixed(1) : "New"}
                 </span>
                 {shop.reviews > 0 && <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>({shop.reviews} reviews)</span>}
+                {penaltyInfo.isPenalized && (
+                  <span style={{ fontSize: "11px", fontWeight: "700", background: "rgba(239,68,68,0.35)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.5)", padding: "2px 8px", borderRadius: "8px", marginLeft: "4px" }}>
+                    -{penaltyInfo.penalty.toFixed(1)}★ penalty
+                  </span>
+                )}
               </div>
             </div>
 
@@ -858,6 +888,11 @@ export default function AutoShopProfile() {
                   <div style={{ fontSize: "48px", fontWeight: "900", color: colors.navy, lineHeight: 1 }}>
                     {dynamicAvgRating > 0 ? dynamicAvgRating.toFixed(1) : "0.0"}
                   </div>
+                  {penaltyInfo.isPenalized && (
+                    <div style={{ fontSize: "11px", fontWeight: "700", color: colors.danger, background: colors.dangerBg, padding: "3px 8px", borderRadius: "8px", marginTop: "6px" }}>
+                      -{penaltyInfo.penalty.toFixed(1)}★ penalty ({reportCount} reports)
+                    </div>
+                  )}
                   <div style={{ display: "flex", gap: "3px", margin: "10px 0 6px" }}>
                     {[1, 2, 3, 4, 5].map(s => (
                       <Star

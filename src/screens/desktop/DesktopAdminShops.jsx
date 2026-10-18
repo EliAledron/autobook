@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { collection, onSnapshot, deleteDoc, doc } from "firebase/firestore";
+import { collection, onSnapshot, deleteDoc, doc, query, where } from "firebase/firestore";
 import { db } from "../../firebase";
 import { colors, ConfirmModal } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
 import { Search, Store, MapPin, Star, Eye, Archive, RotateCcw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { calculateShopRating, getReportPenalty } from "../../utils/ratingUtils";
 
 export default function DesktopAdminShops() {
   const [shops, setShops] = useState([]);
+  const [reportCounts, setReportCounts] = useState({});
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
@@ -21,7 +23,20 @@ export default function DesktopAdminShops() {
       setShops(list);
       setLoading(false);
     });
-    return () => unsub();
+
+    const unsubAlerts = onSnapshot(query(collection(db, "adminAlerts"), where("type", "==", "shop_report")), (snap) => {
+      const counts = {};
+      snap.docs.forEach(d => {
+        const data = d.data();
+        if (data.shopId) counts[data.shopId] = (counts[data.shopId] || 0) + 1;
+      });
+      setReportCounts(counts);
+    });
+
+    return () => {
+      unsub();
+      unsubAlerts();
+    };
   }, []);
 
   const handleArchive = async (shop) => {
@@ -213,15 +228,38 @@ export default function DesktopAdminShops() {
                         </div>
                       </td>
                       <td style={{ padding: "16px 24px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <Star size={16} color={colors.warning} fill={colors.warning} />
-                          <span style={{ fontSize: "14px", fontWeight: "700", color: colors.textPrimary }}>
-                            {Number(s.rating || 0).toFixed(1)}
-                          </span>
-                          <span style={{ fontSize: "12px", color: colors.textMuted }}>
-                            ({s.reviews || 0})
-                          </span>
-                        </div>
+                        {(() => {
+                          const repCount = reportCounts[s.id] || s.reportCount || 0;
+                          const penalty = getReportPenalty(repCount);
+                          const displayRating = calculateShopRating(s.rawRating || s.rating || 0, repCount);
+                          return (
+                            <div>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                <Star size={16} color={colors.warning} fill={colors.warning} />
+                                <span style={{ fontSize: "14px", fontWeight: "700", color: colors.textPrimary }}>
+                                  {Number(displayRating || 0).toFixed(1)}
+                                </span>
+                                <span style={{ fontSize: "12px", color: colors.textMuted }}>
+                                  ({s.reviews || 0})
+                                </span>
+                              </div>
+                              {penalty.isPenalized && (
+                                <div style={{ marginTop: "4px" }}>
+                                  <span style={{ fontSize: "11px", fontWeight: "700", color: colors.danger, background: colors.dangerBg, padding: "2px 6px", borderRadius: "4px" }}>
+                                    -{penalty.penalty.toFixed(1)}★ ({repCount} reports)
+                                  </span>
+                                </div>
+                              )}
+                              {penalty.isApproaching && (
+                                <div style={{ marginTop: "4px" }}>
+                                  <span style={{ fontSize: "11px", fontWeight: "700", color: colors.warning, background: colors.warningBg, padding: "2px 6px", borderRadius: "4px" }}>
+                                    {repCount}/10 reports
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td style={{ padding: "16px 24px", fontSize: "14px", color: colors.textSecondary }}>
                         {s.createdAt?.seconds ? new Date(s.createdAt.seconds * 1000).toLocaleDateString() : "Unknown"}

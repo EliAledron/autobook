@@ -7,6 +7,7 @@ import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
 import { Store, Star, Sparkles, X } from "lucide-react";
 import { STANDARD_SERVICES } from "../utils/servicesList";
+import { calculateShopRating } from "../utils/ratingUtils";
 
 export default function ShopSelect() {
   const navigate = useNavigate();
@@ -78,7 +79,7 @@ export default function ShopSelect() {
                 reportCount = repSnap.size;
               } catch(e) {}
 
-              let avg = shop.rating || 0;
+              let avg = shop.rawRating || shop.rating || 0;
               let reviewCount = shop.reviews || 0;
 
               if (allReviews.length > 0) {
@@ -86,12 +87,10 @@ export default function ShopSelect() {
                 reviewCount = allReviews.length;
               }
 
-              if (avg > 0 && reportCount > 0) {
-                avg = Math.max(0.5, avg - (reportCount * 0.5));
-              }
+              const adjustedRating = calculateShopRating(avg, reportCount);
 
               if (reviewCount > 0 || reportCount > 0) {
-                return { ...shop, rating: avg, reviews: reviewCount };
+                return { ...shop, rating: adjustedRating, reviews: reviewCount, reportCount };
               }
             } catch(e) {}
             return shop;

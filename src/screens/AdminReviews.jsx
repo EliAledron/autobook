@@ -9,6 +9,7 @@ import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
 import BackButton from "../components/BackButton";
 import { Star, Wrench, Flag } from "lucide-react";
+import { calculateShopRating, getReportPenalty } from "../utils/ratingUtils";
 
 function timeAgo(timestamp) {
   if (!timestamp) return "Just now";
@@ -41,6 +42,7 @@ export default function AdminReviews() {
   const [shopData, setShopData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [avgRating, setAvgRating] = useState(0);
+  const [reportCount, setReportCount] = useState(0);
   const [selectedStarFilter, setSelectedStarFilter] = useState(0);
   const [reviewToReport, setReviewToReport] = useState(null);
   const [successMsg, setSuccessMsg] = useState("");
@@ -106,18 +108,28 @@ export default function AdminReviews() {
         return tB - tA;
       });
 
+      // Fetch active reports against the shop
+      let currentReports = 0;
+      try {
+        const repSnap = await getDocs(query(collection(db, "adminAlerts"), where("type", "==", "shop_report"), where("shopId", "==", shopId)));
+        currentReports = repSnap.size;
+      } catch(e) {}
+      setReportCount(currentReports);
+
       // Dynamically calculate the real average based on fetched reviews
       if (ratedBookings.length > 0) {
-        const calculatedAvg = ratedBookings.reduce((sum, r) => sum + r.rating, 0) / ratedBookings.length;
+        const rawAvg = ratedBookings.reduce((sum, r) => sum + r.rating, 0) / ratedBookings.length;
+        const calculatedAvg = calculateShopRating(rawAvg, currentReports);
         setAvgRating(calculatedAvg);
         
         // Sync the calculated rating back to the database for customers to see
         if (shopSnap.exists() && (shopSnap.data().rating !== calculatedAvg || shopSnap.data().reviews !== ratedBookings.length)) {
-          await updateDoc(doc(db, "shops", shopId), { rating: calculatedAvg, reviews: ratedBookings.length });
+          await updateDoc(doc(db, "shops", shopId), { rating: calculatedAvg, reviews: ratedBookings.length, reportCount: currentReports, rawRating: Math.round(rawAvg * 10) / 10 });
         }
       } else {
         if (shopSnap.exists()) {
-          setAvgRating(shopSnap.data().rating || 0);
+          const rawAvg = shopSnap.data().rawRating || shopSnap.data().rating || 0;
+          setAvgRating(calculateShopRating(rawAvg, currentReports));
         }
       }
 
@@ -176,6 +188,15 @@ export default function AdminReviews() {
                   <div style={{ fontSize: "44px", fontWeight: "900", color: colors.navy, lineHeight: 1 }}>
                     {avgRating > 0 ? avgRating.toFixed(1) : "0.0"}
                   </div>
+                  {(() => {
+                    const p = getReportPenalty(reportCount);
+                    if (!p.isPenalized) return null;
+                    return (
+                      <div style={{ fontSize: "11px", fontWeight: "700", color: colors.danger, background: colors.dangerBg, padding: "2px 8px", borderRadius: "6px", marginTop: "4px" }}>
+                        -{p.penalty.toFixed(1)}★ ({reportCount} reports)
+                      </div>
+                    );
+                  })()}
                   <div style={{ display: "flex", gap: "3px", margin: "8px 0 4px" }}>
                     {[1, 2, 3, 4, 5].map(star => (
                       <span key={star} style={{ color: avgRating >= star - 0.5 ? "#f59e0b" : "#e2e8f0", display: "flex", alignItems: "center" }}>

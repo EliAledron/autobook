@@ -8,6 +8,7 @@ import { useUser } from "../UserContext";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
 import { Newspaper, Star, XCircle, Trash2 } from "lucide-react";
+import { calculateShopRating } from "../utils/ratingUtils";
 
 const CLOUDINARY_CLOUD = "dpwojan8w";
 const CLOUDINARY_PRESET = "autobook_uploads";
@@ -134,7 +135,7 @@ export default function ShopFeed() {
               reportCount = repSnap.size;
             } catch(e) {}
 
-            let avg = shop.rating || 0;
+            let avg = shop.rawRating || shop.rating || 0;
             let reviewCount = shop.reviews || 0;
 
             if (allReviews.length > 0) {
@@ -142,12 +143,10 @@ export default function ShopFeed() {
               reviewCount = allReviews.length;
             }
 
-            if (avg > 0 && reportCount > 0) {
-              avg = Math.max(0.5, avg - (reportCount * 0.5));
-            }
+            const adjustedRating = calculateShopRating(avg, reportCount);
 
             if (reviewCount > 0 || reportCount > 0) {
-              return { ...shop, rating: avg, reviews: reviewCount };
+              return { ...shop, rating: adjustedRating, reviews: reviewCount, reportCount };
             }
           } catch(e) {}
           return shop;

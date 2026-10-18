@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { collection, onSnapshot, updateDoc, doc, getDoc, getDocs, query, where, deleteDoc } from "firebase/firestore";
+import { collection, onSnapshot, updateDoc, doc, getDoc, getDocs, query, where, deleteDoc, arrayRemove } from "firebase/firestore";
 import { db } from "../../firebase";
 import { colors, ErrorModal, SuccessModal, ConfirmModal } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
 import { ShieldAlert, CheckCircle, Search, Ban, Flag, Trash2, Eye, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { recalculateAndSyncShopRating, getReportPenalty } from "../../utils/ratingUtils";
 
 export default function DesktopAdminReportedShops() {
   const [reports, setReports] = useState([]);
@@ -36,18 +37,34 @@ export default function DesktopAdminReportedShops() {
     };
   }, []);
 
-  const dismissReport = (id) => {
+  const dismissReport = (report) => {
     setConfirmAction({
       type: 'dismiss',
-      id,
+      report,
       title: 'Dismiss Report',
-      message: 'Dismiss this report?'
+      message: `Dismiss this report against "${report.shopName || "this shop"}"? The report will be deleted and the shop's rating penalty will automatically recalculate and recover.`
     });
   };
 
-  const executeDismiss = async (id) => {
-    setActionLoading(id);
-    try { await deleteDoc(doc(db, "adminAlerts", id)); } catch (e) {}
+  const executeDismiss = async (report) => {
+    setActionLoading(report.id);
+    try {
+      if (report.shopId && report.reporterId) {
+        try {
+          await updateDoc(doc(db, "shops", report.shopId), {
+            flags: arrayRemove(report.reporterId)
+          });
+        } catch (e) {}
+      }
+      await deleteDoc(doc(db, "adminAlerts", report.id));
+      if (report.shopId) {
+        await recalculateAndSyncShopRating(db, report.shopId);
+      }
+      setSuccessMsg("Report dismissed successfully. Shop rating updated.");
+    } catch (e) {
+      console.error(e);
+      setErrorMsg("Failed to dismiss report: " + e.message);
+    }
     setActionLoading(null);
   };
 
@@ -71,6 +88,9 @@ export default function DesktopAdminReportedShops() {
         }
       });
       await deleteDoc(doc(db, "adminAlerts", report.id));
+      if (report.shopId) {
+        await recalculateAndSyncShopRating(db, report.shopId);
+      }
       setSuccessMsg("Shop Owner has been restricted.");
     } catch (e) {
       console.error(e);
@@ -112,6 +132,9 @@ export default function DesktopAdminReportedShops() {
         });
       }
       await deleteDoc(doc(db, "adminAlerts", report.id));
+      if (report.shopId) {
+        await recalculateAndSyncShopRating(db, report.shopId);
+      }
       setSuccessMsg("Warning issued successfully.");
     } catch (e) {
       console.error(e);
@@ -122,11 +145,18 @@ export default function DesktopAdminReportedShops() {
 
   const handleConfirmAction = () => {
     if (!confirmAction) return;
-    if (confirmAction.type === 'dismiss') executeDismiss(confirmAction.id);
+    if (confirmAction.type === 'dismiss') executeDismiss(confirmAction.report);
     if (confirmAction.type === 'ban') executeBan(confirmAction.report);
     if (confirmAction.type === 'warning') executeWarning(confirmAction.report);
     setConfirmAction(null);
   };
+
+  const shopReportCounts = {};
+  reports.forEach(r => {
+    if (r.shopId) {
+      shopReportCounts[r.shopId] = (shopReportCounts[r.shopId] || 0) + 1;
+    }
+  });
 
   const filteredReports = reports.filter(r => {
     const s = search.toLowerCase();
@@ -202,11 +232,28 @@ export default function DesktopAdminReportedShops() {
                     <td style={{ padding: "16px 24px", verticalAlign: "top" }}>
                       <div style={{ fontWeight: "700", fontSize: "14px", color: colors.textPrimary }}>{r.shopName || "Unknown"}</div>
                       {r.shopId && <div style={{ fontSize: "12px", color: colors.textSecondary }}>ID: {r.shopId}</div>}
-                      {r.shopId && shopsMap[r.shopId] && (
-                        <div style={{ fontSize: "11px", fontWeight: "700", color: colors.warning, marginTop: "4px" }}>
-                          Warnings: {shopsMap[r.shopId].warnings || 0}/3
-                        </div>
-                      )}
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginTop: "4px" }}>
+                        {r.shopId && (
+                          <span style={{ fontSize: "11px", fontWeight: "700", color: colors.textSecondary, background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px" }}>
+                            Reports: {shopReportCounts[r.shopId] || 1}
+                          </span>
+                        )}
+                        {r.shopId && getReportPenalty(shopReportCounts[r.shopId] || 1).isPenalized && (
+                          <span style={{ fontSize: "11px", fontWeight: "700", color: colors.danger, background: colors.dangerBg, padding: "2px 6px", borderRadius: "4px" }}>
+                            -{getReportPenalty(shopReportCounts[r.shopId] || 1).penalty.toFixed(1)}★ Penalty
+                          </span>
+                        )}
+                        {r.shopId && getReportPenalty(shopReportCounts[r.shopId] || 1).isApproaching && (
+                          <span style={{ fontSize: "11px", fontWeight: "700", color: colors.warning, background: colors.warningBg, padding: "2px 6px", borderRadius: "4px" }}>
+                            Approaching Penalty
+                          </span>
+                        )}
+                        {r.shopId && shopsMap[r.shopId] && (
+                          <span style={{ fontSize: "11px", fontWeight: "700", color: colors.warning, background: colors.warningBg, padding: "2px 6px", borderRadius: "4px" }}>
+                            Warnings: {shopsMap[r.shopId].warnings || 0}/3
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td style={{ padding: "16px 24px" }}>
                       <div style={{ fontSize: "14px", color: colors.textPrimary, lineHeight: "1.5" }}>{r.reason || r.message || "No reason provided"}</div>
@@ -222,7 +269,7 @@ export default function DesktopAdminReportedShops() {
                         <button onClick={() => navigate("/customer/shop-profile", { state: { shopId: r.shopId } })} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.infoBg, color: colors.info, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="View Shop Profile">
                           <Eye size={18} />
                         </button>
-                        <button disabled={actionLoading === r.id} onClick={() => dismissReport(r.id)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.successBg, color: colors.success, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Dismiss Report">
+                        <button disabled={actionLoading === r.id} onClick={() => dismissReport(r)} style={{ width: "36px", height: "36px", borderRadius: "10px", background: colors.successBg, color: colors.success, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Dismiss Report">
                           <CheckCircle size={18} />
                         </button>
                         {r.shopId && shopsMap[r.shopId] && (shopsMap[r.shopId].warnings || 0) >= 3 ? (

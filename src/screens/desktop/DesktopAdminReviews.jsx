@@ -9,6 +9,7 @@ import {
   ShieldAlert, Flag
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { recalculateAndSyncShopRating } from "../../utils/ratingUtils";
 
 export default function DesktopAdminReviews() {
   const navigate = useNavigate();
@@ -206,6 +207,9 @@ export default function DesktopAdminReviews() {
           reviewHidden: true,
           reviewStatus: "archived"
         });
+        if (reviewToArchive.shopId) {
+          await recalculateAndSyncShopRating(db, reviewToArchive.shopId);
+        }
       } else {
         await updateDoc(doc(db, "reviews", reviewToArchive.id), {
           status: "archived"
@@ -234,6 +238,9 @@ export default function DesktopAdminReviews() {
           reviewHidden: false,
           reviewStatus: "active"
         });
+        if (reviewToRestore.shopId) {
+          await recalculateAndSyncShopRating(db, reviewToRestore.shopId);
+        }
       } else {
         await updateDoc(doc(db, "reviews", reviewToRestore.id), {
           status: "active"
@@ -308,6 +315,9 @@ export default function DesktopAdminReviews() {
           isReported: false,
           disputeResolution: "archived"
         });
+        if (disputeToUphold.shopId) {
+          await recalculateAndSyncShopRating(db, disputeToUphold.shopId);
+        }
       } else {
         await updateDoc(doc(db, "reviews", disputeToUphold.id), {
           status: "archived",
