@@ -1,0 +1,9 @@
+{
+  "appId": "com.autobook.app",
+  "appName": "AutoBook",
+  "webDir": "dist",
+  "server": {
+    "url": "http://192.168.254.103:3000",
+    "cleartext": true
+  }
+}

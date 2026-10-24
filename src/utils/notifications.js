@@ -123,6 +123,9 @@ export const sendCustomVerificationEmail = async () => {
  */
 export const requestPushPermission = async (userUid) => {
   try {
+    if (!messaging) {
+      return { success: false, error: "Messaging not supported in this environment" };
+    }
     const permission = await Notification.requestPermission();
     if (permission === "granted") {
       const currentToken = await getToken(messaging, { 

@@ -7,7 +7,7 @@ export function usePushNotifications() {
   useEffect(() => {
     const requestPermissionAndSaveToken = async () => {
       try {
-        if (!auth.currentUser) return;
+        if (!auth.currentUser || !messaging) return;
 
         console.log("Requesting notification permission...");
         const permission = await Notification.requestPermission();
