@@ -1,6 +1,8 @@
 import { auth, messaging, db } from "../firebase";
 import { getToken } from "firebase/messaging";
 import { doc, updateDoc } from "firebase/firestore";
+import { Capacitor } from "@capacitor/core";
+import { PushNotifications } from "@capacitor/push-notifications";
 
 const BACKEND_URL = "https://autobook-backend-k543.onrender.com";
 
@@ -123,6 +125,19 @@ export const sendCustomVerificationEmail = async () => {
  */
 export const requestPushPermission = async (userUid) => {
   try {
+    if (Capacitor.isNativePlatform()) {
+      let permStatus = await PushNotifications.checkPermissions();
+      if (permStatus.receive === "prompt") {
+        permStatus = await PushNotifications.requestPermissions();
+      }
+      if (permStatus.receive === "granted") {
+        await PushNotifications.register();
+        return { success: true };
+      } else {
+        return { success: false, error: "Notification permission denied." };
+      }
+    }
+
     if (!messaging) {
       return { success: false, error: "Messaging not supported in this environment" };
     }
