@@ -8,7 +8,7 @@ import { sh, colors, EmptyState, getInitials, SharedSearchBar, CustomDropdown } 
 import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
 import BackButton from "../components/BackButton";
-import { CheckCircle2, Wrench, XCircle, Clock, Check, X, Trash2, Calendar, Search, AlertTriangle } from "lucide-react";
+import { CheckCircle2, Wrench, XCircle, Clock, Check, X, Trash2, Calendar, Search, AlertTriangle, Phone, MessageSquare } from "lucide-react";
 
 const STATUS_TABS = ["All", "Pending", "In Progress", "Completed", "Cancelled", "Archived"];
 
@@ -126,6 +126,7 @@ export default function AdminBookings() {
   const [users, setUsers] = useState([]);
   const [activeTab, setActiveTab] = useState("All");
   const [selected, setSelected] = useState(null);
+  const [customerPhones, setCustomerPhones] = useState({});
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     if (loading) return;
@@ -280,6 +281,28 @@ export default function AdminBookings() {
 
       setBookings(bList);
 
+      // Pre-load customer phones for bookings lacking customerPhone
+      const missingCustomerIds = Array.from(new Set(bList.map(b => !b.customerPhone && (b.customerId || b.userId)).filter(Boolean)));
+      if (missingCustomerIds.length > 0) {
+        Promise.all(missingCustomerIds.map(async (cid) => {
+          try {
+            const uDoc = await getDoc(doc(db, "users", cid));
+            if (uDoc.exists() && uDoc.data()?.phone) {
+              return [cid, uDoc.data().phone];
+            }
+          } catch(e) {}
+          return null;
+        })).then(results => {
+          const map = {};
+          results.forEach(res => {
+            if (res) map[res[0]] = res[1];
+          });
+          if (Object.keys(map).length > 0) {
+            setCustomerPhones(prev => ({ ...prev, ...map }));
+          }
+        });
+      }
+
       const shopMechanics = smList.map((m) => ({
         id: m.id,
         shopId: m.shopId,
@@ -328,6 +351,29 @@ export default function AdminBookings() {
     const found = users.find((u) => u.id === uid);
     return found?.displayName || found?.name || found?.email || "Unknown Customer";
   };
+
+  // Helper: look up customer phone number
+  const getCustomerPhone = (booking) => {
+    if (!booking) return "";
+    if (booking.customerPhone) return booking.customerPhone;
+    const uid = booking.customerId || booking.userId;
+    if (uid && customerPhones[uid]) return customerPhones[uid];
+    const found = users.find((u) => u.id === uid);
+    if (found?.phone) return found.phone;
+    return "";
+  };
+
+  useEffect(() => {
+    if (!selected) return;
+    const cid = selected.customerId || selected.userId;
+    if (cid && !selected.customerPhone && !customerPhones[cid]) {
+      getDoc(doc(db, "users", cid)).then((snap) => {
+        if (snap.exists() && snap.data()?.phone) {
+          setCustomerPhones((prev) => ({ ...prev, [cid]: snap.data().phone }));
+        }
+      }).catch(() => {});
+    }
+  }, [selected, customerPhones]);
 
   const filtered = bookings
     .filter((b) => {
@@ -730,8 +776,25 @@ export default function AdminBookings() {
         <div style={{ fontWeight: "800", fontSize: "16px", color: colors.textPrimary, marginBottom: "8px", lineHeight: 1.3 }}>
           {b.serviceType || "Service"}
         </div>
-        <div style={{ fontSize: "13px", color: colors.textSecondary, display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> {getCustomerName(b)}
+        <div style={{ fontSize: "13px", color: colors.textSecondary, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginBottom: "4px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> 
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{getCustomerName(b)}</span>
+          </div>
+          {(() => {
+            const phone = getCustomerPhone(b);
+            if (!phone) return null;
+            return (
+              <div style={{ display: "inline-flex", gap: "4px", flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+                <a href={`tel:${phone}`} title="Call Customer" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", borderRadius: "6px", background: "#dcfce7", color: "#16a34a", textDecoration: "none" }}>
+                  <Phone size={12} />
+                </a>
+                <a href={`sms:${phone}`} title="Text Customer" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", borderRadius: "6px", background: "#dbeafe", color: "#2563eb", textDecoration: "none" }}>
+                  <MessageSquare size={12} />
+                </a>
+              </div>
+            );
+          })()}
         </div>
         <div style={{ fontSize: "13px", color: colors.textSecondary, display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> {b.date || "No date"} {b.time && `• ${b.time}`}
@@ -1071,7 +1134,21 @@ export default function AdminBookings() {
                       <div style={{ fontWeight: "800", color: colors.textPrimary, fontSize: "14px", marginBottom: "6px" }}>{b.serviceType}</div>
                       <div style={{ fontSize: "13px", color: colors.textSecondary, display: "flex", alignItems: "center", gap: "6px" }}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                        {getCustomerName(b)}
+                        <span>{getCustomerName(b)}</span>
+                        {(() => {
+                          const phone = getCustomerPhone(b);
+                          if (!phone) return null;
+                          return (
+                            <span style={{ display: "inline-flex", gap: "4px", marginLeft: "4px" }} onClick={(e) => e.stopPropagation()}>
+                              <a href={`tel:${phone}`} title="Call Customer" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "22px", height: "22px", borderRadius: "4px", background: "#dcfce7", color: "#16a34a", textDecoration: "none" }}>
+                                <Phone size={11} />
+                              </a>
+                              <a href={`sms:${phone}`} title="Text Customer" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "22px", height: "22px", borderRadius: "4px", background: "#dbeafe", color: "#2563eb", textDecoration: "none" }}>
+                                <MessageSquare size={11} />
+                              </a>
+                            </span>
+                          );
+                        })()}
                       </div>
                     </td>
                     <td style={{ padding: "16px", verticalAlign: "middle" }}>
@@ -1208,6 +1285,67 @@ export default function AdminBookings() {
                 <div style={{ fontSize: "14px", color: colors.textPrimary }}>{value}</div>
               </div>
             ))}
+
+            {/* Customer Direct Contact Card (Call & Text) */}
+            {(() => {
+              const custPhone = getCustomerPhone(selected);
+              if (!custPhone) return null;
+              return (
+                <div style={{
+                  background: "#f0fdf4",
+                  border: "1px solid #bbf7d0",
+                  borderRadius: "14px",
+                  padding: "12px 16px",
+                  marginBottom: "1rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  flexWrap: "wrap"
+                }}>
+                  <div>
+                    <div style={{ fontSize: "11px", fontWeight: "700", color: "#166534", textTransform: "uppercase", letterSpacing: "0.5px" }}>Customer Phone</div>
+                    <div style={{ fontSize: "14px", fontWeight: "800", color: "#14532d", marginTop: "2px" }}>{custPhone}</div>
+                  </div>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <a
+                      href={`tel:${custPhone}`}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        padding: "8px 14px",
+                        borderRadius: "10px",
+                        background: "#10b981",
+                        color: "#fff",
+                        fontSize: "13px",
+                        fontWeight: "700",
+                        textDecoration: "none"
+                      }}
+                    >
+                      <Phone size={14} /> Call Customer
+                    </a>
+                    <a
+                      href={`sms:${custPhone}`}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        padding: "8px 14px",
+                        borderRadius: "10px",
+                        background: "#3b82f6",
+                        color: "#fff",
+                        fontSize: "13px",
+                        fontWeight: "700",
+                        textDecoration: "none"
+                      }}
+                    >
+                      <MessageSquare size={14} /> Text Customer
+                    </a>
+                  </div>
+                </div>
+              );
+            })()}
 
             {selected.delayNote && (
               <div style={{ background: "#fef3c7", border: "1px solid #fde68a", borderRadius: "14px", padding: "10px 14px", marginBottom: "1rem" }}>

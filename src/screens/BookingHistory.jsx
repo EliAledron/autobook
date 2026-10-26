@@ -7,7 +7,7 @@ import { sh, colors, EmptyState, getInitials, SharedSearchBar, ErrorModal, Succe
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
 import BookingIssueModal from "../components/BookingIssueModal";
-import { CheckCircle2, Wrench, XCircle, Clock, ClipboardList, Store, Calendar, Car, X, RefreshCw, Star, ShieldAlert } from "lucide-react";
+import { CheckCircle2, Wrench, XCircle, Clock, ClipboardList, Store, Calendar, Car, X, RefreshCw, Star, ShieldAlert, Phone, MessageSquare } from "lucide-react";
 
 const STATUS_TABS = ["All", "Pending", "In Progress", "Completed", "Cancelled", "Archived"];
 
@@ -130,6 +130,7 @@ export default function BookingHistory() {
   }, [loading]);
   const [activeTab, setActiveTab] = useState("All");
   const [selected, setSelected] = useState(null);
+  const [shopPhones, setShopPhones] = useState({});
   const [cancelling, setCancelling] = useState(false);
   const [search, setSearch] = useState("");
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -187,6 +188,28 @@ export default function BookingHistory() {
       const snap = await getDocs(q);
       const allBookings = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       setBookings(allBookings);
+
+      // Pre-load shop phones for any bookings missing shopPhone
+      const missingShopIds = Array.from(new Set(allBookings.map(b => !b.shopPhone && b.shopId).filter(Boolean)));
+      if (missingShopIds.length > 0) {
+        Promise.all(missingShopIds.map(async (sid) => {
+          try {
+            const sSnap = await getDoc(doc(db, "shops", sid));
+            if (sSnap.exists() && sSnap.data()?.phone) {
+              return [sid, sSnap.data().phone];
+            }
+          } catch(e) {}
+          return null;
+        })).then(results => {
+          const map = {};
+          results.forEach(res => {
+            if (res) map[res[0]] = res[1];
+          });
+          if (Object.keys(map).length > 0) {
+            setShopPhones(prev => ({ ...prev, ...map }));
+          }
+        });
+      }
     } catch (e) { setBookings([]); }
   }, []);
 
@@ -510,8 +533,20 @@ export default function BookingHistory() {
                     <div style={{ fontWeight: "800", fontSize: "16px", color: colors.textPrimary, marginBottom: "8px", lineHeight: 1.3 }}>
                       {b.serviceType || "Service"}
                     </div>
-                    <div style={{ fontSize: "13px", color: colors.textSecondary, display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                      <Store size={14} /> {b.shopName || "AutoBook"}
+                    <div style={{ fontSize: "13px", color: colors.textSecondary, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginBottom: "4px" }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: "8px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <Store size={14} style={{ flexShrink: 0 }} /> {b.shopName || "AutoBook"}
+                      </span>
+                      {(b.shopPhone || shopPhones[b.shopId]) && (
+                        <span style={{ display: "inline-flex", gap: "4px", flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+                          <a href={`tel:${b.shopPhone || shopPhones[b.shopId]}`} title="Call Shop" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", borderRadius: "6px", background: "#dcfce7", color: "#16a34a", textDecoration: "none" }}>
+                            <Phone size={12} />
+                          </a>
+                          <a href={`sms:${b.shopPhone || shopPhones[b.shopId]}`} title="Text Shop" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", borderRadius: "6px", background: "#dbeafe", color: "#2563eb", textDecoration: "none" }}>
+                            <MessageSquare size={12} />
+                          </a>
+                        </span>
+                      )}
                     </div>
                     <div style={{ fontSize: "13px", color: colors.textSecondary, display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
                       <Calendar size={14} /> {b.date || "No date"} {b.dropOffTime || b.time ? `• Drop-off: ${b.dropOffTime || b.time}` : ""}
@@ -631,6 +666,67 @@ export default function BookingHistory() {
                 <div style={{ fontSize: "15px", color: colors.textPrimary, fontWeight: "500" }}>{value}</div>
               </div>
             ))}
+
+            {/* Direct Shop Contact (Call & Text) */}
+            {(() => {
+              const currentShopPhone = selected.shopPhone || shopPhones[selected.shopId];
+              if (!currentShopPhone) return null;
+              return (
+                <div style={{
+                  background: "#f0fdf4",
+                  border: "1px solid #bbf7d0",
+                  borderRadius: "16px",
+                  padding: "14px 16px",
+                  marginBottom: "1.25rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  flexWrap: "wrap"
+                }}>
+                  <div>
+                    <div style={{ fontSize: "11px", fontWeight: "700", color: "#166534", textTransform: "uppercase", letterSpacing: "0.5px" }}>Shop Contact</div>
+                    <div style={{ fontSize: "15px", fontWeight: "800", color: "#14532d", marginTop: "2px" }}>{currentShopPhone}</div>
+                  </div>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <a
+                      href={`tel:${currentShopPhone}`}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        padding: "8px 14px",
+                        borderRadius: "10px",
+                        background: "#10b981",
+                        color: "#fff",
+                        fontSize: "13px",
+                        fontWeight: "700",
+                        textDecoration: "none"
+                      }}
+                    >
+                      <Phone size={14} /> Call Shop
+                    </a>
+                    <a
+                      href={`sms:${currentShopPhone}`}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        padding: "8px 14px",
+                        borderRadius: "10px",
+                        background: "#3b82f6",
+                        color: "#fff",
+                        fontSize: "13px",
+                        fontWeight: "700",
+                        textDecoration: "none"
+                      }}
+                    >
+                      <MessageSquare size={14} /> Text Shop
+                    </a>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* View Profile option */}
             <button

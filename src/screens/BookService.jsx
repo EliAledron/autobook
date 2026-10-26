@@ -38,6 +38,7 @@ export default function BookService() {
 
   const [uid, setUid] = useState(null);
   const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [vehicles, setVehicles] = useState([]);
   const [shopBookings, setShopBookings] = useState([]);
   const [shopMechanics, setShopMechanics] = useState([]);
@@ -85,6 +86,7 @@ export default function BookService() {
         if (userSnap.exists()) {
           const ud = userSnap.data();
           setCustomerName(ud.displayName || u.displayName || "Unknown");
+          if (ud.phone) setCustomerPhone(ud.phone);
           if (ud.cooldownUntil && ud.cooldownUntil > Date.now()) {
             setCooldownUntil(ud.cooldownUntil);
           }
@@ -158,8 +160,10 @@ export default function BookService() {
       await addDoc(collection(db, "bookings"), {
         customerId: uid,
         customerName: customerName,
+        customerPhone: customerPhone || "",
         shopId: shop.id,
         shopName: shop.name,
+        shopPhone: shop.phone || "",
         serviceType: finalService,
         vehicleId: vehicleId || null,
         vehicleLabel: vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model} (${vehicle.plate})` : null,

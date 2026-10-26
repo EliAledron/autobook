@@ -5,7 +5,7 @@ import { doc, updateDoc, addDoc, setDoc, collection, serverTimestamp, getDocs, q
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import BackButton from "../components/BackButton";
-import { Store, AlertTriangle, FileText, Check, Star, Edit, Flag, Calendar, Heart, Phone, MapPin } from "lucide-react";
+import { Store, AlertTriangle, FileText, Check, Star, Edit, Flag, Calendar, Heart, Phone, MapPin, MessageSquare } from "lucide-react";
 import { useUser } from "../UserContext";
 import AdminLayout from "../components/AdminLayout";
 import DesktopOnly from "../components/DesktopOnly";
@@ -653,9 +653,51 @@ export default function AutoShopProfile() {
               <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.85)", marginBottom: "8px", fontWeight: "500" }}>{shop.tagline || "Quality auto services"}</div>
               
               {shop.phone && (
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
-                  <Phone size={14} color="rgba(255,255,255,0.85)" />
-                  <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.9)", fontWeight: "600" }}>{shop.phone}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px", flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <Phone size={14} color="rgba(255,255,255,0.85)" />
+                    <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.9)", fontWeight: "600" }}>{shop.phone}</span>
+                  </div>
+                  {!isOwner && (
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      <a
+                        href={`tel:${shop.phone}`}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          padding: "4px 10px",
+                          borderRadius: "8px",
+                          background: "#10b981",
+                          color: "#fff",
+                          fontSize: "12px",
+                          fontWeight: "700",
+                          textDecoration: "none",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.2)"
+                        }}
+                      >
+                        <Phone size={12} /> Call
+                      </a>
+                      <a
+                        href={`sms:${shop.phone}`}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          padding: "4px 10px",
+                          borderRadius: "8px",
+                          background: "#3b82f6",
+                          color: "#fff",
+                          fontSize: "12px",
+                          fontWeight: "700",
+                          textDecoration: "none",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.2)"
+                        }}
+                      >
+                        <MessageSquare size={12} /> Text
+                      </a>
+                    </div>
+                  )}
                 </div>
               )}
               
@@ -800,6 +842,64 @@ export default function AutoShopProfile() {
             <div style={{ fontSize: "14px", color: colors.textSecondary, marginBottom: "16px", lineHeight: "1.6" }}>
               {shop.tagline || "No additional information provided."}
             </div>
+
+            {shop.phone && (
+              <div style={{
+                background: "#f0fdf4",
+                border: "1px solid #bbf7d0",
+                borderRadius: "14px",
+                padding: "14px 16px",
+                marginBottom: "16px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: "12px"
+              }}>
+                <div>
+                  <div style={{ fontSize: "11px", fontWeight: "700", color: "#166534", textTransform: "uppercase", letterSpacing: "0.5px" }}>Direct Contact</div>
+                  <div style={{ fontSize: "15px", fontWeight: "800", color: "#14532d", marginTop: "2px" }}>{shop.phone}</div>
+                </div>
+                {!isOwner && (
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <a
+                      href={`tel:${shop.phone}`}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        padding: "8px 14px",
+                        borderRadius: "10px",
+                        background: "#10b981",
+                        color: "#fff",
+                        fontSize: "13px",
+                        fontWeight: "700",
+                        textDecoration: "none"
+                      }}
+                    >
+                      <Phone size={14} /> Call Shop
+                    </a>
+                    <a
+                      href={`sms:${shop.phone}`}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        padding: "8px 14px",
+                        borderRadius: "10px",
+                        background: "#3b82f6",
+                        color: "#fff",
+                        fontSize: "13px",
+                        fontWeight: "700",
+                        textDecoration: "none"
+                      }}
+                    >
+                      <MessageSquare size={14} /> Text Shop
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
             
             <div style={{ borderTop: `1px solid ${colors.border}`, margin: "16px 0" }} />
             

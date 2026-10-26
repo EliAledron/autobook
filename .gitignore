@@ -8,3 +8,13 @@ yarn-debug.log*
 yarn-error.log*
 dist/
 debug*.js
+
+# Sensitive credentials & configs
+*google-services.json*
+*.bak
+
+# Android build & local config
+android/.gradle/
+android/app/build/
+android/build/
+*.apk
