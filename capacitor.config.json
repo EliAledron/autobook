@@ -2,10 +2,6 @@
   "appId": "com.autobook.app",
   "appName": "AutoBook",
   "webDir": "dist",
-  "server": {
-    "url": "http://192.168.254.104:3000",
-    "cleartext": true
-  },
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 1500,
