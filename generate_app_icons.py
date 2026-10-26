@@ -1,75 +1,44 @@
 import os
+import shutil
 from PIL import Image, ImageDraw
 
 def create_adaptive_foreground(logo, size):
-    # Android adaptive icon foreground is 108dp x 108dp.
-    # Safe zone is central 72dp (66.7%).
-    # We scale the logo to fit within ~68% of canvas size.
     canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     target_dim = int(size * 0.68)
-    
-    # Calculate scale preserving aspect ratio
-    w_ratio = target_dim / logo.width
-    h_ratio = target_dim / logo.height
-    scale = min(w_ratio, h_ratio)
-    
+    scale = min(target_dim / logo.width, target_dim / logo.height)
     new_w = int(logo.width * scale)
     new_h = int(logo.height * scale)
     scaled_logo = logo.resize((new_w, new_h), Image.Resampling.LANCZOS)
-    
     pos_x = (size - new_w) // 2
     pos_y = (size - new_h) // 2
     canvas.paste(scaled_logo, (pos_x, pos_y), scaled_logo)
     return canvas
 
 def create_legacy_icon(logo, size):
-    # Legacy icon with clean rounded look or full fit
     canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     target_dim = int(size * 0.90)
-    
     scale = min(target_dim / logo.width, target_dim / logo.height)
     new_w = int(logo.width * scale)
     new_h = int(logo.height * scale)
     scaled = logo.resize((new_w, new_h), Image.Resampling.LANCZOS)
-    
     pos_x = (size - new_w) // 2
     pos_y = (size - new_h) // 2
     canvas.paste(scaled, (pos_x, pos_y), scaled)
     return canvas
 
 def create_round_icon(logo, size):
-    # Round icon on a white circular base
     base = Image.new("RGBA", (size, size), (255, 255, 255, 0))
     draw = ImageDraw.Draw(base)
     draw.ellipse((1, 1, size - 2, size - 2), fill=(255, 255, 255, 255))
-    
     target_dim = int(size * 0.72)
     scale = min(target_dim / logo.width, target_dim / logo.height)
     new_w = int(logo.width * scale)
     new_h = int(logo.height * scale)
     scaled = logo.resize((new_w, new_h), Image.Resampling.LANCZOS)
-    
     pos_x = (size - new_w) // 2
     pos_y = (size - new_h) // 2
     base.paste(scaled, (pos_x, pos_y), scaled)
     return base
-
-def create_splash(logo, width, height):
-    # Clean branded splash with #1a3a5c background and centered logo
-    bg_color = (26, 58, 92, 255) # #1a3a5c
-    canvas = Image.new("RGBA", (width, height), bg_color)
-    
-    # Scale logo to ~30% of the smaller dimension (min 120px)
-    target_dim = max(120, int(min(width, height) * 0.32))
-    scale = min(target_dim / logo.width, target_dim / logo.height)
-    new_w = int(logo.width * scale)
-    new_h = int(logo.height * scale)
-    scaled = logo.resize((new_w, new_h), Image.Resampling.LANCZOS)
-    
-    pos_x = (width - new_w) // 2
-    pos_y = (height - new_h) // 2
-    canvas.paste(scaled, (pos_x, pos_y), scaled)
-    return canvas
 
 def main():
     logo_path = "public/autobook-logo.png"
@@ -82,8 +51,7 @@ def main():
     
     res_base = "android/app/src/main/res"
     
-    # Mipmap densities and sizes
-    # (density, legacy_size, adaptive_size)
+    # 1. Generate Mipmap Icons
     densities = [
         ("mdpi", 48, 108),
         ("hdpi", 72, 162),
@@ -96,56 +64,90 @@ def main():
         folder = os.path.join(res_base, f"mipmap-{density}")
         os.makedirs(folder, exist_ok=True)
         
-        # 1. Adaptive foreground
+        # Adaptive foreground
         fg = create_adaptive_foreground(logo, adapt_sz)
         fg.save(os.path.join(folder, "ic_launcher_foreground.png"), "PNG")
         
-        # 2. Legacy square launcher
+        # Legacy square launcher
         sq = create_legacy_icon(logo, legacy_sz)
         sq.save(os.path.join(folder, "ic_launcher.png"), "PNG")
         
-        # 3. Legacy round launcher
+        # Legacy round launcher
         rnd = create_round_icon(logo, legacy_sz)
         rnd.save(os.path.join(folder, "ic_launcher_round.png"), "PNG")
-        
-        print(f"Generated {density} icons (legacy: {legacy_sz}x{legacy_sz}, adaptive: {adapt_sz}x{adapt_sz})")
-        
-    # Remove drawable-v24/ic_launcher_foreground.xml if it exists to prevent Android from using the default robot vector
+        print(f"Generated {density} icons")
+
+    # Remove any leftover vector template
     robot_vector = os.path.join(res_base, "drawable-v24", "ic_launcher_foreground.xml")
     if os.path.exists(robot_vector):
         os.remove(robot_vector)
-        print("Removed default vector drawable-v24/ic_launcher_foreground.xml")
-        
-    # Splash screens
-    splash_configs = [
-        ("drawable/splash.png", 480, 320),
-        ("drawable-port-mdpi/splash.png", 320, 480),
-        ("drawable-port-hdpi/splash.png", 480, 800),
-        ("drawable-port-xhdpi/splash.png", 720, 1280),
-        ("drawable-port-xxhdpi/splash.png", 960, 1600),
-        ("drawable-port-xxxhdpi/splash.png", 1280, 1920),
-        ("drawable-land-mdpi/splash.png", 480, 320),
-        ("drawable-land-hdpi/splash.png", 800, 480),
-        ("drawable-land-xhdpi/splash.png", 1280, 720),
-        ("drawable-land-xxhdpi/splash.png", 1600, 960),
-        ("drawable-land-xxxhdpi/splash.png", 1920, 1280),
-    ]
-    
-    for rel_path, w, h in splash_configs:
-        out_path = os.path.join(res_base, rel_path)
-        os.makedirs(os.path.dirname(out_path), exist_ok=True)
-        sp = create_splash(logo, w, h)
-        sp.save(out_path, "PNG")
-        print(f"Generated splash: {rel_path} ({w}x{h})")
 
-    # Update web icons too
+    # 2. Clean up ALL old static full-screen splash PNGs (which were causing stretching!)
+    for root, dirs, files in os.walk(res_base):
+        for f in files:
+            if f == "splash.png":
+                path = os.path.join(root, f)
+                os.remove(path)
+                print(f"Removed stretched splash bitmap: {path}")
+
+    # 3. Generate un-stretched splash_logo drawables for each density
+    splash_logo_sizes = [
+        ("drawable-mdpi", 140),
+        ("drawable-hdpi", 210),
+        ("drawable-xhdpi", 280),
+        ("drawable-xxhdpi", 420),
+        ("drawable-xxxhdpi", 560),
+        ("drawable", 280),
+    ]
+    for folder_name, sz in splash_logo_sizes:
+        folder = os.path.join(res_base, folder_name)
+        os.makedirs(folder, exist_ok=True)
+        out_img = logo.resize((sz, sz), Image.Resampling.LANCZOS)
+        out_img.save(os.path.join(folder, "splash_logo.png"), "PNG")
+        print(f"Generated {folder_name}/splash_logo.png ({sz}x{sz})")
+
+    # 4. Create the sleek modern gradient background drawable
+    gradient_xml = """<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="270"
+        android:startColor="#0b1e36"
+        android:centerColor="#143c68"
+        android:endColor="#1d5999"
+        android:type="linear" />
+</shape>
+"""
+    with open(os.path.join(res_base, "drawable", "splash_background.xml"), "w", encoding="utf-8") as f:
+        f.write(gradient_xml)
+    print("Created drawable/splash_background.xml")
+
+    # 5. Create the layer-list splash.xml (guarantees NO stretching on ANY phone aspect ratio!)
+    splash_layer_xml = """<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/splash_background" />
+    <item
+        android:width="150dp"
+        android:height="150dp"
+        android:gravity="center">
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/splash_logo" />
+    </item>
+</layer-list>
+"""
+    with open(os.path.join(res_base, "drawable", "splash.xml"), "w", encoding="utf-8") as f:
+        f.write(splash_layer_xml)
+    print("Created drawable/splash.xml (non-stretching layer-list)")
+
+    # 6. Update web/pwa icons
     p192 = logo.resize((192, 192), Image.Resampling.LANCZOS)
     p192.save("public/logo192.png", "PNG")
     p512 = logo.resize((512, 512), Image.Resampling.LANCZOS)
     p512.save("public/logo512.png", "PNG")
     print("Updated public/logo192.png and public/logo512.png")
     
-    print("All app icons and splash assets successfully updated!")
+    print("\n--- ALL ASSETS SUCCESSFULLY REGENERATED ---")
 
 if __name__ == "__main__":
     main()

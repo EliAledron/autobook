@@ -5,5 +5,13 @@
   "server": {
     "url": "http://192.168.254.103:3000",
     "cleartext": true
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "launchAutoHide": true,
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_INSIDE"
+    }
   }
 }
