@@ -56,14 +56,8 @@ export default function Dashboard() {
         }
 
         if (data.status !== "approved" && (data.role || "").toLowerCase() !== "admin") {
-          if ((data.role || "").toLowerCase() === "customer") {
-            try {
-              await updateDoc(doc(db, "users", firebaseUser.uid), { status: "approved" });
-            } catch (e) {}
-          } else {
-            navigate("/pending");
-            return;
-          }
+          navigate("/pending");
+          return;
         }
 
         let shopId = data.shopId;

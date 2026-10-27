@@ -45,15 +45,6 @@ async function checkStatusAndNavigate(uid, navigate, setError) {
     return;
   }
 
-  // Auto-approve verified Customers on login
-  if (role === "customer" && isVerified && status === "pending") {
-    try {
-      await updateDoc(doc(db, "users", uid), { status: "approved" });
-    } catch (e) {}
-    navigate("/dashboard");
-    return;
-  }
-
   navigate("/pending");
 }
 
