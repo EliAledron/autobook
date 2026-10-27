@@ -63,6 +63,14 @@ export default function PendingApproval() {
           return;
         }
 
+        // Auto-approve Customers whose email is verified
+        if ((data.role || "").toLowerCase() === "customer" && currentStatus === "pending") {
+          updateDoc(userRef, { status: "approved" }).catch(() => {});
+          setStatus("approved");
+          setTimeout(() => navigate("/dashboard"), 1200);
+          return;
+        }
+
         setStatus(currentStatus);
 
         if (currentStatus === "approved") {

@@ -124,6 +124,7 @@ export default function Signup() {
     const finalRole = resolvedRole || "Customer";
     const isOwner = finalRole.toLowerCase() === "owner";
     const isMechanic = finalRole.toLowerCase() === "mechanic";
+    const isCustomer = finalRole.toLowerCase() === "customer";
     
     const fName = names?.firstName || "";
     const mName = names?.middleName || "";
@@ -139,7 +140,7 @@ export default function Signup() {
       middleName: mName,
       lastName: lName,
       role: finalRole,
-      status: "pending",
+      status: isCustomer ? "approved" : "pending",
       createdAt: serverTimestamp(),
     };
     if (isOwner) {
@@ -159,8 +160,10 @@ export default function Signup() {
     // Notify Admin about new user registration
     await addDoc(collection(db, "adminAlerts"), {
       type: "new_user",
-      title: "New User Registration",
-      message: `${dName} just registered as a ${finalRole} and is waiting for approval.`,
+      title: isCustomer ? "New Customer Registered" : "New User Registration",
+      message: isCustomer 
+        ? `${dName} just registered as a Customer.`
+        : `${dName} just registered as a ${finalRole} and is waiting for approval.`,
       read: false,
       createdAt: serverTimestamp(),
     });
@@ -364,7 +367,11 @@ export default function Signup() {
         createdAt: serverTimestamp(),
       });
 
-      navigate("/pending", { replace: true });
+      if (user.emailVerified) {
+        navigate("/dashboard", { replace: true });
+      } else {
+        navigate("/pending", { replace: true });
+      }
     } catch (err) {
       setError(err.code === "auth/email-already-in-use" ? "This email is already registered." : err.message);
       setLoading(false);
