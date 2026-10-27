@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "firebase/auth";
 import BackButton from "../components/BackButton";
 import { doc, getDoc } from "firebase/firestore";
 import { AlertTriangle, Wrench } from "lucide-react";
@@ -47,6 +47,15 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      if (u) {
+        await checkStatusAndNavigate(u.uid, navigate, setError);
+      }
+    });
+    return () => unsub();
+  }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();

@@ -10,6 +10,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   updateProfile,
+  onAuthStateChanged,
 } from "firebase/auth";
 import { doc, setDoc, getDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
 
@@ -188,7 +189,37 @@ export default function Onboarding() {
   // null | "signup" | "login"
   const [drawerScreen, setDrawerScreen] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const snap = await getDoc(doc(db, "users", user.uid));
+          if (snap.exists()) {
+            const data = snap.data();
+            if (data.status === "restricted") {
+              navigate("/restricted", { replace: true });
+              return;
+            }
+            if (data.status !== "approved" && (data.role || "").toLowerCase() !== "admin") {
+              navigate("/pending", { replace: true });
+              return;
+            }
+          }
+          navigate("/dashboard", { replace: true });
+        } catch (e) {
+          console.error("Auth check error in Onboarding:", e);
+          navigate("/dashboard", { replace: true });
+        }
+      } else {
+        setCheckingAuth(false);
+      }
+    });
+
+    return () => unsub();
+  }, [navigate]);
 
   const openDrawer = (target) => {
     setDrawerScreen(target);
@@ -198,6 +229,39 @@ export default function Onboarding() {
     setDrawerOpen(false);
     setTimeout(() => setDrawerScreen(null), 450); // wait for slide down animation
   };
+
+  if (checkingAuth) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "linear-gradient(135deg, #0b1e36 0%, #143c68 50%, #1d5999 100%)",
+        color: "#ffffff",
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+      }}>
+        <div style={{
+          width: "80px",
+          height: "80px",
+          borderRadius: "20px",
+          overflow: "hidden",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
+          marginBottom: "18px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "rgba(255,255,255,0.05)",
+          border: "1px solid rgba(255,255,255,0.15)"
+        }}>
+          <img src="/autobook-logo.png" alt="AutoBook" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        </div>
+        <div style={{ fontSize: "22px", fontWeight: "800", letterSpacing: "-0.5px", marginBottom: "6px" }}>AutoBook</div>
+        <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.7)", fontWeight: "500" }}>Restoring your session...</div>
+      </div>
+    );
+  }
   return (
     <>
       <style>

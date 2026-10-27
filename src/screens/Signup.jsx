@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import BackButton from "../components/BackButton";
@@ -11,6 +11,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   updateProfile,
+  onAuthStateChanged,
 } from "firebase/auth";
 import { doc, setDoc, getDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
 
@@ -56,7 +57,29 @@ const GoogleIcon = () => (
 );
 
 export default function Signup() {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      if (u) {
+        try {
+          const snap = await getDoc(doc(db, "users", u.uid));
+          if (snap.exists()) {
+            const { status, role = "" } = snap.data();
+            if (status === "restricted") { navigate("/restricted", { replace: true }); return; }
+            if (status === "approved" || role.toLowerCase() === "admin") { navigate("/dashboard", { replace: true }); return; }
+            navigate("/pending", { replace: true });
+            return;
+          }
+          navigate("/dashboard", { replace: true });
+        } catch (e) {
+          console.error("Signup auth check error:", e);
+        }
+      }
+    });
+    return () => unsub();
+  }, [navigate]);
   const [firstName, setFirstName] = useState("");
   const [middleName, setMiddleName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -92,7 +115,6 @@ export default function Signup() {
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const saveUser = async (user, resolvedRole, names, permitUrl = "", shopNameStr = "", extraData = {}, dtiUrl = "") => {
     const finalRole = resolvedRole || "Customer";
