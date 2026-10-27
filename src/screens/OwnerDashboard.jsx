@@ -86,6 +86,20 @@ const keyframes = `
   
   
   
+    .owner-analytics-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  @media (min-width: 768px) {
+    .owner-analytics-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+      align-items: stretch;
+    }
+  }
   .owner-stat-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -1032,8 +1046,8 @@ export default function OwnerDashboard({ user }) {
                 style={{ flex: 1, padding: "12px 36px 12px 14px", borderRadius: "12px", border: `1.5px solid ${colors.border}`, fontSize: "13px", fontWeight: "600", backgroundColor: colors.white }} 
               />
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px", marginBottom: "1.5rem" }}>
-              <div style={{ ...sh.card, display: "flex", alignItems: "center", gap: "20px", marginBottom: 0 }}>
+            <div className="owner-analytics-grid">
+              <div style={{ ...sh.card, display: "flex", alignItems: "center", gap: "20px", marginBottom: 0, minHeight: "180px" }}>
                 <div style={{
                   width: "140px", height: "70px", flexShrink: 0, position: "relative", overflow: "hidden",
                   display: "flex", alignItems: "flex-end", justifyContent: "center"
@@ -1091,7 +1105,7 @@ export default function OwnerDashboard({ user }) {
                 </div>
               </div>
               
-              <div style={{ ...sh.card, marginBottom: 0 }}>
+              <div style={{ ...sh.card, marginBottom: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: "180px" }}>
                 <div style={{ fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>Weekly Bookings</div>
                 {Math.max(...weekCounts) === 0 ? (
                   <div style={{ fontSize: "12px", color: colors.textMuted, textAlign: "center", padding: "20px 0" }}>No bookings this month yet.</div>
@@ -1134,10 +1148,11 @@ export default function OwnerDashboard({ user }) {
                   </div>
                 )}
               </div>
+            </div>
               
-              <div style={{ ...sh.card, marginBottom: 0 }}>
-                <div style={{ fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span>Monthly Trends ({selYear})</span>
+            <div style={{ ...sh.card, marginBottom: "1.5rem" }}>
+              <div style={{ fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>Monthly Trends ({selYear})</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: "6px", height: "100px", paddingTop: "20px" }}>
                   {monthCounts.map((count, i) => (
@@ -1186,7 +1201,6 @@ export default function OwnerDashboard({ user }) {
                   ))}
                 </div>
               </div>
-            </div>
           </>
         )}
 
