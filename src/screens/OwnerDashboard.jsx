@@ -86,6 +86,34 @@ const keyframes = `
   
   
   
+  .owner-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+  @media (min-width: 640px) {
+    .owner-stat-grid {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+  }
+  .owner-stat-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .owner-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  }
   .owner-card {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
@@ -702,7 +730,7 @@ export default function OwnerDashboard({ user }) {
         </div>
       </div>
 
-      <div style={{ ...sh.content, paddingTop: "2rem", position: "relative", zIndex: 2 }} className="stagger-slide-up">
+      <div style={{ ...sh.content, paddingTop: "2rem", position: "relative", zIndex: 2, maxWidth: "1200px", margin: "0 auto", width: "100%", boxSizing: "border-box" }} className="stagger-slide-up">
 
         {!isAdmin && shopData && (!shopData.isSetupCompleted && (!shopData.services || shopData.services.length === 0)) && (
           <div style={{
@@ -746,82 +774,114 @@ export default function OwnerDashboard({ user }) {
           </div>
         )}
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", marginBottom: "1.5rem" }}>
+        <div className="owner-stat-grid">
           {isAdmin ? (
             <>
-              <div style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", alignItems: "center", gap: "14px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
-                <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: colors.navy }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.87"/></svg>
+              <div className="owner-stat-card" onClick={() => navigate("/admin/users")}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                  <div style={{ width: "42px", height: "42px", borderRadius: "14px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: colors.navy }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.87"/></svg>
+                  </div>
+                  <span style={{ fontSize: "11px", fontWeight: "700", color: colors.textMuted }}>View ↗</span>
                 </div>
                 <div>
-                  <div style={{ fontSize: "22px", fontWeight: "800", color: colors.navy, lineHeight: 1 }}>{users.length}</div>
-                  <div style={{ fontSize: "12px", fontWeight: "600", color: colors.textSecondary, marginTop: "4px" }}>Total Users</div>
+                  <div style={{ fontSize: "28px", fontWeight: "800", color: colors.navy, lineHeight: 1.1 }}>{users.length}</div>
+                  <div style={{ fontSize: "13px", fontWeight: "700", color: colors.textSecondary, marginTop: "4px" }}>Total Users</div>
+                  <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "2px" }}>Registered accounts</div>
                 </div>
               </div>
-              <div style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", alignItems: "center", gap: "14px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
-                <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.warning }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <div className="owner-stat-card" onClick={() => navigate("/admin/users")}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                  <div style={{ width: "42px", height: "42px", borderRadius: "14px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.warning }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  </div>
+                  <span style={{ fontSize: "11px", fontWeight: "700", color: pendingUsers.length > 0 ? colors.warning : colors.textMuted }}>{pendingUsers.length > 0 ? "Review" : "All clear"}</span>
                 </div>
                 <div>
-                  <div style={{ fontSize: "22px", fontWeight: "800", color: colors.warning, lineHeight: 1 }}>{pendingUsers.length}</div>
-                  <div style={{ fontSize: "12px", fontWeight: "600", color: colors.textSecondary, marginTop: "4px" }}>Pending</div>
+                  <div style={{ fontSize: "28px", fontWeight: "800", color: colors.warning, lineHeight: 1.1 }}>{pendingUsers.length}</div>
+                  <div style={{ fontSize: "13px", fontWeight: "700", color: colors.textSecondary, marginTop: "4px" }}>Pending</div>
+                  <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "2px" }}>Awaiting admin approval</div>
                 </div>
               </div>
-              <div style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", alignItems: "center", gap: "14px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
-                <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.successBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.success }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              <div className="owner-stat-card" onClick={() => navigate("/admin/users")}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                  <div style={{ width: "42px", height: "42px", borderRadius: "14px", background: colors.successBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.success }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                  </div>
+                  <span style={{ fontSize: "11px", fontWeight: "700", color: colors.success }}>Active</span>
                 </div>
                 <div>
-                  <div style={{ fontSize: "22px", fontWeight: "800", color: colors.success, lineHeight: 1 }}>{approvedUsers.length}</div>
-                  <div style={{ fontSize: "12px", fontWeight: "600", color: colors.textSecondary, marginTop: "4px" }}>Active Users</div>
+                  <div style={{ fontSize: "28px", fontWeight: "800", color: colors.success, lineHeight: 1.1 }}>{approvedUsers.length}</div>
+                  <div style={{ fontSize: "13px", fontWeight: "700", color: colors.textSecondary, marginTop: "4px" }}>Active Users</div>
+                  <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "2px" }}>Approved & active</div>
                 </div>
               </div>
-              <div style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", alignItems: "center", gap: "14px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
-                <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.dangerBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.danger }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+              <div className="owner-stat-card" onClick={() => navigate("/admin/alerts")}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                  <div style={{ width: "42px", height: "42px", borderRadius: "14px", background: colors.dangerBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.danger }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                  </div>
+                  <span style={{ fontSize: "11px", fontWeight: "700", color: unreadAlerts > 0 ? colors.danger : colors.textMuted }}>{unreadAlerts > 0 ? "Unread" : "0 new"}</span>
                 </div>
                 <div>
-                  <div style={{ fontSize: "22px", fontWeight: "800", color: colors.danger, lineHeight: 1 }}>{unreadAlerts}</div>
-                  <div style={{ fontSize: "12px", fontWeight: "600", color: colors.textSecondary, marginTop: "4px" }}>Alerts</div>
+                  <div style={{ fontSize: "28px", fontWeight: "800", color: colors.danger, lineHeight: 1.1 }}>{unreadAlerts}</div>
+                  <div style={{ fontSize: "13px", fontWeight: "700", color: colors.textSecondary, marginTop: "4px" }}>Alerts</div>
+                  <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "2px" }}>Notifications & alerts</div>
                 </div>
               </div>
             </>
           ) : (
             <>
-              <div style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", alignItems: "center", gap: "14px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
-                <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: colors.navy }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+              <div className="owner-stat-card" onClick={() => navigate("/admin/bookings")}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                  <div style={{ width: "42px", height: "42px", borderRadius: "14px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: colors.navy }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+                  </div>
+                  <span style={{ fontSize: "11px", fontWeight: "700", color: colors.textMuted }}>View ↗</span>
                 </div>
                 <div>
-                  <div style={{ fontSize: "22px", fontWeight: "800", color: colors.navy, lineHeight: 1 }}>{allBookings.length}</div>
-                  <div style={{ fontSize: "12px", fontWeight: "600", color: colors.textSecondary, marginTop: "4px" }}>All Bookings</div>
+                  <div style={{ fontSize: "28px", fontWeight: "800", color: colors.navy, lineHeight: 1.1 }}>{allBookings.length}</div>
+                  <div style={{ fontSize: "13px", fontWeight: "700", color: colors.textSecondary, marginTop: "4px" }}>All Bookings</div>
+                  <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "2px" }}>Total shop appointments</div>
                 </div>
               </div>
-              <div style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", alignItems: "center", gap: "14px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
-                <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.warning }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <div className="owner-stat-card" onClick={() => navigate("/admin/bookings", { state: { statusFilter: "Pending" } })}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                  <div style={{ width: "42px", height: "42px", borderRadius: "14px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.warning }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  </div>
+                  <span style={{ fontSize: "11px", fontWeight: "700", color: pendingBookings > 0 ? colors.warning : colors.textMuted }}>{pendingBookings > 0 ? "Action needed" : "All clear"}</span>
                 </div>
                 <div>
-                  <div style={{ fontSize: "22px", fontWeight: "800", color: colors.warning, lineHeight: 1 }}>{pendingBookings}</div>
-                  <div style={{ fontSize: "12px", fontWeight: "600", color: colors.textSecondary, marginTop: "4px" }}>Pending</div>
+                  <div style={{ fontSize: "28px", fontWeight: "800", color: colors.warning, lineHeight: 1.1 }}>{pendingBookings}</div>
+                  <div style={{ fontSize: "13px", fontWeight: "700", color: colors.textSecondary, marginTop: "4px" }}>Pending</div>
+                  <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "2px" }}>{pendingBookings > 0 ? "Awaiting confirmation" : "No pending requests"}</div>
                 </div>
               </div>
-              <div style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", alignItems: "center", gap: "14px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
-                <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.successBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.success }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              <div className="owner-stat-card" onClick={() => navigate("/admin/bookings", { state: { statusFilter: "Completed" } })}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                  <div style={{ width: "42px", height: "42px", borderRadius: "14px", background: colors.successBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.success }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                  </div>
+                  <span style={{ fontSize: "11px", fontWeight: "700", color: colors.success }}>{MONTHS[new Date().getMonth()]}</span>
                 </div>
                 <div>
-                  <div style={{ fontSize: "22px", fontWeight: "800", color: colors.success, lineHeight: 1 }}>{totalCompletedThisMonth}</div>
-                  <div style={{ fontSize: "12px", fontWeight: "600", color: colors.textSecondary, marginTop: "4px" }}>This Month</div>
+                  <div style={{ fontSize: "28px", fontWeight: "800", color: colors.success, lineHeight: 1.1 }}>{totalCompletedThisMonth}</div>
+                  <div style={{ fontSize: "13px", fontWeight: "700", color: colors.textSecondary, marginTop: "4px" }}>This Month</div>
+                  <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "2px" }}>{totalCompletedThisMonth > 0 ? "Completed bookings" : "No completions yet"}</div>
                 </div>
               </div>
-              <div style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", alignItems: "center", gap: "14px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
-                <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.info }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+              <div className="owner-stat-card" onClick={() => navigate("/admin/mechanics")}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                  <div style={{ width: "42px", height: "42px", borderRadius: "14px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.info }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+                  </div>
+                  <span style={{ fontSize: "11px", fontWeight: "700", color: colors.info }}>Manage ↗</span>
                 </div>
                 <div>
-                  <div style={{ fontSize: "22px", fontWeight: "800", color: colors.info, lineHeight: 1 }}>{mechanics.length}</div>
-                  <div style={{ fontSize: "12px", fontWeight: "600", color: colors.textSecondary, marginTop: "4px" }}>Mechanics</div>
+                  <div style={{ fontSize: "28px", fontWeight: "800", color: colors.info, lineHeight: 1.1 }}>{mechanics.length}</div>
+                  <div style={{ fontSize: "13px", fontWeight: "700", color: colors.textSecondary, marginTop: "4px" }}>Mechanics</div>
+                  <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "2px" }}>{mechanics.length > 0 ? `${mechanics.length} staff member${mechanics.length !== 1 ? 's' : ''}` : "Add staff to assign"}</div>
                 </div>
               </div>
             </>
