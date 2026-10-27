@@ -174,7 +174,7 @@ export default function GlobalBottomNav() {
     boxShadow: "0 -8px 30px rgba(0,0,0,0.07)",
     display: "flex",
     padding: "0 8px 4px",
-    zIndex: 100,
+    zIndex: 90,
     paddingBottom: "calc(4px + env(safe-area-inset-bottom))",
   };
 

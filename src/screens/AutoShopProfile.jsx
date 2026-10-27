@@ -52,6 +52,28 @@ async function uploadToCloudinary(file) {
   return data.secure_url;
 }
 
+const PRESET_ICONS = [
+  { emoji: "🏪", label: "Shop" },
+  { emoji: "🔧", label: "Mechanic" },
+  { emoji: "🚗", label: "Car Care" },
+  { emoji: "🛞", label: "Tires" },
+  { emoji: "⚙️", label: "Parts" },
+  { emoji: "🏎️", label: "Speed" },
+  { emoji: "🧰", label: "Tools" },
+  { emoji: "⚡", label: "Battery" },
+  { emoji: "🚙", label: "SUV" },
+  { emoji: "🚚", label: "Truck" },
+];
+
+const PRESET_THEMES = [
+  { name: "Ocean Blue", bg: "#e6f0fa", accent: "#2a5298" },
+  { name: "Slate Navy", bg: "#f1f5f9", accent: "#0f2640" },
+  { name: "Racing Red", bg: "#fee2e2", accent: "#dc2626" },
+  { name: "Emerald", bg: "#dcfce7", accent: "#16a34a" },
+  { name: "Amber Gold", bg: "#fef3c7", accent: "#d97706" },
+  { name: "Royal Violet", bg: "#f3e8ff", accent: "#7c3aed" },
+];
+
 // ─── Shop Edit Modal ──────────────────────────────────────────────────────────
 function ShopEditModal({ shop, onClose, onSaved, ownerId, isFirstSetup }) {
   const [name, setName] = useState(shop?.name || "");
@@ -59,7 +81,7 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId, isFirstSetup }) {
   const [tagline, setTagline] = useState(shop?.tagline || "");
   const [phone, setPhone] = useState(shop?.phone || "");
   const [address, setAddress] = useState(shop?.address || "");
-  const [icon, setIcon] = useState(shop?.icon || "store");
+  const [icon, setIcon] = useState(shop?.icon && shop?.icon !== "store" ? shop.icon : "🏪");
   const [bg, setBg] = useState(shop?.bg || colors.infoBg);
   const [accent, setAccent] = useState(shop?.accent || colors.info);
   const [services, setServices] = useState(shop?.services || []);
@@ -98,7 +120,7 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId, isFirstSetup }) {
         tagline: tagline.trim(),
         phone: phone.trim(),
         address: address.trim(),
-        icon: icon.trim() || "store",
+        icon: (icon && icon.trim() !== "store" ? icon.trim() : "🏪"),
         bg,
         accent,
         services,
@@ -137,8 +159,8 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId, isFirstSetup }) {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 100, display: "flex", alignItems: "flex-end", animation: "ab-fade-in 0.2s ease-out" }} onClick={onClose}>
-      <div style={{ background: colors.white, borderRadius: "32px 32px 0 0", width: "100%", padding: "2rem 1.5rem", maxHeight: "90vh", overflowY: "auto", animation: "ab-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards", boxShadow: "0 -4px 24px rgba(0,0,0,0.15)" }} onClick={e => e.stopPropagation()}>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.65)", backdropFilter: "blur(6px)", zIndex: 1200, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px", animation: "ab-fade-in 0.2s ease-out" }} onClick={onClose}>
+      <div style={{ background: colors.white, borderRadius: "28px", width: "100%", maxWidth: "600px", padding: "2rem 1.5rem calc(2rem + env(safe-area-inset-bottom)) 1.5rem", maxHeight: "90vh", overflowY: "auto", animation: "ab-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards", boxShadow: "0 20px 60px rgba(0,0,0,0.25)", boxSizing: "border-box" }} onClick={e => e.stopPropagation()}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.info }}><Store size={24} /></div>
@@ -277,26 +299,122 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId, isFirstSetup }) {
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: "12px", marginBottom: "1.5rem" }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Icon (Emoji)</div>
-            <input type="text" style={{ ...inputStyle, padding: "8px 16px", height: "48px" }} value={icon} onChange={e => setIcon(e.target.value)} />
+        {/* SHOP ICON & COLOR BADGE */}
+        <div style={{ marginBottom: "1.5rem", padding: "16px", borderRadius: "18px", background: "#f8fafc", border: `1.5px solid ${colors.border}` }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+            <div>
+              <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Shop Icon & Theme</div>
+              <div style={{ fontSize: "12px", color: colors.textMuted, marginTop: "2px" }}>Avatar badge displayed if no profile picture is uploaded</div>
+            </div>
+            {/* Live Badge Preview */}
+            <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: bg, border: `2px solid ${accent}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px", flexShrink: 0, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+              {icon || "🏪"}
+            </div>
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Bg Color</div>
-            <input type="color" style={{ ...inputStyle, padding: "8px", height: "48px" }} value={bg} onChange={e => setBg(e.target.value)} />
+
+          {/* Quick Select Preset Icons */}
+          <div style={{ fontSize: "11px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", marginBottom: "8px" }}>Select Icon</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "12px" }}>
+            {PRESET_ICONS.map(item => (
+              <button
+                key={item.emoji}
+                type="button"
+                onClick={() => setIcon(item.emoji)}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: "10px",
+                  border: icon === item.emoji ? `2px solid ${colors.blue}` : `1px solid ${colors.border}`,
+                  background: icon === item.emoji ? colors.infoBg : "#fff",
+                  cursor: "pointer",
+                  fontSize: "15px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  transition: "all 0.15s ease"
+                }}
+              >
+                <span>{item.emoji}</span>
+                <span style={{ fontSize: "11px", fontWeight: "600", color: icon === item.emoji ? colors.blue : colors.textSecondary }}>{item.label}</span>
+              </button>
+            ))}
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Accent Color</div>
-            <input type="color" style={{ ...inputStyle, padding: "8px", height: "48px" }} value={accent} onChange={e => setAccent(e.target.value)} />
+
+          {/* Preset Theme Colors */}
+          <div style={{ fontSize: "11px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", marginBottom: "8px" }}>Theme Accent</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", alignItems: "center" }}>
+            {PRESET_THEMES.map(theme => (
+              <button
+                key={theme.name}
+                type="button"
+                onClick={() => { setBg(theme.bg); setAccent(theme.accent); }}
+                title={theme.name}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "6px 10px",
+                  borderRadius: "10px",
+                  border: accent === theme.accent ? `2px solid ${theme.accent}` : `1px solid ${colors.border}`,
+                  background: theme.bg,
+                  cursor: "pointer",
+                  fontSize: "11px",
+                  fontWeight: "600",
+                  color: theme.accent,
+                  transition: "all 0.15s ease"
+                }}
+              >
+                <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: theme.accent, display: "inline-block" }} />
+                {theme.name}
+              </button>
+            ))}
           </div>
         </div>
 
-        <button onClick={handleSubmit} disabled={saving} style={{ width: "100%", padding: "16px", background: colors.blue, color: "#fff", border: "none", borderRadius: "16px", fontSize: "16px", fontWeight: "800", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", boxShadow: "0 8px 20px rgba(42, 82, 152, 0.25)", transition: "all 0.2s" }}>
-          {saving ? "Saving..." : <><Check size={16} /> {isFirstSetup ? "Complete Setup & Save" : "Save Changes"}</>}
-        </button>
-        <div style={{ height: "12px" }} />
-        <button onClick={onClose} style={{ width: "100%", padding: "16px", borderRadius: "16px", fontSize: "15px", border: "none", background: "transparent", color: colors.textSecondary, fontWeight: "700", cursor: "pointer" }}>Cancel</button>
+        <div style={{ marginTop: "1.5rem", display: "flex", flexDirection: "column", gap: "10px", paddingBottom: "2rem" }}>
+          <button 
+            type="button"
+            onClick={handleSubmit} 
+            disabled={saving} 
+            style={{ 
+              width: "100%", 
+              padding: "16px", 
+              background: colors.blue, 
+              color: "#fff", 
+              border: "none", 
+              borderRadius: "16px", 
+              fontSize: "16px", 
+              fontWeight: "800", 
+              cursor: "pointer", 
+              display: "flex", 
+              justifyContent: "center", 
+              alignItems: "center", 
+              gap: "8px", 
+              boxShadow: "0 8px 20px rgba(42, 82, 152, 0.25)", 
+              transition: "all 0.2s" 
+            }}
+          >
+            {saving ? "Saving..." : <><Check size={16} /> {isFirstSetup ? "Complete Setup & Save" : "Save Changes"}</>}
+          </button>
+          
+          <button 
+            type="button"
+            onClick={onClose} 
+            style={{ 
+              width: "100%", 
+              padding: "14px", 
+              borderRadius: "16px", 
+              fontSize: "15px", 
+              border: `1.5px solid ${colors.border}`, 
+              background: "#f8fafc", 
+              color: colors.textSecondary, 
+              fontWeight: "700", 
+              cursor: "pointer",
+              transition: "all 0.2s" 
+            }}
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -633,7 +751,7 @@ export default function AutoShopProfile() {
           
           <div style={{ position: "relative", zIndex: 1, padding: "20px 24px", display: "flex", gap: "20px", alignItems: "flex-end", flexWrap: "wrap" }}>
             <div style={{ width: "88px", height: "88px", borderRadius: "50%", background: shop.logoURL ? `url(${shop.logoURL}) center/cover` : colors.white, border: "3px solid rgba(255,255,255,0.2)", color: shop.accent || colors.info, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "36px", fontWeight: "800", flexShrink: 0, boxShadow: "0 4px 16px rgba(0,0,0,0.2)" }}>
-              {!shop.logoURL && (shop.icon || getInitials(shop.name))}
+              {!shop.logoURL && (shop.icon && shop.icon !== "store" ? shop.icon : <Store size={36} />)}
             </div>
             
             <div style={{ flex: 1, minWidth: "200px" }}>
@@ -794,7 +912,7 @@ export default function AutoShopProfile() {
                   <div key={post.id} style={{ background: colors.white, borderRadius: "20px", padding: "20px", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}` }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "14px" }}>
                       <div style={{ width: "42px", height: "42px", borderRadius: "50%", background: shop.logoURL ? `url(${shop.logoURL}) center/cover` : shop.bg || colors.infoBg, color: shop.accent || colors.info, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", fontWeight: "800", border: `1px solid ${colors.border}` }}>
-                        {!shop.logoURL && (shop.icon || getInitials(shop.name))}
+                        {!shop.logoURL && (shop.icon && shop.icon !== "store" ? shop.icon : <Store size={20} />)}
                       </div>
                       <div>
                         <div style={{ fontWeight: "800", fontSize: "15px", color: colors.textPrimary }}>{shop.name}</div>

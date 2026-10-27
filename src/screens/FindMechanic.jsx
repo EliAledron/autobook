@@ -241,7 +241,7 @@ export default function FindMechanic() {
             >
               <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "1.25rem" }}>
                 <div style={{ width: "56px", height: "56px", borderRadius: "16px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.blue, flexShrink: 0, fontSize: "26px" }}>
-                  {shop.icon || <Store size={26} />}
+                  {shop.icon && shop.icon !== "store" ? shop.icon : <Store size={26} />}
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>{shop.name}</div>

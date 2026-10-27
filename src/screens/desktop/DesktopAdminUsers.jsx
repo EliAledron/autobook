@@ -112,7 +112,7 @@ export default function DesktopAdminUsers() {
                 ownerId: targetUser.id,
                 rating: 0,
                 reviews: 0,
-                icon: "store",
+                icon: "🏪",
                 tagline: "Quality auto services",
                 bg: colors.infoBg,
                 accent: colors.info,

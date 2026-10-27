@@ -196,7 +196,7 @@ export default function ShopSelect() {
                   background: colors.infoBg, display: "flex", alignItems: "center",
                   justifyContent: "center", color: colors.blue, fontSize: "26px", flexShrink: 0,
                 }}>
-                  {shop.icon || <Store size={26} />}
+                  {shop.icon && shop.icon !== "store" ? shop.icon : <Store size={26} />}
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>
