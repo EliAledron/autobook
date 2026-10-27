@@ -62,16 +62,20 @@ export default function Signup() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
+      // Don't auto-redirect if the user is in the middle of completing the form steps
+      if (step > 1 || loading) return;
+
       if (u) {
         try {
           const snap = await getDoc(doc(db, "users", u.uid));
-          if (snap.exists()) {
-            const { status, role = "" } = snap.data();
-            if (status === "restricted") { navigate("/restricted", { replace: true }); return; }
-            if (status === "approved" || role.toLowerCase() === "admin") { navigate("/dashboard", { replace: true }); return; }
-            navigate("/pending", { replace: true });
-            return;
+          if (!snap.exists()) {
+            return; // Profile document not created yet — do NOT navigate to /dashboard!
           }
+          const { status, role = "" } = snap.data();
+          if (status === "restricted") { navigate("/restricted", { replace: true }); return; }
+          // Require email verification and approval
+          if (!u.emailVerified && role.toLowerCase() !== "admin") { navigate("/pending", { replace: true }); return; }
+          if (status !== "approved" && role.toLowerCase() !== "admin") { navigate("/pending", { replace: true }); return; }
           navigate("/dashboard", { replace: true });
         } catch (e) {
           console.error("Signup auth check error:", e);
@@ -79,7 +83,7 @@ export default function Signup() {
       }
     });
     return () => unsub();
-  }, [navigate]);
+  }, [navigate, step, loading]);
   const [firstName, setFirstName] = useState("");
   const [middleName, setMiddleName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -187,7 +191,7 @@ export default function Signup() {
       if (!user) {
         try {
           const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
-          await sendCustomVerificationEmail();
+          sendCustomVerificationEmail().catch((e) => console.warn("Email send background error:", e));
           user = newUser;
         } catch (authErr) {
           if (authErr.code === "auth/email-already-in-use") {
@@ -200,7 +204,7 @@ export default function Signup() {
         await updateProfile(user, { displayName: dName });
       }
       await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() }, permitUrl, shopNameStr, {}, dtiUrl);
-      navigate("/pending");
+      navigate("/pending", { replace: true });
     } catch (err) {
       setError(
         err.code === "auth/email-already-in-use"
@@ -257,7 +261,7 @@ export default function Signup() {
       if (!user) {
         try {
           const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
-          await sendCustomVerificationEmail();
+          sendCustomVerificationEmail().catch((e) => console.warn("Email send background error:", e));
           user = newUser;
         } catch (authErr) {
           if (authErr.code === "auth/email-already-in-use") {
@@ -276,7 +280,7 @@ export default function Signup() {
         "", "",
         { shopName: mechShopName.trim(), specialization: mechSpecialization }
       );
-      navigate("/pending");
+      navigate("/pending", { replace: true });
     } catch (err) {
       setError(err.code === "auth/email-already-in-use" ? "This email is already registered." : err.message);
       setLoading(false);
@@ -315,7 +319,7 @@ export default function Signup() {
       if (!user) {
         try {
           const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
-          await sendCustomVerificationEmail();
+          sendCustomVerificationEmail().catch((e) => console.warn("Email send background error:", e));
           user = newUser;
         } catch (authErr) {
           if (authErr.code === "auth/email-already-in-use") {
@@ -355,7 +359,7 @@ export default function Signup() {
         createdAt: serverTimestamp(),
       });
 
-      navigate("/pending");
+      navigate("/pending", { replace: true });
     } catch (err) {
       setError(err.code === "auth/email-already-in-use" ? "This email is already registered." : err.message);
       setLoading(false);

@@ -128,10 +128,11 @@ async function uploadToCloudinary(file) {
 /* ─── Firebase helpers ────────────────────────────────────────── */
 async function checkStatusAndNavigate(uid, navigate, setError) {
   const snap = await getDoc(doc(db, "users", uid));
-  if (!snap.exists()) { navigate("/dashboard"); return; }
+  if (!snap.exists()) { navigate("/pending"); return; }
   const { status, role = "", rejectionReason } = snap.data();
   const r = role.toLowerCase();
   if (r === "admin") { navigate("/dashboard"); return; }
+  if (!auth.currentUser?.emailVerified) { navigate("/pending"); return; }
   if (status === "approved") { navigate("/dashboard"); return; }
   navigate("/pending");
 }
@@ -194,24 +195,38 @@ export default function Onboarding() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
+      // If user has the signup drawer open or is actively submitting, do not auto-redirect!
+      if (drawerScreen === "signup") {
+        setCheckingAuth(false);
+        return;
+      }
+
       if (user) {
         try {
           const snap = await getDoc(doc(db, "users", user.uid));
-          if (snap.exists()) {
-            const data = snap.data();
-            if (data.status === "restricted") {
-              navigate("/restricted", { replace: true });
-              return;
-            }
-            if (data.status !== "approved" && (data.role || "").toLowerCase() !== "admin") {
-              navigate("/pending", { replace: true });
-              return;
-            }
+          if (!snap.exists()) {
+            // Profile document not created yet — do not jump to /dashboard!
+            setCheckingAuth(false);
+            return;
+          }
+          const data = snap.data();
+          if (data.status === "restricted") {
+            navigate("/restricted", { replace: true });
+            return;
+          }
+          // Must be email verified and approved (except admin)
+          if (!user.emailVerified && (data.role || "").toLowerCase() !== "admin") {
+            navigate("/pending", { replace: true });
+            return;
+          }
+          if (data.status !== "approved" && (data.role || "").toLowerCase() !== "admin") {
+            navigate("/pending", { replace: true });
+            return;
           }
           navigate("/dashboard", { replace: true });
         } catch (e) {
           console.error("Auth check error in Onboarding:", e);
-          navigate("/dashboard", { replace: true });
+          setCheckingAuth(false);
         }
       } else {
         setCheckingAuth(false);
@@ -219,7 +234,7 @@ export default function Onboarding() {
     });
 
     return () => unsub();
-  }, [navigate]);
+  }, [navigate, drawerScreen]);
 
   const openDrawer = (target) => {
     setDrawerScreen(target);
@@ -468,7 +483,7 @@ function SignupForm({ goBack, navigate }) {
       if (!user) {
         try {
           const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
-          await sendCustomVerificationEmail();
+          sendCustomVerificationEmail().catch((e) => console.warn("Email send background error:", e));
           user = newUser;
         } catch (authErr) {
           if (authErr.code === "auth/email-already-in-use") {
@@ -485,7 +500,7 @@ function SignupForm({ goBack, navigate }) {
       const permitUrl = await uploadToCloudinary(permitFile);
       const dtiUrl = await uploadToCloudinary(dtiFile);
       await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() }, permitUrl, shopName.trim(), "", { dtiUrl });
-      navigate("/pending");
+      navigate("/pending", { replace: true });
     } catch (err) {
       setError(err.code === "auth/email-already-in-use" ? "This email is already registered." : err.message);
       setLoading(false);
@@ -505,7 +520,7 @@ function SignupForm({ goBack, navigate }) {
       if (!user) {
         try {
           const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
-          await sendCustomVerificationEmail();
+          sendCustomVerificationEmail().catch((e) => console.warn("Email send background error:", e));
           user = newUser;
         } catch (authErr) {
           if (authErr.code === "auth/email-already-in-use") {
@@ -542,7 +557,7 @@ function SignupForm({ goBack, navigate }) {
         createdAt: serverTimestamp(),
       });
 
-      navigate("/pending");
+      navigate("/pending", { replace: true });
     } catch (err) {
       setError(err.code === "auth/email-already-in-use" ? "This email is already registered." : err.message);
       setLoading(false);
@@ -561,7 +576,7 @@ function SignupForm({ goBack, navigate }) {
       if (!user) {
         try {
           const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
-          await sendCustomVerificationEmail();
+          sendCustomVerificationEmail().catch((e) => console.warn("Email send background error:", e));
           user = newUser;
         } catch (authErr) {
           if (authErr.code === "auth/email-already-in-use") {
@@ -576,7 +591,7 @@ function SignupForm({ goBack, navigate }) {
       }
 
       await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() }, "", mechanicShopName.trim(), mechanicSpecialization);
-      navigate("/pending");
+      navigate("/pending", { replace: true });
     } catch (err) {
       setError(err.code === "auth/email-already-in-use" ? "This email is already registered." : err.message);
       setLoading(false);

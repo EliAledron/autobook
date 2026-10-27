@@ -19,7 +19,7 @@ async function checkStatusAndNavigate(uid, navigate, setError) {
   const snap = await getDoc(doc(db, "users", uid));
 
   if (!snap.exists()) {
-    navigate("/dashboard");
+    navigate("/pending");
     return;
   }
 
@@ -30,6 +30,12 @@ async function checkStatusAndNavigate(uid, navigate, setError) {
   // Legacy Admin roles get direct access
   if (role === "admin") {
     navigate("/dashboard");
+    return;
+  }
+
+  // Must verify email before accessing dashboard
+  if (!auth.currentUser?.emailVerified) {
+    navigate("/pending");
     return;
   }
 

@@ -14,7 +14,7 @@ call npx cap sync android
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 REM Clear OneDrive ReparsePoint attributes on synced assets
-powershell -NoProfile -Command "Get-ChildItem -Path 'android\app\src\main\assets' -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object { $b = [System.IO.File]::ReadAllBytes($PSItem.FullName); [System.IO.File]::Delete($PSItem.FullName); [System.IO.File]::WriteAllBytes($PSItem.FullName, $b) }"
+powershell -NoProfile -ExecutionPolicy Bypass -File clean-assets.ps1
 
 REM Clean intermediates to avoid Windows/OneDrive file locks
 if exist "android\app\build\intermediates" (

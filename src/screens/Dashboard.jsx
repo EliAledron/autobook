@@ -48,7 +48,13 @@ export default function Dashboard() {
           return;
         }
 
-        if (data.status !== "approved") {
+        // Must be email verified first (except admin)
+        if (!firebaseUser.emailVerified && (data.role || "").toLowerCase() !== "admin") {
+          navigate("/pending");
+          return;
+        }
+
+        if (data.status !== "approved" && (data.role || "").toLowerCase() !== "admin") {
           navigate("/pending");
           return;
         }
@@ -70,12 +76,9 @@ export default function Dashboard() {
           shopName: data.shopName || shopId || null,
         });
       } else {
-        setUser({
-          name: resolveName(null, firebaseUser.displayName),
-          email: firebaseUser.email,
-          role: "Customer",
-          uid: firebaseUser.uid,
-        });
+        // Document does not exist yet (signup in progress or uninitialized profile)
+        navigate("/pending");
+        return;
       }
 
       setLoading(false);
