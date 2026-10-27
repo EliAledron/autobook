@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import CarLoader from "./CarLoader";
 import CustomerDashboard from "./CustomerDashboard";
 import OwnerDashboard from "./OwnerDashboard";
@@ -65,7 +65,6 @@ export default function Dashboard() {
           const sName = data.shopName.toUpperCase();
           if (sName.includes("JME")) shopId = "JME";
           else if (sName.includes("GRHE")) shopId = "GRHE";
-          else if (!shopId) shopId = data.shopName;
         }
 
         // Auto-bring owner to shop setup screen if their profile has not been initialized
@@ -80,12 +79,47 @@ export default function Dashboard() {
           }
           if (!targetShop) {
             try {
-              const sQuery = query(collection(db, "shops"), where("ownerId", "==", firebaseUser.uid));
-              const sSnap = await getDocs(sQuery);
+              let sQuery = query(collection(db, "shops"), where("ownerId", "==", firebaseUser.uid));
+              let sSnap = await getDocs(sQuery);
+              if (sSnap.empty && data.shopName) {
+                sQuery = query(collection(db, "shops"), where("name", "==", data.shopName));
+                sSnap = await getDocs(sQuery);
+              }
               if (!sSnap.empty) {
                 targetShop = { id: sSnap.docs[0].id, ...sSnap.docs[0].data() };
                 targetShopId = sSnap.docs[0].id;
+                shopId = targetShopId;
+                try {
+                  await updateDoc(doc(db, "users", firebaseUser.uid), { shopId: targetShopId });
+                } catch (e) {}
               }
+            } catch (e) {}
+          }
+
+          // If no shop doc exists at all for this owner, create their initial shop doc
+          if (!targetShop) {
+            try {
+              const initialShop = {
+                name: data.shopName || "Auto Shop",
+                shortName: (data.shopName || "Shop").split(" ")[0],
+                ownerId: firebaseUser.uid,
+                rating: 0,
+                reviews: 0,
+                icon: "store",
+                tagline: "Quality auto services",
+                bg: "#f0fdf4",
+                accent: "#16a34a",
+                isSetupCompleted: false,
+                services: [],
+                createdAt: serverTimestamp()
+              };
+              const newRef = await addDoc(collection(db, "shops"), initialShop);
+              targetShop = { id: newRef.id, ...initialShop };
+              targetShopId = newRef.id;
+              shopId = targetShopId;
+              try {
+                await updateDoc(doc(db, "users", firebaseUser.uid), { shopId: targetShopId });
+              } catch (e) {}
             } catch (e) {}
           }
 

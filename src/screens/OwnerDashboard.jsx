@@ -275,10 +275,14 @@ export default function OwnerDashboard({ user }) {
     }
     if (!isAdmin && (user?.uid || user?.id)) {
       try {
-        const sQuery = query(collection(db, "shops"), where("ownerId", "==", user.uid || user.id));
-        const sSnap = await getDocs(sQuery);
+        let sQuery = query(collection(db, "shops"), where("ownerId", "==", user.uid || user.id));
+        let sSnap = await getDocs(sQuery);
+        if (sSnap.empty && user?.shopName) {
+          sQuery = query(collection(db, "shops"), where("name", "==", user.shopName));
+          sSnap = await getDocs(sQuery);
+        }
         if (!sSnap.empty) {
-          if (!shopId) shopId = sSnap.docs[0].id;
+          shopId = sSnap.docs[0].id;
           for (const docSnap of sSnap.docs) {
             const fetchedName = (docSnap.data().name || "").toUpperCase();
             if (fetchedName.includes("JME")) { shopId = "JME"; break; }
@@ -302,10 +306,14 @@ export default function OwnerDashboard({ user }) {
       }
       if (!isAdmin && (user?.uid || user?.id)) {
         try {
-          const sQuery = query(collection(db, "shops"), where("ownerId", "==", user.uid || user.id));
-          const sSnap = await getDocs(sQuery);
+          let sQuery = query(collection(db, "shops"), where("ownerId", "==", user.uid || user.id));
+          let sSnap = await getDocs(sQuery);
+          if (sSnap.empty && user?.shopName) {
+            sQuery = query(collection(db, "shops"), where("name", "==", user.shopName));
+            sSnap = await getDocs(sQuery);
+          }
           if (!sSnap.empty) {
-            if (!shopId) shopId = sSnap.docs[0].id;
+            shopId = sSnap.docs[0].id;
             for (const docSnap of sSnap.docs) {
               const fetchedName = (docSnap.data().name || "").toUpperCase();
               if (fetchedName.includes("JME")) { shopId = "JME"; break; }
