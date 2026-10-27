@@ -118,6 +118,8 @@ export default function DesktopAdminUsers() {
                 accent: colors.info,
                 isSetupCompleted: false,
                 services: [],
+                dtiURL: targetUser.dtiUrl || "",
+                businessPermitUrl: targetUser.businessPermitUrl || "",
                 createdAt: serverTimestamp()
               };
               const newShopRef = await addDoc(collection(db, "shops"), shopData);

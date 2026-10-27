@@ -68,8 +68,6 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId, isFirstSetup }) {
   const [coverPreview, setCoverPreview] = useState(shop?.coverURL || "");
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(shop?.logoURL || "");
-  const [dtiFile, setDtiFile] = useState(null);
-  const [dtiPreview, setDtiPreview] = useState(shop?.dtiURL || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -93,7 +91,6 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId, isFirstSetup }) {
       if (logoFile) finalLogoURL = await uploadToCloudinary(logoFile);
 
       let finalDtiURL = shop?.dtiURL || null;
-      if (dtiFile) finalDtiURL = await uploadToCloudinary(dtiFile);
 
       const updates = {
         name: name.trim(),
@@ -197,27 +194,6 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId, isFirstSetup }) {
                 <span style={{ fontSize: "12px", color: colors.textMuted }}>Tap to upload</span>
               )}
             </div>
-          </div>
-        </div>
-
-        <div style={{ marginBottom: "1.25rem" }}>
-          <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>DTI Certificate</div>
-          <input type="file" id="dtiPhotoUpload" accept="image/*" style={{ display: "none" }} onChange={(e) => {
-            const file = e.target.files[0];
-            if (file) { setDtiFile(file); setDtiPreview(URL.createObjectURL(file)); }
-          }} />
-          <div 
-            onClick={() => document.getElementById("dtiPhotoUpload").click()}
-            style={{ width: "100%", height: dtiPreview ? "160px" : "80px", background: colors.bg, borderRadius: "14px", border: `1.5px dashed ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", position: "relative" }}
-          >
-            {dtiPreview ? (
-              <>
-                <img src={dtiPreview} alt="DTI preview" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-                <button onClick={(e) => { e.stopPropagation(); setDtiFile(null); setDtiPreview(""); }} style={{ position: "absolute", top: "8px", right: "8px", background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: "50%", width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: "14px" }}>×</button>
-              </>
-            ) : (
-              <span style={{ fontSize: "12px", color: colors.textMuted, display: "flex", alignItems: "center", gap: "6px" }}><FileText size={14} /> Tap to upload DTI</span>
-            )}
           </div>
         </div>
 

@@ -253,6 +253,8 @@ export default function AdminUsers() {
           accent: colors.info,
           isSetupCompleted: false,
           services: [],
+          dtiURL: selected.dtiUrl || "",
+          businessPermitUrl: selected.businessPermitUrl || "",
           createdAt: serverTimestamp()
         };
         const newShopRef = await addDoc(collection(db, "shops"), shopData);
