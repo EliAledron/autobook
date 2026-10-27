@@ -336,25 +336,31 @@ export default function BookService() {
             />
             
             <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-              {(shop?.services?.length > 0 ? shop.services : ["Oil Change", "Brake Inspection", "Tire Rotation", "Aircon Cleaning", "Battery Replacement", "General Checkup"])
-              .filter(s => s.toLowerCase().includes(serviceSearch.toLowerCase()))
-              .map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setCustomService(s)}
-                  style={{
-                    padding: "8px 16px", borderRadius: "20px", fontSize: "13px",
-                    fontWeight: "700", cursor: "pointer", fontFamily: "inherit",
-                    background: customService === s ? `linear-gradient(135deg, ${colors.navy}, ${colors.blue})` : colors.bg,
-                    color: customService === s ? "#fff" : colors.textSecondary,
-                    border: customService === s ? "none" : `1px solid ${colors.border}`,
-                    boxShadow: customService === s ? "0 4px 12px rgba(26,58,92,0.2)" : "none",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  {s}
-                </button>
-              ))}
+              {(!shop?.services || shop.services.length === 0) ? (
+                <div style={{ padding: "16px", background: "#f8fafc", borderRadius: "14px", border: `1px dashed ${colors.border}`, color: colors.textMuted, fontSize: "13px", textAlign: "center", width: "100%" }}>
+                  This auto shop has not listed any services yet.
+                </div>
+              ) : (
+                shop.services
+                  .filter(s => s.toLowerCase().includes(serviceSearch.toLowerCase()))
+                  .map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setCustomService(s)}
+                      style={{
+                        padding: "8px 16px", borderRadius: "20px", fontSize: "13px",
+                        fontWeight: "700", cursor: "pointer", fontFamily: "inherit",
+                        background: customService === s ? `linear-gradient(135deg, ${colors.navy}, ${colors.blue})` : colors.bg,
+                        color: customService === s ? "#fff" : colors.textSecondary,
+                        border: customService === s ? "none" : `1px solid ${colors.border}`,
+                        boxShadow: customService === s ? "0 4px 12px rgba(26,58,92,0.2)" : "none",
+                        transition: "all 0.2s",
+                      }}
+                    >
+                      {s}
+                    </button>
+                  ))
+              )}
             </div>
 
             {customService && (

@@ -53,7 +53,7 @@ async function uploadToCloudinary(file) {
 }
 
 // ─── Shop Edit Modal ──────────────────────────────────────────────────────────
-function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
+function ShopEditModal({ shop, onClose, onSaved, ownerId, isFirstSetup }) {
   const [name, setName] = useState(shop?.name || "");
   const [shortName, setShortName] = useState(shop?.shortName || "");
   const [tagline, setTagline] = useState(shop?.tagline || "");
@@ -107,7 +107,8 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
         services,
         coverURL: finalCoverURL,
         logoURL: finalLogoURL,
-        dtiURL: finalDtiURL
+        dtiURL: finalDtiURL,
+        isSetupCompleted: true
       };
       
       if (shop?.id) {
@@ -145,8 +146,8 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.info }}><Store size={24} /></div>
             <div>
-              <div style={{ fontWeight: "800", fontSize: "18px", color: colors.textPrimary }}>Edit Shop Profile</div>
-              <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "500", marginTop: "2px" }}>Update your shop details</div>
+              <div style={{ fontWeight: "800", fontSize: "18px", color: colors.textPrimary }}>{isFirstSetup ? "Setup Your Shop Profile" : "Edit Shop Profile"}</div>
+              <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "500", marginTop: "2px" }}>{isFirstSetup ? "Add your services, address, and contact details to get your shop ready for customers." : "Update your shop details"}</div>
             </div>
           </div>
           <button onClick={onClose} style={{ background: colors.bg, border: "none", width: "36px", height: "36px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", cursor: "pointer", color: colors.textSecondary }}>×</button>
@@ -316,7 +317,7 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId }) {
         </div>
 
         <button onClick={handleSubmit} disabled={saving} style={{ width: "100%", padding: "16px", background: colors.blue, color: "#fff", border: "none", borderRadius: "16px", fontSize: "16px", fontWeight: "800", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", boxShadow: "0 8px 20px rgba(42, 82, 152, 0.25)", transition: "all 0.2s" }}>
-          {saving ? "Saving..." : <><Check size={16} /> Save Changes</>}
+          {saving ? "Saving..." : <><Check size={16} /> {isFirstSetup ? "Complete Setup & Save" : "Save Changes"}</>}
         </button>
         <div style={{ height: "12px" }} />
         <button onClick={onClose} style={{ width: "100%", padding: "16px", borderRadius: "16px", fontSize: "15px", border: "none", background: "transparent", color: colors.textSecondary, fontWeight: "700", cursor: "pointer" }}>Cancel</button>
@@ -333,9 +334,14 @@ export default function AutoShopProfile() {
   const [shop, setShop] = useState(location.state?.shop || null);
   const shopId = location.state?.shopId || location.state?.shop?.id;
   const prefilledService = location.state?.prefilledService;
-  const isOwner = location.state?.isOwner;
+  const isOwner = Boolean(
+    location.state?.isOwner ||
+    (userProfile && shop && (userProfile.uid === shop.ownerId || userProfile.id === shop.ownerId)) ||
+    (userProfile?.role?.toLowerCase() === "owner" && (!shop || userProfile.shopId === shop?.id))
+  );
 
-  const [showEditModal, setShowEditModal] = useState(false);
+  const isFirstSetup = Boolean(location.state?.isFirstSetup || (isOwner && shop && !shop.isSetupCompleted && (!shop.services || shop.services.length === 0)));
+  const [showEditModal, setShowEditModal] = useState(Boolean(location.state?.openEdit || isFirstSetup));
   const [posts, setPosts] = useState([]);
   const [activeTab, setActiveTab] = useState("Posts");
   const [serviceSearch, setServiceSearch] = useState("");
@@ -368,6 +374,12 @@ export default function AutoShopProfile() {
     });
     return () => unsub();
   }, []);
+
+  useEffect(() => {
+    if (isOwner && shop && !shop.isSetupCompleted && (!shop.services || shop.services.length === 0)) {
+      setShowEditModal(true);
+    }
+  }, [isOwner, shop?.id, shop?.isSetupCompleted, shop?.services?.length]);
 
   useEffect(() => {
     if (!shop && !shopId) return;
@@ -559,7 +571,7 @@ export default function AutoShopProfile() {
       <div style={sh.page}>
         {!isAdmin && (
           <div style={sh.topbar}>
-            <BackButton />
+            <BackButton onClick={isOwner ? () => navigate("/dashboard") : undefined} />
             <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
           </div>
         )}
@@ -576,7 +588,7 @@ export default function AutoShopProfile() {
         {!isAdmin && (
           <div style={sh.topbar}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <BackButton />
+              <BackButton onClick={isOwner ? () => navigate("/dashboard") : undefined} />
               <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
             </div>
           </div>
@@ -588,9 +600,9 @@ export default function AutoShopProfile() {
     return content;
   }
 
-  const displayServices = shop.services?.length > 0 
+  const displayServices = shop?.services?.length > 0 
     ? shop.services 
-    : ["Oil Change", "Brake Inspection", "Tire Rotation", "Aircon Cleaning", "Battery Replacement", "General Checkup"];
+    : [];
 
   const totalReviewsCount = reviews.length;
   const starCounts = {
@@ -626,7 +638,7 @@ export default function AutoShopProfile() {
       {!isAdmin && (
         <div style={sh.topbar}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <BackButton />
+            <BackButton onClick={isOwner ? () => navigate("/dashboard") : undefined} />
             <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
           </div>
         </div>
@@ -776,7 +788,7 @@ export default function AutoShopProfile() {
               <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: "800", color: colors.textPrimary }}>Intro</h3>
               <div style={{ fontSize: "14px", color: colors.textSecondary, marginBottom: "16px", lineHeight: "1.5" }}>{shop.tagline || "Quality auto services"}</div>
               
-              {displayServices.length > 0 && (
+              {displayServices.length > 0 ? (
                 <>
                   <div style={{ borderTop: `1px solid ${colors.border}`, margin: "16px 0" }} />
                   {displayServices.map(s => (
@@ -785,6 +797,15 @@ export default function AutoShopProfile() {
                     </div>
                   ))}
                 </>
+              ) : isOwner ? (
+                <div style={{ padding: "16px", background: "#f8fafc", borderRadius: "14px", border: `1.5px dashed ${colors.border}`, textAlign: "center", margin: "16px 0 0" }}>
+                  <div style={{ fontSize: "13px", color: colors.textSecondary, marginBottom: "10px", fontWeight: "600" }}>No services added yet.</div>
+                  <button onClick={() => setShowEditModal(true)} style={{ padding: "8px 16px", background: colors.navy, color: "#fff", border: "none", borderRadius: "10px", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>
+                    + Add Services Offered
+                  </button>
+                </div>
+              ) : (
+                <div style={{ fontSize: "13px", color: colors.textMuted, fontStyle: "italic", margin: "16px 0 0" }}>No services listed yet.</div>
               )}
             </div>
 
@@ -1254,11 +1275,13 @@ export default function AutoShopProfile() {
       {showEditModal && (
         <ShopEditModal
           shop={shop || {}}
-          ownerId={shop.ownerId}
+          ownerId={shop?.ownerId || (currentUser?.id || currentUser?.uid)}
+          isFirstSetup={isFirstSetup}
           onClose={() => setShowEditModal(false)}
           onSaved={(updates) => {
             setShop((prev) => ({ ...prev, ...updates }));
             setShowEditModal(false);
+            setSuccessMsg(isFirstSetup ? "Shop profile setup complete! Your services are now live." : "Shop profile updated!");
           }}
         />
       )}

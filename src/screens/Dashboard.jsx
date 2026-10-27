@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import CarLoader from "./CarLoader";
 import CustomerDashboard from "./CustomerDashboard";
 import OwnerDashboard from "./OwnerDashboard";
@@ -66,6 +66,42 @@ export default function Dashboard() {
           if (sName.includes("JME")) shopId = "JME";
           else if (sName.includes("GRHE")) shopId = "GRHE";
           else if (!shopId) shopId = data.shopName;
+        }
+
+        // Auto-bring owner to shop setup screen if their profile has not been initialized
+        if ((data.role || "").toLowerCase() === "owner") {
+          let targetShop = null;
+          let targetShopId = shopId || data.shopId;
+          if (targetShopId) {
+            try {
+              const sSnap = await getDoc(doc(db, "shops", targetShopId));
+              if (sSnap.exists()) targetShop = { id: sSnap.id, ...sSnap.data() };
+            } catch (e) {}
+          }
+          if (!targetShop) {
+            try {
+              const sQuery = query(collection(db, "shops"), where("ownerId", "==", firebaseUser.uid));
+              const sSnap = await getDocs(sQuery);
+              if (!sSnap.empty) {
+                targetShop = { id: sSnap.docs[0].id, ...sSnap.docs[0].data() };
+                targetShopId = sSnap.docs[0].id;
+              }
+            } catch (e) {}
+          }
+
+          if (targetShop && !targetShop.isSetupCompleted && (!targetShop.services || targetShop.services.length === 0)) {
+            navigate("/customer/shop-profile", {
+              replace: true,
+              state: {
+                shop: targetShop,
+                shopId: targetShopId,
+                isOwner: true,
+                openEdit: true,
+                isFirstSetup: true
+              }
+            });
+            return;
+          }
         }
 
         setUser({

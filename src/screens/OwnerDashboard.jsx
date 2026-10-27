@@ -696,6 +696,48 @@ export default function OwnerDashboard({ user }) {
 
       <div style={{ ...sh.content, paddingTop: "2rem", position: "relative", zIndex: 2 }} className="stagger-slide-up">
 
+        {!isAdmin && shopData && (!shopData.isSetupCompleted && (!shopData.services || shopData.services.length === 0)) && (
+          <div style={{
+            background: "linear-gradient(135deg, #1e3a8a, #2563eb)",
+            borderRadius: "20px",
+            padding: "20px",
+            color: "#fff",
+            marginBottom: "1.5rem",
+            boxShadow: "0 8px 24px rgba(37,99,235,0.25)",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "14px"
+          }}>
+            <div style={{ flex: 1, minWidth: "240px" }}>
+              <div style={{ fontSize: "16px", fontWeight: "800", marginBottom: "4px", display: "flex", alignItems: "center", gap: "8px" }}>
+                <span>🛠️</span> Complete Your Shop Profile Setup
+              </div>
+              <div style={{ fontSize: "13px", opacity: 0.9, lineHeight: "1.4" }}>
+                Add your services, address, and contact details so customers can start booking appointments.
+              </div>
+            </div>
+            <button
+              onClick={() => navigate("/customer/shop-profile", { state: { shop: shopData, isOwner: true, openEdit: true, isFirstSetup: true } })}
+              style={{
+                padding: "10px 18px",
+                background: "#fff",
+                color: "#1e3a8a",
+                border: "none",
+                borderRadius: "12px",
+                fontSize: "13px",
+                fontWeight: "800",
+                cursor: "pointer",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                whiteSpace: "nowrap"
+              }}
+            >
+              Set Up Profile Now →
+            </button>
+          </div>
+        )}
+
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", marginBottom: "1.5rem" }}>
           {isAdmin ? (
             <>

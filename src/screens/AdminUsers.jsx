@@ -251,6 +251,8 @@ export default function AdminUsers() {
           tagline: "Quality auto services",
           bg: colors.infoBg,
           accent: colors.info,
+          isSetupCompleted: false,
+          services: [],
           createdAt: serverTimestamp()
         };
         const newShopRef = await addDoc(collection(db, "shops"), shopData);
