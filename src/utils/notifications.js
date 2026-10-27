@@ -127,7 +127,7 @@ export const requestPushPermission = async (userUid) => {
   try {
     if (Capacitor.isNativePlatform()) {
       let permStatus = await PushNotifications.checkPermissions();
-      if (permStatus.receive === "prompt") {
+      if (permStatus.receive !== "granted") {
         permStatus = await PushNotifications.requestPermissions();
       }
       if (permStatus.receive === "granted") {

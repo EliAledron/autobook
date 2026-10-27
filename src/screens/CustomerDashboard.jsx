@@ -8,7 +8,7 @@ import { doc, getDoc, collection, query, where, getDocs, orderBy, addDoc, server
 import { sh, colors, getGreeting, EmptyState } from "./dashboardShared";
 import TopbarAvatar from "./TopbarAvatar";
 import CarLoader from "./CarLoader";
-import { usePushNotifications } from "../hooks/usePushNotifications";
+// push notifications managed globally via UserContext
 import { 
   Droplet, Settings, ShieldAlert, Snowflake, AlertTriangle, 
   Calendar, Wrench, Sparkles, X, Gauge, BookOpen, Plus, 
@@ -143,7 +143,7 @@ const getLastServiceRecord = (bookings, serviceLogs, keywords, serviceKey, vehic
 };
 
 export default function CustomerDashboard() {
-  usePushNotifications();
+  // notifications handled globally in UserContext
   const navigate = useNavigate();
   const [animate, setAnimate] = useState(false);
   const [user, setUser] = useState(null);

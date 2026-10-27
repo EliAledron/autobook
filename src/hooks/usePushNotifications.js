@@ -5,17 +5,22 @@ import { getToken } from "firebase/messaging";
 import { doc, updateDoc } from "firebase/firestore";
 import { auth, db, messaging } from "../firebase";
 
-export function usePushNotifications() {
+export function usePushNotifications(userId) {
   useEffect(() => {
+    const currentUid = userId || auth.currentUser?.uid;
+    if (!currentUid) return;
+
+    let isMounted = true;
+
     const setupNativePush = async () => {
       try {
         let permStatus = await PushNotifications.checkPermissions();
-        if (permStatus.receive === "prompt") {
+        if (permStatus.receive !== "granted") {
           permStatus = await PushNotifications.requestPermissions();
         }
 
         if (permStatus.receive !== "granted") {
-          console.log("Native push notification permission denied.");
+          console.log("Native push notification permission denied or dismissed.");
           return;
         }
 
@@ -24,11 +29,17 @@ export function usePushNotifications() {
 
         // Listen for FCM registration token
         await PushNotifications.addListener("registration", async (token) => {
+          if (!isMounted) return;
           console.log("Native FCM Token retrieved:", token.value);
-          if (auth.currentUser && token?.value) {
-            await updateDoc(doc(db, "users", auth.currentUser.uid), {
-              fcmToken: token.value,
-            });
+          const uidToUpdate = userId || auth.currentUser?.uid;
+          if (uidToUpdate && token?.value) {
+            try {
+              await updateDoc(doc(db, "users", uidToUpdate), {
+                fcmToken: token.value,
+              });
+            } catch (err) {
+              console.error("Error saving native FCM token:", err);
+            }
           }
         });
 
@@ -53,25 +64,25 @@ export function usePushNotifications() {
 
     const setupWebPush = async () => {
       try {
-        if (!auth.currentUser || !messaging) return;
+        if (!messaging) return;
 
-        console.log("Requesting web notification permission...");
-        const permission = await Notification.requestPermission();
+        let permission = Notification.permission;
+        if (permission !== "granted" && permission !== "denied") {
+          permission = await Notification.requestPermission();
+        }
 
         if (permission === "granted") {
-          console.log("Web notification permission granted.");
-          const token = await getToken(messaging, {
-            vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
-          });
+          const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+          if (!vapidKey) return;
 
-          if (token) {
+          const token = await getToken(messaging, { vapidKey });
+          const uidToUpdate = userId || auth.currentUser?.uid;
+          if (token && uidToUpdate && isMounted) {
             console.log("Web FCM Token retrieved:", token);
-            await updateDoc(doc(db, "users", auth.currentUser.uid), {
+            await updateDoc(doc(db, "users", uidToUpdate), {
               fcmToken: token,
             });
           }
-        } else {
-          console.log("Web notification permission denied.");
         }
       } catch (error) {
         console.error("Error retrieving web push token:", error);
@@ -83,5 +94,12 @@ export function usePushNotifications() {
     } else if ("Notification" in window && "serviceWorker" in navigator) {
       setupWebPush();
     }
-  }, []);
+
+    return () => {
+      isMounted = false;
+      if (Capacitor.isNativePlatform()) {
+        PushNotifications.removeAllListeners().catch(() => {});
+      }
+    };
+  }, [userId]);
 }

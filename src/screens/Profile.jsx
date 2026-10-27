@@ -9,7 +9,7 @@ import BackButton from "../components/BackButton";
 import { Save, LifeBuoy } from "lucide-react";
 import ReviewAppModal from "../components/ReviewAppModal";
 import HelpSupportModal from "../components/HelpSupportModal";
-import { requestPushPermission } from "../utils/notifications";
+// push notifications managed automatically via UserContext
 
 const CLOUDINARY_CLOUD = "dpwojan8w";
 const CLOUDINARY_PRESET = "autobook_uploads";
@@ -583,25 +583,7 @@ export default function Profile() {
           </button>
         </div>
 
-        {/* PUSH NOTIFICATIONS */}
-        <div style={sh.sectionLabel}>Notifications</div>
-        <div className="profile-card" style={{ ...sh.card, padding: 0, borderRadius: "20px", border: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.03)", marginBottom: "32px" }}>
-          <button
-            style={{ width: "100%", padding: "16px", fontSize: "15px", fontWeight: "700", border: "none", borderRadius: "20px", cursor: "pointer", background: colors.blue, color: "#fff" }}
-            onClick={async () => {
-              if (!auth.currentUser) return;
-              showToast("Requesting permission...");
-              const result = await requestPushPermission(auth.currentUser.uid);
-              if (result.success) {
-                showToast("Push notifications enabled!");
-              } else {
-                showToast(result.error || "Failed to enable notifications.");
-              }
-            }}
-          >
-            Enable Push Notifications
-          </button>
-        </div>
+
 
         {/* SIGN OUT */}
         <div style={sh.sectionLabel}>Account</div>

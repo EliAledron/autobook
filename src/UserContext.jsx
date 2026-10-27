@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, getDocs, collection, query, where, onSnapshot, updateDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
+import { usePushNotifications } from "./hooks/usePushNotifications";
 
 const UserContext = createContext(null);
 
@@ -11,6 +12,8 @@ export function UserProvider({ children }) {
   const [unreadAlertsCount, setUnreadAlertsCount] = useState(0);
   const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
   const [assignedJobsCount, setAssignedJobsCount] = useState(0);
+
+  usePushNotifications(userProfile?.uid);
 
   useEffect(() => {
     let notifUnsub = null;
