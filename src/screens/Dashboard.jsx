@@ -48,8 +48,9 @@ export default function Dashboard() {
           return;
         }
 
-        // Must be email verified first (except admin)
-        if (!firebaseUser.emailVerified && (data.role || "").toLowerCase() !== "admin") {
+        // Must be email verified first (except admin, or if already approved by admin)
+        const isVerified = firebaseUser.emailVerified || data.emailVerified === true || data.status === "approved";
+        if (!isVerified && (data.role || "").toLowerCase() !== "admin") {
           navigate("/pending");
           return;
         }

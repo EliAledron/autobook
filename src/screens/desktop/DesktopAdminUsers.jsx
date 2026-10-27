@@ -101,6 +101,7 @@ export default function DesktopAdminUsers() {
             if (status === "approved") {
               updates.lateCancellations = 0;
               updates.cooldownUntil = null;
+              updates.emailVerified = true;
             }
 
             const targetUser = users.find(u => u.id === id);

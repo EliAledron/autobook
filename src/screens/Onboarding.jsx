@@ -132,7 +132,8 @@ async function checkStatusAndNavigate(uid, navigate, setError) {
   const { status, role = "", rejectionReason } = snap.data();
   const r = role.toLowerCase();
   if (r === "admin") { navigate("/dashboard"); return; }
-  if (!auth.currentUser?.emailVerified) { navigate("/pending"); return; }
+  const isVerified = auth.currentUser?.emailVerified || data.emailVerified === true || status === "approved";
+  if (!isVerified) { navigate("/pending"); return; }
   if (status === "approved") { navigate("/dashboard"); return; }
   navigate("/pending");
 }
@@ -214,8 +215,9 @@ export default function Onboarding() {
             navigate("/restricted", { replace: true });
             return;
           }
-          // Must be email verified and approved (except admin)
-          if (!user.emailVerified && (data.role || "").toLowerCase() !== "admin") {
+          // Must be email verified and approved (except admin, or if approved by admin)
+          const isVerified = user.emailVerified || data.emailVerified === true || data.status === "approved";
+          if (!isVerified && (data.role || "").toLowerCase() !== "admin") {
             navigate("/pending", { replace: true });
             return;
           }

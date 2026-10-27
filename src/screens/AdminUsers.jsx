@@ -238,6 +238,7 @@ export default function AdminUsers() {
       if (status === "approved") {
         updates.lateCancellations = 0;
         updates.cooldownUntil = null;
+        updates.emailVerified = true;
       }
       if (status === "approved" && selected && (selected.role || "").toLowerCase() === "owner" && !selected.shopId) {
         const shopData = {

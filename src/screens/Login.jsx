@@ -33,8 +33,9 @@ async function checkStatusAndNavigate(uid, navigate, setError) {
     return;
   }
 
-  // Must verify email before accessing dashboard
-  if (!auth.currentUser?.emailVerified) {
+  // Must verify email before accessing dashboard (unless already approved by admin or test verified)
+  const isVerified = auth.currentUser?.emailVerified || data.emailVerified === true || status === "approved";
+  if (!isVerified) {
     navigate("/pending");
     return;
   }

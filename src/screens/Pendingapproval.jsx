@@ -56,8 +56,9 @@ export default function PendingApproval() {
           return;
         }
 
-        // For pending/approved, require email verification first
-        if (!user.emailVerified) {
+        // For pending/approved, require email verification first (admin approval or data.emailVerified bypasses for test accounts)
+        const isVerified = user.emailVerified || data.emailVerified === true || currentStatus === "approved";
+        if (!isVerified) {
           setStatus("unverified");
           return;
         }
