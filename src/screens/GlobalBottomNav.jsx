@@ -181,77 +181,68 @@ export default function GlobalBottomNav() {
   // ─── OWNER / ADMIN NAV ───
   if (role === "owner" || role === "admin") {
     return (
-      <>
-        <style>{`
-          @media (min-width: 768px) {
-            .global-bottom-nav-owner {
-              display: none !important;
-            }
-          }
-        `}</style>
-        <div className="global-bottom-nav global-bottom-nav-owner" style={navStyle}>
-          <NavItem
-            icon={IconHome}
-            label="Home"
-            isActive={path === "/dashboard"}
-            onClick={() => navigate("/dashboard")}
-          />
-          {role === "admin" && (
-            <>
-              <NavItem
-                icon={IconUsers}
-                label="Users"
-                isActive={path === "/admin/users"}
-                onClick={() => navigate("/admin/users")}
-              />
-              <NavItem
-                icon={IconFeed}
-                label="Feed"
-                isActive={path === "/customer/feed"}
-                onClick={() => navigate("/customer/feed")}
-              />
-              <NavItem
-                icon={IconBell}
-                label="Alerts"
-                isActive={path === "/admin/alerts"}
-                onClick={() => navigate("/admin/alerts")}
-                badge={unreadAlertsCount}
-              />
-            </>
-          )}
-          {role === "owner" && (
-            <>
-              <NavItem
-                icon={IconWrench}
-                label="Mechanic"
-                isActive={path === "/admin/mechanics"}
-                onClick={() => navigate("/admin/mechanics")}
-              />
-              <NavItem
-                icon={IconClipboard}
-                label="Bookings"
-                isActive={path === "/admin/bookings"}
-                onClick={() => navigate("/admin/bookings")}
-                badge={pendingBookingsCount}
-              />
-              <NavItem
-                icon={IconBell}
-                label="Alerts"
-                isActive={path === "/admin/alerts"}
-                onClick={() => navigate("/admin/alerts")}
-                badge={unreadAlertsCount}
-              />
-            </>
-          )}
-        </div>
-      </>
+      <div style={navStyle}>
+        <NavItem
+          icon={IconHome}
+          label="Home"
+          isActive={path === "/dashboard"}
+          onClick={() => navigate("/dashboard")}
+        />
+        {role === "admin" && (
+          <>
+            <NavItem
+              icon={IconUsers}
+              label="Users"
+              isActive={path === "/admin/users"}
+              onClick={() => navigate("/admin/users")}
+            />
+            <NavItem
+              icon={IconFeed}
+              label="Feed"
+              isActive={path === "/customer/feed"}
+              onClick={() => navigate("/customer/feed")}
+            />
+            <NavItem
+              icon={IconBell}
+              label="Alerts"
+              isActive={path === "/admin/alerts"}
+              onClick={() => navigate("/admin/alerts")}
+              badge={unreadAlertsCount}
+            />
+          </>
+        )}
+        {role === "owner" && (
+          <>
+            <NavItem
+              icon={IconWrench}
+              label="Mechanic"
+              isActive={path === "/admin/mechanics"}
+              onClick={() => navigate("/admin/mechanics")}
+            />
+            <NavItem
+              icon={IconClipboard}
+              label="Bookings"
+              isActive={path === "/admin/bookings"}
+              onClick={() => navigate("/admin/bookings")}
+              badge={pendingBookingsCount}
+            />
+            <NavItem
+              icon={IconBell}
+              label="Alerts"
+              isActive={path === "/admin/alerts"}
+              onClick={() => navigate("/admin/alerts")}
+              badge={unreadAlertsCount}
+            />
+          </>
+        )}
+      </div>
     );
   }
 
   // ─── MECHANIC NAV ───
   if (role === "mechanic") {
     return (
-      <div className="global-bottom-nav" style={navStyle}>
+      <div style={navStyle}>
         <NavItem
           icon={IconHome}
           label="Home"
@@ -283,7 +274,7 @@ export default function GlobalBottomNav() {
 
   // ─── CUSTOMER NAV ───
   return (
-    <div className="global-bottom-nav" style={navStyle}>
+    <div style={navStyle}>
       <NavItem
         icon={IconHome}
         label="Home"

@@ -1,6 +1,6 @@
 import React from "react";
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   collection, getDocs, query, where, doc, updateDoc,
   addDoc, serverTimestamp, getDoc, orderBy, limit,
@@ -14,35 +14,6 @@ import { Check, Megaphone, ShieldAlert, AlertTriangle } from "lucide-react";
 import { calculateShopRating, getReportPenalty } from "../utils/ratingUtils";
 
 // ─── Quick Action SVG Icons ────────────────────────────────────────────────────
-const IcoHomeHeader = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
-    <path d="M9 21V12h6v9" />
-  </svg>
-);
-const IcoWrenchHeader = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
-  </svg>
-);
-const IcoClipHeader = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
-    <rect x="9" y="3" width="6" height="4" rx="1" />
-    <path d="M9 12h6M9 16h4" />
-  </svg>
-);
-const IcoStarHeader = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-  </svg>
-);
-const IcoBellHeader = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
-    <path d="M13.73 21a2 2 0 01-3.46 0" />
-  </svg>
-);
 const IcoUsers    = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.87"/></svg>;
 const IcoShop     = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l1-5h16l1 5"/><path d="M3 9a5 5 0 005 5 5 5 0 005-5 5 5 0 005 5"/><path d="M5 21V14h14v7"/></svg>;
 const IcoWrench   = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>;
@@ -115,93 +86,6 @@ const keyframes = `
   
   
   
-    @media (min-width: 768px) {
-    .owner-page-root {
-      padding-bottom: 2.5rem !important;
-    }
-    .desktop-header-nav {
-      display: flex !important;
-    }
-  }
-  .desktop-header-nav {
-    display: none;
-    align-items: center;
-    gap: 6px;
-    margin-left: 20px;
-  }
-  .desktop-nav-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 7px 14px;
-    border-radius: 12px;
-    font-size: 13px;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.78);
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    white-space: nowrap;
-    text-decoration: none;
-  }
-  .desktop-nav-link:hover {
-    background: rgba(255, 255, 255, 0.12);
-    color: #ffffff;
-    transform: translateY(-1px);
-  }
-  .desktop-nav-link.active {
-    background: rgba(255, 255, 255, 0.2);
-    color: #ffffff;
-    font-weight: 700;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  }
-  .desktop-nav-badge {
-    background: #ef4444;
-    color: #ffffff;
-    font-size: 10px;
-    font-weight: 800;
-    border-radius: 10px;
-    padding: 1px 6px;
-    min-width: 16px;
-    height: 16px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 6px rgba(239,68,68,0.35);
-    margin-left: 2px;
-  }
-  .owner-analytics-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 16px;
-    margin-bottom: 1.5rem;
-  }
-  @media (min-width: 860px) {
-    .owner-analytics-grid {
-      grid-template-columns: 1fr 1fr;
-      align-items: stretch;
-    }
-  }
-  .owner-actions-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    margin-bottom: 1.5rem;
-  }
-  @media (min-width: 640px) {
-    .owner-actions-grid {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-    }
-  }
-  @media (min-width: 1024px) {
-    .owner-actions-grid {
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-    }
-  }
   .owner-stat-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -361,7 +245,6 @@ function CarPartsModal({ user, onClose, onSaved, shopId }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function OwnerDashboard({ user }) {
   const navigate = useNavigate();
-  const location = useLocation();
   const firstName = user?.name?.split(" ")[0] || user?.role || "Owner";
   const isAdmin = (user?.role || "").toLowerCase() === "admin";
 
@@ -800,7 +683,7 @@ export default function OwnerDashboard({ user }) {
   const penaltyDetails = getReportPenalty(shopReportCount);
 
   return (
-    <div style={sh.page} className="owner-page-root">
+    <div style={sh.page}>
       <style>{keyframes}</style>
 
       {/* SWIPEABLE TOAST */}
@@ -817,63 +700,7 @@ export default function OwnerDashboard({ user }) {
 
       {/* TOPBAR */}
       <div style={sh.topbar}>
-        <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
-          <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
-
-          {!isAdmin && (
-            <nav className="desktop-header-nav" aria-label="Desktop Navigation">
-              <button
-                type="button"
-                onClick={() => navigate("/dashboard")}
-                className={`desktop-nav-link ${location.pathname === "/dashboard" ? "active" : ""}`}
-              >
-                <IcoHomeHeader />
-                <span>Home</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate("/admin/mechanics")}
-                className={`desktop-nav-link ${location.pathname === "/admin/mechanics" ? "active" : ""}`}
-              >
-                <IcoWrenchHeader />
-                <span>Mechanic</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate("/admin/bookings")}
-                className={`desktop-nav-link ${location.pathname === "/admin/bookings" ? "active" : ""}`}
-              >
-                <IcoClipHeader />
-                <span>Bookings</span>
-                {pendingBookings > 0 && (
-                  <span className="desktop-nav-badge">{pendingBookings}</span>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate("/admin/reviews")}
-                className={`desktop-nav-link ${location.pathname === "/admin/reviews" ? "active" : ""}`}
-              >
-                <IcoStarHeader />
-                <span>Reviews</span>
-                {unreadReviewAlertsCount > 0 && (
-                  <span className="desktop-nav-badge">{unreadReviewAlertsCount}</span>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate("/admin/alerts")}
-                className={`desktop-nav-link ${location.pathname === "/admin/alerts" ? "active" : ""}`}
-              >
-                <IcoBellHeader />
-                <span>Alerts</span>
-                {unreadAlerts > 0 && (
-                  <span className="desktop-nav-badge">{unreadAlerts}</span>
-                )}
-              </button>
-            </nav>
-          )}
-        </div>
+        <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
         <div style={sh.topbarRight}>
           <div style={sh.topbarMeta}>
             <div style={sh.topbarName}>{user?.name}</div>
@@ -1190,28 +1017,23 @@ export default function OwnerDashboard({ user }) {
         {/* MONTHLY OVERVIEW */}
         {!isAdmin && (
           <>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginTop: "2rem", marginBottom: "1.25rem" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{ width: "5px", height: "20px", borderRadius: "3px", background: colors.accent }}></div>
-                <span style={{ fontSize: "18px", fontWeight: "800", color: colors.textPrimary, letterSpacing: "-0.3px" }}>Monthly Overview</span>
-              </div>
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                <CustomDropdown 
-                  value={selMonth} 
-                  onChange={(val) => setSelMonth(Number(val))} 
-                  options={MONTHS.map((m, i) => ({ value: i, label: m }))}
-                  style={{ width: "120px", padding: "10px 32px 10px 14px", borderRadius: "12px", border: `1.5px solid ${colors.border}`, fontSize: "13px", fontWeight: "600", backgroundColor: colors.white }} 
-                />
-                <CustomDropdown 
-                  value={selYear} 
-                  onChange={(val) => setSelYear(Number(val))} 
-                  options={[new Date().getFullYear() - 1, new Date().getFullYear()].map(y => ({ value: y, label: y }))}
-                  style={{ width: "95px", padding: "10px 32px 10px 14px", borderRadius: "12px", border: `1.5px solid ${colors.border}`, fontSize: "13px", fontWeight: "600", backgroundColor: colors.white }} 
-                />
-              </div>
+            <SectionTitle title="Monthly Overview" />
+            <div style={{ display: "flex", gap: "10px", marginBottom: "1rem", alignItems: "center" }}>
+              <CustomDropdown 
+                value={selMonth} 
+                onChange={(val) => setSelMonth(Number(val))} 
+                options={MONTHS.map((m, i) => ({ value: i, label: m }))}
+                style={{ flex: 1, padding: "12px 36px 12px 14px", borderRadius: "12px", border: `1.5px solid ${colors.border}`, fontSize: "13px", fontWeight: "600", backgroundColor: colors.white }} 
+              />
+              <CustomDropdown 
+                value={selYear} 
+                onChange={(val) => setSelYear(Number(val))} 
+                options={[new Date().getFullYear() - 1, new Date().getFullYear()].map(y => ({ value: y, label: y }))}
+                style={{ flex: 1, padding: "12px 36px 12px 14px", borderRadius: "12px", border: `1.5px solid ${colors.border}`, fontSize: "13px", fontWeight: "600", backgroundColor: colors.white }} 
+              />
             </div>
-            <div className="owner-analytics-grid">
-              <div style={{ ...sh.card, display: "flex", alignItems: "center", gap: "20px", marginBottom: 0, minHeight: "180px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px", marginBottom: "1.5rem" }}>
+              <div style={{ ...sh.card, display: "flex", alignItems: "center", gap: "20px", marginBottom: 0 }}>
                 <div style={{
                   width: "140px", height: "70px", flexShrink: 0, position: "relative", overflow: "hidden",
                   display: "flex", alignItems: "flex-end", justifyContent: "center"
@@ -1269,7 +1091,7 @@ export default function OwnerDashboard({ user }) {
                 </div>
               </div>
               
-              <div style={{ ...sh.card, marginBottom: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: "180px" }}>
+              <div style={{ ...sh.card, marginBottom: 0 }}>
                 <div style={{ fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>Weekly Bookings</div>
                 {Math.max(...weekCounts) === 0 ? (
                   <div style={{ fontSize: "12px", color: colors.textMuted, textAlign: "center", padding: "20px 0" }}>No bookings this month yet.</div>
@@ -1312,11 +1134,10 @@ export default function OwnerDashboard({ user }) {
                   </div>
                 )}
               </div>
-            </div>
               
-            <div style={{ ...sh.card, marginBottom: "1.5rem" }}>
-              <div style={{ fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span>Monthly Trends ({selYear})</span>
+              <div style={{ ...sh.card, marginBottom: 0 }}>
+                <div style={{ fontSize: "13px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>Monthly Trends ({selYear})</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: "6px", height: "100px", paddingTop: "20px" }}>
                   {monthCounts.map((count, i) => (
@@ -1365,6 +1186,7 @@ export default function OwnerDashboard({ user }) {
                   ))}
                 </div>
               </div>
+            </div>
           </>
         )}
 
@@ -1374,7 +1196,7 @@ export default function OwnerDashboard({ user }) {
             <span style={{ fontSize: "11px", color: colors.textMuted, fontWeight: "500" }}>Updated {timeAgo}</span>
           ) : null}
         />
-        <div className="owner-actions-grid">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", marginBottom: "1.5rem" }}>
           {[
             isAdmin ? { id: "users", label: "Users", sub: pendingUsers.length > 0 ? `${pendingUsers.length} pending` : "Approve & manage", path: "/admin/users", badge: pendingUsers.length } : null,
             !isAdmin ? { id: "profile", label: "Shop Profile", sub: "View & Edit", onClick: () => navigate("/customer/shop-profile", { state: { shop: shopData || { ownerId: user?.uid || user?.id, name: user?.shopName || "My Shop" }, isOwner: true } }) } : null,
