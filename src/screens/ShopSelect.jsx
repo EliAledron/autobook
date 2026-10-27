@@ -203,8 +203,8 @@ export default function ShopSelect() {
                     {shop.name}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-                    <span style={{ color: "#f59e0b", fontSize: "14px" }}><Star fill="currentColor" size={14} /></span>
-                    <span style={{ fontSize: "13px", fontWeight: "700", color: colors.textPrimary }}>{shop.rating && !isNaN(Number(shop.rating)) && Number(shop.rating) > 0 ? Number(shop.rating).toFixed(1) : "New"}</span>
+                    <span style={{ color: shop.rating > 0 ? "#f59e0b" : "#9ca3af", fontSize: "14px" }}><Star fill={shop.rating > 0 ? "currentColor" : "none"} size={14} /></span>
+                    <span style={{ fontSize: "13px", fontWeight: shop.rating > 0 ? "700" : "500", color: shop.rating > 0 ? colors.textPrimary : colors.textMuted }}>{shop.rating && !isNaN(Number(shop.rating)) && Number(shop.rating) > 0 ? Number(shop.rating).toFixed(1) : "No reviews yet"}</span>
                     {shop.reviews > 0 && <span style={{ fontSize: "12px", color: colors.textMuted }}>({shop.reviews} review{shop.reviews !== 1 ? 's' : ''})</span>}
                   </div>
                   <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>{shop.tagline || "Quality auto services"}</div>

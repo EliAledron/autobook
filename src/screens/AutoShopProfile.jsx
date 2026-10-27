@@ -815,9 +815,9 @@ export default function AutoShopProfile() {
               )}
               
               <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                <Star fill="currentColor" size={16} style={{ color: "#f59e0b" }} />
+                <Star fill={dynamicAvgRating > 0 ? "currentColor" : "none"} size={16} style={{ color: dynamicAvgRating > 0 ? "#f59e0b" : "rgba(255,255,255,0.4)" }} />
                 <span style={{ fontSize: "14px", fontWeight: "700", color: "#fff" }}>
-                  {dynamicAvgRating > 0 ? dynamicAvgRating.toFixed(1) : "New"}
+                  {dynamicAvgRating > 0 ? dynamicAvgRating.toFixed(1) : "No reviews yet"}
                 </span>
                 {shop.reviews > 0 && <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>({shop.reviews} reviews)</span>}
                 {penaltyInfo.isPenalized && (

@@ -556,9 +556,9 @@ export default function ShopFeed() {
                       <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px" }}>
                         <span style={{ fontSize: "11px", color: colors.textMuted, fontWeight: "600" }}>{timeAgo(post.createdAt)}</span>
                         <span style={{ fontSize: "10px", color: colors.border }}>•</span>
-                        <span style={{ color: "#f59e0b", fontSize: "11px" }}><Star fill="currentColor" size={11} /></span>
+                        <span style={{ color: (targetShop.rating && Number(targetShop.rating) > 0) ? "#f59e0b" : "#9ca3af", fontSize: "11px" }}><Star fill={(targetShop.rating && Number(targetShop.rating) > 0) ? "currentColor" : "none"} size={11} /></span>
                         <span style={{ fontSize: "11px", color: colors.textSecondary, fontWeight: "700" }}>
-                          {targetShop.rating && !isNaN(Number(targetShop.rating)) && Number(targetShop.rating) > 0 ? Number(targetShop.rating).toFixed(1) : "New"}
+                          {targetShop.rating && !isNaN(Number(targetShop.rating)) && Number(targetShop.rating) > 0 ? Number(targetShop.rating).toFixed(1) : "No reviews yet"}
                         </span>
                         {targetShop.reviews > 0 && (
                           <span style={{ fontSize: "10px", color: colors.textMuted }}>({targetShop.reviews})</span>
