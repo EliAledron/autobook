@@ -14,7 +14,7 @@ call npx cap sync android
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 REM Clear OneDrive ReparsePoint attributes on synced assets
-powershell -NoProfile -ExecutionPolicy Bypass -File clean-assets.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0clean-assets.ps1"
 
 REM Clean intermediates to avoid Windows/OneDrive file locks
 if exist "android\app\build\intermediates" (
