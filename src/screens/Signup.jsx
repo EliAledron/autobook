@@ -235,15 +235,20 @@ export default function Signup() {
       if (role === "Owner" || role === "Mechanic") setStep(2);
       else setStep(3);
     } catch (err) {
+      console.error("Google sign-up error:", err);
       if (err.code === "auth/popup-closed-by-user") {
         // user dismissed — do nothing
+      } else if (err.code === "auth/unauthorized-domain") {
+        setError(`This domain (${window.location.hostname}) is not authorized in Firebase. Please add "${window.location.hostname}" to Firebase Console > Authentication > Settings > Authorized domains.`);
+      } else if (err.code === "auth/popup-blocked") {
+        setError("The Google Sign-In popup was blocked by your browser. Please allow popups for this site and try again.");
       } else if (
         err.code === "auth/web-storage-unsupported" ||
         (err.message && err.message.toLowerCase().includes("sessionstorage"))
       ) {
         setError("Google sign-in needs browser storage to work. Please open this page in your browser's normal (non-private) mode, or enable cookies in your browser settings, then try again.");
       } else {
-        setError("Google sign-up failed. Please try again.");
+        setError(err.message || "Google sign-up failed. Please try again.");
       }
       setLoading(false);
     }
