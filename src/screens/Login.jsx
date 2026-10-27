@@ -67,9 +67,18 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    const trimmedEmail = (email || "").trim();
+    if (!trimmedEmail) {
+      setError("Please enter your email address.");
+      return;
+    }
+    if (!password) {
+      setError("Please enter your password.");
+      return;
+    }
     setLoading(true);
     try {
-      const { user } = await signInWithEmailAndPassword(auth, email, password);
+      const { user } = await signInWithEmailAndPassword(auth, trimmedEmail, password);
       await checkStatusAndNavigate(user.uid, navigate, setError);
     } catch (err) {
       const bad = ["auth/user-not-found", "auth/wrong-password", "auth/invalid-credential"];
