@@ -66,7 +66,7 @@ const keyframes = `
 import DesktopAdminUsers from "./desktop/DesktopAdminUsers";
 import { useUser } from "../UserContext";
 
-import { sendEmailNotification } from "../utils/notifications";
+import { sendApprovalEmailNotification, sendRejectionEmailNotification } from "../utils/notifications";
 export default function AdminUsers() {
   const { userProfile } = useUser();
   if (userProfile?.role?.toLowerCase() === "admin") return <DesktopAdminUsers />;
@@ -273,6 +273,19 @@ export default function AdminUsers() {
           createdAt: serverTimestamp(),
           type: "system"
         });
+
+        // Send Email Notification (Brevo)
+        const targetUser = users.find(u => u.id === id) || selected;
+        if (targetUser?.email) {
+          const userName = targetUser.displayName || targetUser.firstName || targetUser.name || "there";
+          if (status === "approved") {
+            sendApprovalEmailNotification(targetUser.email, userName, targetUser.role)
+              .catch(err => console.warn("Failed to send approval email:", err));
+          } else if (status === "rejected") {
+            sendRejectionEmailNotification(targetUser.email, userName, inputValue)
+              .catch(err => console.warn("Failed to send rejection email:", err));
+          }
+        }
       }
 
     } catch (err) {

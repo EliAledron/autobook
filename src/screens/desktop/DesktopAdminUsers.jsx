@@ -4,6 +4,7 @@ import { db } from "../../firebase";
 import { colors, ConfirmModal } from "../dashboardShared";
 import RoleBasedWrapper from "../../components/RoleBasedWrapper";
 import { Check, X, Ban, Trash2, Search, UserCheck, Eye, Archive } from "lucide-react";
+import { sendApprovalEmailNotification, sendRejectionEmailNotification } from "../../utils/notifications";
 
 const getUserActivityStatus = (lastActiveAt) => {
   if (!lastActiveAt) return { text: "No data", color: colors.textMuted, dot: colors.border };
@@ -138,6 +139,18 @@ export default function DesktopAdminUsers() {
                 createdAt: serverTimestamp(),
                 type: "system"
               });
+
+              // Send Email Notification (Brevo)
+              if (targetUser?.email) {
+                const userName = targetUser.displayName || targetUser.firstName || targetUser.name || "there";
+                if (status === "approved") {
+                  sendApprovalEmailNotification(targetUser.email, userName, targetUser.role)
+                    .catch(err => console.warn("Failed to send approval email:", err));
+                } else if (status === "rejected") {
+                  sendRejectionEmailNotification(targetUser.email, userName, inputValue)
+                    .catch(err => console.warn("Failed to send rejection email:", err));
+                }
+              }
             }
 
           } catch (e) {
