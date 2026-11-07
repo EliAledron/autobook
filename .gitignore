@@ -1,4 +1,6 @@
 node_modules/
+backend/node_modules/
+**/node_modules/
 /coverage
 /build
 .DS_Store
