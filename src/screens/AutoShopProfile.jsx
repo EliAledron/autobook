@@ -666,7 +666,7 @@ export default function AutoShopProfile() {
         {!isAdmin && (
           <div style={sh.topbar}>
             <BackButton onClick={isOwner ? () => navigate("/dashboard") : undefined} />
-            <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
+
           </div>
         )}
         <div style={{ padding: "4rem 2rem", textAlign: "center", color: colors.textSecondary }}>Loading shop details...</div>
@@ -683,7 +683,7 @@ export default function AutoShopProfile() {
           <div style={sh.topbar}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <BackButton onClick={isOwner ? () => navigate("/dashboard") : undefined} />
-              <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
+  
             </div>
           </div>
         )}
@@ -733,7 +733,7 @@ export default function AutoShopProfile() {
         <div style={sh.topbar}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <BackButton onClick={isOwner ? () => navigate("/dashboard") : undefined} />
-            <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
+
           </div>
         </div>
       )}

@@ -272,7 +272,7 @@ export default function Profile() {
       <div style={sh.topbar}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
           <BackButton />
-          <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
+
         </div>
         <button
           className="profile-edit-btn"

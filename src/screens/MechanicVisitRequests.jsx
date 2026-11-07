@@ -138,7 +138,7 @@ export default function MechanicVisitRequests() {
       <div style={sh.topbar}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <BackButton />
-          <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
+
         </div>
         {stats.active > 0 && (
           <div style={{ background: colors.danger, color: "#fff", fontSize: "11px", fontWeight: "700", borderRadius: "20px", padding: "4px 10px" }}>

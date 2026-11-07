@@ -487,7 +487,7 @@ export default function ShopFeed() {
       <div style={sh.topbar}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <BackButton />
-          <div style={sh.topbarLogo}>Auto<span style={sh.topbarAccent}>Book</span></div>
+
         </div>
       </div>
 
