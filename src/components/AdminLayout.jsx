@@ -6,7 +6,7 @@ import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { signOut } from "firebase/auth";
 import TopbarAvatar from "../screens/TopbarAvatar";
-import { Users, FileText, Wrench, AlertTriangle, MessageSquare, ShieldAlert, ClipboardList, LogOut, LayoutDashboard, Search, Bell, Store, LifeBuoy, Star } from "lucide-react";
+import { Users, FileText, Wrench, AlertTriangle, MessageSquare, ShieldAlert, ClipboardList, LogOut, LayoutDashboard, Bell, Store, LifeBuoy, Star } from "lucide-react";
 import { colors } from "../screens/dashboardShared";
 import { useUser } from "../UserContext";
 
@@ -104,11 +104,7 @@ export default function AdminLayout({ children }) {
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }}>
         
         {/* TOP NAV */}
-        <div style={{ height: "76px", background: "#fff", borderBottom: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px", flexShrink: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", color: colors.textSecondary }}>
-            <Search size={20} />
-            <input type="text" placeholder="Search..." style={{ border: "none", outline: "none", fontSize: "15px", background: "transparent", width: "300px", fontFamily: "inherit" }} />
-          </div>
+        <div style={{ height: "76px", background: "#fff", borderBottom: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "flex-end", padding: "0 32px", flexShrink: 0 }}>
           
           <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
             <div style={{ position: "relative" }}>
