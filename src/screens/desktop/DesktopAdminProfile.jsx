@@ -38,7 +38,7 @@ export default function DesktopAdminProfile() {
     <>
       <ErrorModal error={errorMsg} onClose={() => setErrorMsg("")} />
       <RoleBasedWrapper title="Admin Profile">
-      <div style={{ maxWidth: "800px", margin: "0 auto", padding: "32px" }}>
+      <div style={{ padding: "32px" }}>
         
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
           <div>
@@ -47,7 +47,7 @@ export default function DesktopAdminProfile() {
           </div>
         </div>
 
-        <div style={{ background: "#fff", borderRadius: "20px", border: `1px solid ${colors.border}`, padding: "32px", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
+        <div style={{ background: "#fff", borderRadius: "20px", border: `1px solid ${colors.border}`, padding: "32px", boxShadow: "0 2px 8px rgba(0,0,0,0.02)", maxWidth: "800px" }}>
           
           <div style={{ display: "flex", alignItems: "center", gap: "24px", marginBottom: "32px", paddingBottom: "32px", borderBottom: `1px solid ${colors.border}` }}>
             <div style={{ width: "80px", height: "80px", borderRadius: "20px", background: colors.navy, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px", fontWeight: "800" }}>

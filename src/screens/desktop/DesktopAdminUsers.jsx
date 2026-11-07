@@ -219,7 +219,7 @@ export default function DesktopAdminUsers() {
         onConfirm={confirmProps.onConfirm}
       />
       <RoleBasedWrapper title="User Approvals">
-      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "32px" }}>
+      <div style={{ padding: "32px" }}>
         
         {/* HEADER */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>

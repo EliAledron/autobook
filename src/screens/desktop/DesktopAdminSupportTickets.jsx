@@ -167,10 +167,10 @@ export default function DesktopAdminSupportTickets() {
       />
 
       <RoleBasedWrapper title="Support Tickets">
-        <div style={{ maxWidth: "1240px", margin: "0 auto", padding: "32px", fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ padding: "32px", fontFamily: "'Inter', sans-serif" }}>
           
           {/* HEADER */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "28px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "32px" }}>
             <div>
               <h1 style={{ fontSize: "28px", fontWeight: "800", color: colors.textPrimary, margin: "0 0 8px 0" }}>
                 Customer Support Tickets

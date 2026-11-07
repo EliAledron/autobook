@@ -150,9 +150,9 @@ export default function AdminDashboard({ user }) {
 
   return (
     <AdminLayout>
-      <div style={{ padding: "0 32px 32px" }}>
+      <div style={{ padding: "32px" }}>
         
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "32px", marginTop: "32px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "32px" }}>
           <div>
             <h1 style={{ fontSize: "28px", fontWeight: "800", color: colors.textPrimary, margin: "0 0 8px 0" }}>Overview</h1>
             <p style={{ margin: 0, color: colors.textSecondary, fontSize: "15px" }}>Welcome back, {firstName}. Here is what's happening across the platform today.</p>
