@@ -47,7 +47,7 @@ export default function DesktopAdminProfile() {
           </div>
         </div>
 
-        <div style={{ background: "#fff", borderRadius: "20px", border: `1px solid ${colors.border}`, padding: "32px", boxShadow: "0 2px 8px rgba(0,0,0,0.02)", maxWidth: "800px" }}>
+        <div style={{ background: "#fff", borderRadius: "20px", border: `1px solid ${colors.border}`, padding: "32px", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
           
           <div style={{ display: "flex", alignItems: "center", gap: "24px", marginBottom: "32px", paddingBottom: "32px", borderBottom: `1px solid ${colors.border}` }}>
             <div style={{ width: "80px", height: "80px", borderRadius: "20px", background: colors.navy, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px", fontWeight: "800" }}>
@@ -59,7 +59,7 @@ export default function DesktopAdminProfile() {
             </div>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "24px", maxWidth: "400px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "24px", maxWidth: "480px" }}>
             
             <div>
               <label style={{ display: "block", fontSize: "13px", fontWeight: "700", color: colors.textSecondary, marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Full Name</label>
