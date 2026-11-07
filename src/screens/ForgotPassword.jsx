@@ -36,10 +36,14 @@ export default function ForgotPassword() {
 
   return (
     <div style={s.page}>
-      <div style={s.topAccent} />
+      {/* Background with blur and navy gradient overlay matching Onboarding */}
+      <div style={s.bgImage} />
+      <div style={s.bgOverlay} />
+
       <div style={{ position: "absolute", top: 20, left: 10, zIndex: 10 }}>
         <BackButton variant="light" />
       </div>
+
       <div style={s.scroll}>
         <div style={s.header}>
           <div style={s.logoRing}>
@@ -63,10 +67,10 @@ export default function ForgotPassword() {
         {success && (
           <div style={s.errorOverlay}>
             <div style={s.errorModal}>
-              <div style={{...s.errorModalIcon, background: "#dcfce7"}}><CheckCircle size={24} color="#16a34a" /></div>
+              <div style={{ ...s.errorModalIcon, background: "#dcfce7" }}><CheckCircle size={24} color="#16a34a" /></div>
               <h3 style={s.errorModalTitle}>Check your email</h3>
               <p style={s.errorModalText}>We've sent you instructions to reset your password. Please check your inbox and spam folder.</p>
-              <button style={{...s.errorModalBtn, background: "#16a34a"}} onClick={() => navigate("/login")}>Back to Login</button>
+              <button style={{ ...s.errorModalBtn, background: "#16a34a" }} onClick={() => navigate("/login")}>Back to Login</button>
             </div>
           </div>
         )}
@@ -91,19 +95,92 @@ export default function ForgotPassword() {
             {loading ? "Sending..." : "Send Reset Link"}
           </button>
         </div>
+
+        <div style={s.switchRow}>
+          <span style={s.switchText}>Remember your password?</span>
+          <button style={s.switchBtn} onClick={() => navigate("/login")}>Log in</button>
+        </div>
       </div>
     </div>
   );
 }
 
 const s = {
-  page: { minHeight: "100vh", background: "#f5f7fa", display: "flex", flexDirection: "column", fontFamily: "'Inter', system-ui, -apple-system, sans-serif", position: "relative" },
-  topAccent: { position: "absolute", top: 0, left: 0, right: 0, height: "220px", background: "linear-gradient(160deg, #1a3a5c 0%, #2a5298 100%)", zIndex: 0, borderBottomLeftRadius: "32px", borderBottomRightRadius: "32px" },
-  scroll: { flex: 1, padding: "0 20px 40px", display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 1 },
-  header: { display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "52px", marginBottom: "24px" },
-  logoRing: { width: "80px", height: "80px", borderRadius: "50%", border: "3px solid rgba(70,233,255,0.8)", padding: "3px", background: "rgba(255,255,255,0.15)", marginBottom: "12px", overflow: "hidden" },
-  logo: { width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" },
-  appName: { fontSize: "22px", fontWeight: "700", color: "#fff", margin: "0 0 4px", letterSpacing: "0.5px" },
+  page: {
+    minHeight: "100vh",
+    background: "#0f2640",
+    display: "flex",
+    flexDirection: "column",
+    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+    position: "relative",
+    overflowX: "hidden",
+  },
+  bgImage: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    backgroundImage: "url('/autobook-bg.png')",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    filter: "blur(8px)",
+    transform: "scale(1.08)",
+    zIndex: 0,
+    pointerEvents: "none",
+  },
+  bgOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "linear-gradient(160deg, rgba(15,38,64,0.78), rgba(42,82,152,0.55))",
+    zIndex: 0,
+    pointerEvents: "none",
+  },
+  scroll: {
+    flex: 1,
+    padding: "0 20px 40px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    position: "relative",
+    zIndex: 1,
+  },
+  header: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    paddingTop: "52px",
+    marginBottom: "24px",
+  },
+  logoRing: {
+    width: "76px",
+    height: "76px",
+    borderRadius: "22px",
+    border: "2px solid rgba(70,233,255,0.7)",
+    padding: "4px",
+    background: "rgba(255,255,255,0.12)",
+    backdropFilter: "blur(8px)",
+    marginBottom: "12px",
+    overflow: "hidden",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logo: { width: "100%", height: "100%", objectFit: "contain", borderRadius: "18px" },
+  appName: {
+    fontSize: "26px",
+    fontWeight: "800",
+    color: "#fff",
+    margin: "0 0 4px",
+    letterSpacing: "-0.5px",
+    background: "linear-gradient(to right, #ffffff, #46e9ff)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+  },
   tagline: { fontSize: "14px", color: "rgba(255,255,255,0.75)", margin: 0 },
   errorOverlay: {
     position: "fixed",
@@ -161,9 +238,45 @@ const s = {
     cursor: "pointer",
     fontFamily: "inherit",
   },
-  card: { width: "100%", maxWidth: "400px", background: "#ffffff", borderRadius: "20px", padding: "24px 20px", boxSizing: "border-box", boxShadow: "0 4px 24px rgba(0,0,0,0.08)" },
+  card: {
+    width: "100%",
+    maxWidth: "400px",
+    background: "#ffffff",
+    borderRadius: "20px",
+    padding: "24px 20px",
+    boxSizing: "border-box",
+    boxShadow: "0 12px 36px rgba(0,0,0,0.25)",
+  },
   instructions: { fontSize: "14px", color: "#4b5563", marginBottom: "20px", lineHeight: "1.5", textAlign: "center" },
   label: { display: "block", fontSize: "12px", fontWeight: "600", color: "#6b7280", letterSpacing: "0.4px", textTransform: "uppercase", marginBottom: "6px" },
   input: { display: "block", width: "100%", padding: "13px 14px", fontSize: "15px", border: "1.5px solid #e5e7eb", borderRadius: "10px", outline: "none", background: "#f9fafb", color: "#111827", boxSizing: "border-box", marginBottom: "24px", appearance: "none", fontFamily: "inherit" },
   primaryBtn: { width: "100%", padding: "14px", background: "linear-gradient(135deg, #1a3a5c, #2a5298)", color: "#fff", fontSize: "15px", fontWeight: "600", border: "none", borderRadius: "12px", cursor: "pointer" },
+  switchRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    marginTop: "20px",
+    padding: "14px 20px",
+    background: "rgba(255, 255, 255, 0.12)",
+    border: "1px solid rgba(255, 255, 255, 0.2)",
+    backdropFilter: "blur(10px)",
+    borderRadius: "14px",
+    width: "100%",
+    maxWidth: "400px",
+    boxSizing: "border-box",
+    justifyContent: "center",
+    boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
+  },
+  switchText: { fontSize: "14px", color: "rgba(255,255,255,0.85)" },
+  switchBtn: {
+    fontSize: "14px",
+    fontWeight: "700",
+    color: "#46e9ff",
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    padding: 0,
+    textDecoration: "underline",
+    textUnderlineOffset: "3px",
+  },
 };
