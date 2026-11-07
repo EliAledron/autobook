@@ -333,8 +333,8 @@ export default function Onboarding() {
             transform: drawerOpen ? "translateY(0%)" : "translateY(100%)",
           }}
         >
-          {drawerScreen === "signup" && <SignupForm goBack={closeDrawer} navigate={navigate} />}
-          {drawerScreen === "login" && <LoginForm goBack={closeDrawer} navigate={navigate} />}
+          {drawerScreen === "signup" && <SignupForm goBack={closeDrawer} navigate={navigate} onSwitch={() => setDrawerScreen("login")} />}
+          {drawerScreen === "login" && <LoginForm goBack={closeDrawer} navigate={navigate} onSwitch={() => setDrawerScreen("signup")} />}
         </div>
       </div>
     </>
@@ -392,7 +392,7 @@ function LandingContent({ onSignup, onLogin }) {
 }
 
 /* ─── Signup Form ─────────────────────────────────────────────── */
-function SignupForm({ goBack, navigate }) {
+function SignupForm({ goBack, navigate, onSwitch }) {
   const [step, setStep] = useState(1);
   const [firstName, setFirstName] = useState("");
   const [middleName, setMiddleName] = useState("");
@@ -607,6 +607,9 @@ function SignupForm({ goBack, navigate }) {
 
   return (
     <div style={s.formPage}>
+      {/* Background with blur and navy gradient overlay */}
+      <div style={s.bgImage} />
+      <div style={s.bgOverlay} />
       {/* Header stripe */}
       <div style={s.formHeader}>
         <div style={s.formLogoWrap}>
@@ -887,13 +890,20 @@ function SignupForm({ goBack, navigate }) {
             </>
           ) : null}
         </div>
+
+        {step === 1 && onSwitch && (
+          <div style={s.switchRow}>
+            <span style={s.switchText}>Already have an account?</span>
+            <button style={s.switchBtn} onClick={onSwitch}>Log in</button>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 /* ─── Login Form ──────────────────────────────────────────────── */
-function LoginForm({ goBack, navigate }) {
+function LoginForm({ goBack, navigate, onSwitch }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -942,6 +952,9 @@ function LoginForm({ goBack, navigate }) {
 
   return (
     <div style={s.formPage}>
+      {/* Background with blur and navy gradient overlay */}
+      <div style={s.bgImage} />
+      <div style={s.bgOverlay} />
       {/* Header stripe */}
       <div style={s.formHeader}>
         <div style={s.formLogoWrap}>
@@ -994,6 +1007,13 @@ function LoginForm({ goBack, navigate }) {
             <GoogleIcon />Continue with Google
           </button>
         </div>
+
+        {onSwitch && (
+          <div style={s.switchRow}>
+            <span style={s.switchText}>Don't have an account?</span>
+            <button style={s.switchBtn} onClick={onSwitch}>Create account</button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1012,22 +1032,22 @@ const s = {
 
   /* Drawer — slides up from bottom */
   drawer: {
-  position: "absolute",
-  left: 0,
-  right: 0,
-  bottom: 0,
-  willChange: "transform",
-  height: "100%",
-  background: "#f5f7fa",
-  borderRadius: "28px 28px 0 0",
-  overflow: "hidden",
-  zIndex: 20,
-  transform: "translateY(100%)",
-  transition: "transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)",
-  display: "flex",
-  flexDirection: "column",
-  boxShadow: "0 -10px 40px rgba(0,0,0,0.25)", // 🔥 depth
-},
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    willChange: "transform",
+    height: "100%",
+    background: "#0f2640",
+    borderRadius: "28px 28px 0 0",
+    overflow: "hidden",
+    zIndex: 20,
+    transform: "translateY(100%)",
+    transition: "transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)",
+    display: "flex",
+    flexDirection: "column",
+    boxShadow: "0 -10px 40px rgba(0,0,0,0.5)",
+  },
 
   /* ── Landing ── */
   landing: {
@@ -1190,21 +1210,24 @@ backdrop: {
 
   /* ── Form pages (inside white layer) ── */
   formPage: {
-  height: "100%",
-  display: "flex",
-  flexDirection: "column",
-  background: "#f5f7fa",
-},
+    height: "100%",
+    display: "flex",
+    flexDirection: "column",
+    position: "relative",
+    overflow: "hidden",
+    background: "#0f2640",
+  },
   formHeader: {
     display: "flex",
     alignItems: "center",
     gap: "14px",
-    background: "linear-gradient(160deg, #0f2640 0%, #2a5298 100%)",
-    padding: "32px 20px 24px",
-    borderBottomLeftRadius: "28px",
-    borderBottomRightRadius: "28px",
+    background: "rgba(15, 38, 64, 0.75)",
+    backdropFilter: "blur(12px)",
+    borderBottom: "1px solid rgba(255, 255, 255, 0.12)",
+    padding: "24px 20px 20px",
     position: "relative",
-    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+    zIndex: 3,
+    boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
   },
   backBtn: {
     background: "rgba(255,255,255,0.15)",
@@ -1314,7 +1337,9 @@ backdrop: {
     borderRadius: "20px",
     padding: "24px 20px",
     boxSizing: "border-box",
-    boxShadow: "0 4px 24px rgba(0,0,0,0.07)",
+    boxShadow: "0 12px 36px rgba(0,0,0,0.25)",
+    position: "relative",
+    zIndex: 2,
   },
   label: {
     display: "block",
@@ -1365,6 +1390,36 @@ backdrop: {
   divider: { display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" },
   dividerLine: { flex: 1, height: "1px", background: "#e5e7eb" },
   dividerLabel: { fontSize: "13px", color: "#9ca3af" },
+  switchRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    marginTop: "20px",
+    padding: "14px 20px",
+    background: "rgba(255, 255, 255, 0.12)",
+    border: "1px solid rgba(255, 255, 255, 0.2)",
+    backdropFilter: "blur(10px)",
+    borderRadius: "14px",
+    width: "100%",
+    maxWidth: "440px",
+    boxSizing: "border-box",
+    justifyContent: "center",
+    boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
+    position: "relative",
+    zIndex: 2,
+  },
+  switchText: { fontSize: "14px", color: "rgba(255,255,255,0.85)", margin: 0 },
+  switchBtn: {
+    fontSize: "14px",
+    fontWeight: "700",
+    color: "#46e9ff",
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    padding: 0,
+    textDecoration: "underline",
+    textUnderlineOffset: "3px",
+  },
   googleBtn: {
     width: "100%",
     padding: "13px 14px",
