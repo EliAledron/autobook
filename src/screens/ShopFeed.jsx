@@ -504,7 +504,7 @@ export default function ShopFeed() {
           <SharedSearchBar
             value={search}
             onChange={setSearch}
-            placeholder="Search by services, keywords, or shop name..."
+            placeholder="Search"
           />
           <SharedFilterSelect
             value={minRating}
