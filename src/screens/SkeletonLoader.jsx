@@ -301,46 +301,62 @@ export default function SkeletonLoader({ count = 3, type = "card" }) {
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // 4. SHOPS & MECHANICS (Pixel-accurate to FindMechanic.jsx & ShopSelect.jsx)
+  // 4. SHOPS & MECHANICS (Pixel-accurate to FindMechanic.jsx)
   // ─────────────────────────────────────────────────────────────────────────────
   if (type === "shops" || type === "shop") {
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         <style>{skeletonKeyframes}</style>
         {Array.from({ length: count }).map((_, i) => (
           <div key={i} style={{
             background: colors.white,
-            borderRadius: "20px",
+            borderRadius: "16px",
             border: `1px solid ${colors.border}`,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
-            padding: "20px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+            padding: "12px 14px",
             boxSizing: "border-box"
           }}>
-            {/* Header: 56x56 icon box + Title & Ratings */}
-            <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "1.25rem" }}>
-              <div style={lightShimmer("56px", "56px", "16px")} />
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
-                <div style={lightShimmer("16px", "60%", "6px")} />
-                <div style={lightShimmer("13px", "35%", "4px")} />
-                <div style={lightShimmer("12px", "45%", "4px")} />
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div style={lightShimmer("46px", "46px", "12px")} />
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
+                <div style={lightShimmer("15px", "55%", "6px")} />
+                <div style={lightShimmer("12px", "30%", "4px")} />
+                <div style={lightShimmer("12px", "40%", "4px")} />
+              </div>
+              <div style={lightShimmer("30px", "30px", "50%")} />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // 4b. SHOP SELECT (Pixel-accurate to ShopSelect.jsx)
+  if (type === "shop-select") {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <style>{skeletonKeyframes}</style>
+        {Array.from({ length: count }).map((_, i) => (
+          <div key={i} style={{
+            background: colors.white,
+            borderRadius: "16px",
+            border: `1px solid ${colors.border}`,
+            boxShadow: "0 2px 10px rgba(0,0,0,0.04)",
+            padding: "14px 16px",
+            boxSizing: "border-box"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
+              <div style={lightShimmer("48px", "48px", "12px")} />
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
+                <div style={lightShimmer("15px", "55%", "6px")} />
+                <div style={lightShimmer("12px", "30%", "4px")} />
+                <div style={lightShimmer("12px", "40%", "4px")} />
               </div>
             </div>
-
-            {/* Address row with map pin */}
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-              <div style={lightShimmer("14px", "14px", "3px")} />
-              <div style={lightShimmer("12px", "75%", "4px")} />
+            <div style={{ display: "flex", gap: "8px" }}>
+              <div style={lightShimmer("34px", "50%", "12px")} />
+              <div style={lightShimmer("34px", "50%", "12px")} />
             </div>
-
-            {/* Service Tag Pills */}
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
-              <div style={lightShimmer("26px", "80px", "20px")} />
-              <div style={lightShimmer("26px", "95px", "20px")} />
-              <div style={lightShimmer("26px", "70px", "20px")} />
-            </div>
-
-            {/* Action Button */}
-            <div style={lightShimmer("42px", "100%", "12px")} />
           </div>
         ))}
       </div>

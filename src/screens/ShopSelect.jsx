@@ -138,16 +138,16 @@ export default function ShopSelect() {
       </div>
 
       <div style={sh.content} className="stagger-slide-up">
-        <div style={{ ...sh.sectionLabel, fontSize: "13px", color: colors.textPrimary, letterSpacing: "0.5px", marginBottom: "1rem" }}>Available shops</div>
+        <div style={{ ...sh.sectionLabel, fontSize: "13px", color: colors.textPrimary, letterSpacing: "0.5px", marginBottom: "0.5rem" }}>Available shops</div>
 
         {/* SEARCH & FILTER */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "1.5rem" }}>
-          <div style={{ display: "flex", gap: "10px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "1rem" }}>
+          <div style={{ display: "flex", gap: "8px" }}>
             <button 
               onClick={() => setShowNeedsModal(true)}
-              style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", border: "none", borderRadius: "24px", padding: "14px", fontWeight: "700", fontSize: "14px", cursor: "pointer", boxShadow: "0 4px 12px rgba(26,58,92,0.15)" }}
+              style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, color: "#fff", border: "none", borderRadius: "20px", padding: "11px 14px", fontWeight: "700", fontSize: "13px", cursor: "pointer", boxShadow: "0 4px 12px rgba(26,58,92,0.15)" }}
             >
-              <Sparkles size={16} /> Smart Match
+              <Sparkles size={15} /> Smart Match
             </button>
             <SharedFilterSelect
               value={minRating}
@@ -169,7 +169,7 @@ export default function ShopSelect() {
         </div>
 
         {loading ? (
-          <SkeletonLoader count={3} type="shops" />
+          <SkeletonLoader count={3} type="shop-select" />
         ) : filteredShops.length === 0 ? (
           <EmptyState
             icon={<Store size={48} />}
@@ -182,46 +182,46 @@ export default function ShopSelect() {
               key={shop.id}
               style={{
                 background: colors.white,
-                borderRadius: "20px",
+                borderRadius: "16px",
                 border: `1px solid ${colors.border}`,
-                boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
-                padding: "20px",
-                marginBottom: "1.25rem",
+                boxShadow: "0 2px 10px rgba(0,0,0,0.04)",
+                padding: "14px 16px",
+                marginBottom: "10px",
               }}
             >
               {/* Shop header */}
-              <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "1.25rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
                 <div style={{
-                  width: "56px", height: "56px", borderRadius: "16px",
+                  width: "48px", height: "48px", borderRadius: "12px",
                   background: colors.infoBg, display: "flex", alignItems: "center",
-                  justifyContent: "center", color: colors.blue, fontSize: "26px", flexShrink: 0,
+                  justifyContent: "center", color: colors.blue, fontSize: "24px", flexShrink: 0,
                 }}>
-                  {shop.icon && shop.icon !== "store" ? shop.icon : <Store size={26} />}
+                  {shop.icon && shop.icon !== "store" ? shop.icon : <Store size={24} />}
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: "15px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {shop.name}
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-                    <span style={{ color: shop.rating > 0 ? "#f59e0b" : "#9ca3af", fontSize: "14px" }}><Star fill={shop.rating > 0 ? "currentColor" : "none"} size={14} /></span>
-                    <span style={{ fontSize: "13px", fontWeight: shop.rating > 0 ? "700" : "500", color: shop.rating > 0 ? colors.textPrimary : colors.textMuted }}>{shop.rating && !isNaN(Number(shop.rating)) && Number(shop.rating) > 0 ? Number(shop.rating).toFixed(1) : "No reviews yet"}</span>
-                    {shop.reviews > 0 && <span style={{ fontSize: "12px", color: colors.textMuted }}>({shop.reviews} review{shop.reviews !== 1 ? 's' : ''})</span>}
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px" }}>
+                    <span style={{ color: shop.rating > 0 ? "#f59e0b" : "#9ca3af", fontSize: "13px", display: "inline-flex", alignItems: "center" }}><Star fill={shop.rating > 0 ? "currentColor" : "none"} size={13} /></span>
+                    <span style={{ fontSize: "12px", fontWeight: shop.rating > 0 ? "700" : "500", color: shop.rating > 0 ? colors.textPrimary : colors.textMuted }}>{shop.rating && !isNaN(Number(shop.rating)) && Number(shop.rating) > 0 ? Number(shop.rating).toFixed(1) : "No reviews yet"}</span>
+                    {shop.reviews > 0 && <span style={{ fontSize: "11px", color: colors.textMuted }}>({shop.reviews} review{shop.reviews !== 1 ? 's' : ''})</span>}
                   </div>
-                  <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>{shop.tagline || "Quality auto services"}</div>
+                  <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "500", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shop.tagline || "Quality auto services"}</div>
                 </div>
               </div>
 
               {/* CTA */}
-              <div style={{ display: "flex", gap: "10px", marginTop: "1.25rem" }}>
+              <div style={{ display: "flex", gap: "8px" }}>
                 <button
                   onClick={(e) => { e.stopPropagation(); navigate("/customer/shop-profile", { state: { shopId: shop.id } }); }}
-                  style={{ flex: 1, padding: "14px", background: colors.bg, border: `1px solid ${colors.border}`, borderRadius: "14px", fontSize: "14px", fontWeight: "700", color: colors.textSecondary, cursor: "pointer" }}
+                  style={{ flex: 1, padding: "10px", background: colors.bg, border: `1px solid ${colors.border}`, borderRadius: "12px", fontSize: "13px", fontWeight: "700", color: colors.textSecondary, cursor: "pointer" }}
                 >
                   View Profile
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); navigate("/customer/book-service", { state: { shop, prefilledService: location.state?.prefilledService } }); }}
-                  style={{ flex: 1, padding: "14px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, border: "none", borderRadius: "14px", fontSize: "14px", fontWeight: "800", color: "#fff", cursor: "pointer", boxShadow: "0 4px 12px rgba(26,58,92,0.2)" }}
+                  style={{ flex: 1, padding: "10px", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, border: "none", borderRadius: "12px", fontSize: "13px", fontWeight: "800", color: "#fff", cursor: "pointer", boxShadow: "0 4px 12px rgba(26,58,92,0.2)" }}
                 >
                   Book Now
                 </button>

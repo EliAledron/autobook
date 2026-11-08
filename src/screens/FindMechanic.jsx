@@ -187,18 +187,18 @@ export default function FindMechanic() {
       </div>
 
       <div style={sh.content} className="stagger-slide-up">
-        <div style={{ ...sh.sectionLabel, fontSize: "13px", color: colors.textPrimary, letterSpacing: "0.5px", marginBottom: "1rem" }}>Available shops</div>
+        <div style={{ ...sh.sectionLabel, fontSize: "13px", color: colors.textPrimary, letterSpacing: "0.5px", marginBottom: "0.5rem" }}>Available shops</div>
 
         {/* SEARCH & FILTER */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "1.5rem" }}>
-          <div style={{ display: "flex", gap: "10px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "1rem" }}>
+          <div style={{ display: "flex", gap: "8px" }}>
             <CustomMultiSelectDropdown
               values={selectedServices}
               onChange={setSelectedServices}
               options={STANDARD_SERVICES.map(s => ({ value: s, label: s }))}
               placeholder="Filter by Services..."
               searchPlaceholder="Search services..."
-              style={{ flex: 1, padding: "14px 36px 14px 16px", borderRadius: "24px", border: "1px solid transparent", backgroundColor: "#f1f5f9", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)" }}
+              style={{ flex: 1, padding: "11px 34px 11px 16px", borderRadius: "20px", border: "1px solid transparent", backgroundColor: "#f1f5f9", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)" }}
             />
             <SharedFilterSelect
               value={minRating}
@@ -209,7 +209,7 @@ export default function FindMechanic() {
                 { label: "4.0+ Stars", value: 4.0 },
                 { label: "3.0+ Stars", value: 3.0 },
               ]}
-              style={{ width: "140px" }}
+              style={{ width: "135px" }}
             />
           </div>
           <SharedSearchBar
@@ -220,7 +220,7 @@ export default function FindMechanic() {
         </div>
 
         {loadingShops ? (
-          <SkeletonLoader count={3} type="shops" />
+          <SkeletonLoader count={4} type="shops" />
         ) : filteredShops.length === 0 ? (
           <div style={{ padding: "40px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>{search || minRating > 0 ? "No shops match your search criteria." : "No shops available right now."}</div>
         ) : (
@@ -230,31 +230,31 @@ export default function FindMechanic() {
               onClick={() => { setSelected(shop); setRequestSent(false); setRequestAddress(""); setRequestNote(""); }}
               style={{
                 background: colors.white,
-                borderRadius: "20px",
+                borderRadius: "16px",
                 border: `1px solid ${selected?.id === shop.id ? colors.blue : colors.border}`,
                 cursor: "pointer",
-                boxShadow: selected?.id === shop.id ? `0 8px 24px ${colors.blue}30` : "0 4px 20px rgba(0,0,0,0.05)",
-                padding: "20px",
-                marginBottom: "1.25rem",
+                boxShadow: selected?.id === shop.id ? `0 6px 20px ${colors.blue}25` : "0 2px 8px rgba(0,0,0,0.04)",
+                padding: "12px 14px",
+                marginBottom: "10px",
                 transition: "all 0.2s",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "1.25rem" }}>
-                <div style={{ width: "56px", height: "56px", borderRadius: "16px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.blue, flexShrink: 0, fontSize: "26px" }}>
-                  {shop.icon && shop.icon !== "store" ? shop.icon : <Store size={26} />}
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: 0 }}>
+                <div style={{ width: "46px", height: "46px", borderRadius: "12px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.blue, flexShrink: 0, fontSize: "22px" }}>
+                  {shop.icon && shop.icon !== "store" ? shop.icon : <Store size={22} />}
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px" }}>{shop.name}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-                    <span style={{ color: shop.rating > 0 ? "#f59e0b" : "#9ca3af", display: "inline-flex", alignItems: "center" }}><Star fill={shop.rating > 0 ? "currentColor" : "none"} size={14} /></span>
-                    <span style={{ fontSize: "13px", fontWeight: shop.rating > 0 ? "700" : "500", color: shop.rating > 0 ? colors.textPrimary : colors.textMuted }}>{shop.rating && !isNaN(Number(shop.rating)) && Number(shop.rating) > 0 ? Number(shop.rating).toFixed(1) : "No reviews yet"}</span>
-                    {shop.reviews > 0 && <span style={{ fontSize: "12px", color: colors.textMuted }}>({shop.reviews} review{shop.reviews !== 1 ? 's' : ''})</span>}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: "15px", fontWeight: "800", color: colors.textPrimary, marginBottom: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shop.name}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px" }}>
+                    <span style={{ color: shop.rating > 0 ? "#f59e0b" : "#9ca3af", display: "inline-flex", alignItems: "center" }}><Star fill={shop.rating > 0 ? "currentColor" : "none"} size={13} /></span>
+                    <span style={{ fontSize: "12px", fontWeight: shop.rating > 0 ? "700" : "500", color: shop.rating > 0 ? colors.textPrimary : colors.textMuted }}>{shop.rating && !isNaN(Number(shop.rating)) && Number(shop.rating) > 0 ? Number(shop.rating).toFixed(1) : "No reviews yet"}</span>
+                    {shop.reviews > 0 && <span style={{ fontSize: "11px", color: colors.textMuted }}>({shop.reviews} review{shop.reviews !== 1 ? 's' : ''})</span>}
                   </div>
-                  <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>{shop.tagline || "Quality auto services"}</div>
+                  <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "500", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shop.tagline || "Quality auto services"}</div>
                 </div>
                 {selected?.id === shop.id
-                  ? <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "16px", fontWeight: "700" }}>✓</div>
-                  : <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.textSecondary, fontSize: "18px", fontWeight: "700" }}>›</div>
+                  ? <div style={{ width: "30px", height: "30px", borderRadius: "50%", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "14px", fontWeight: "700", flexShrink: 0 }}>✓</div>
+                  : <div style={{ width: "30px", height: "30px", borderRadius: "50%", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.textSecondary, fontSize: "16px", fontWeight: "700", flexShrink: 0 }}>›</div>
                 }
               </div>
             </div>
