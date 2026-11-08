@@ -58,7 +58,7 @@ export default function MyVehicles() {
   };
 
   const handlePreSubmit = () => {
-    if (!form.make.trim() || !form.model.trim()) { setError("Make and model are required."); return; }
+    if (!form.make.trim() || !form.model.trim()) { setError("Car brand and model are required."); return; }
     if (!form.plate.trim()) { setError("Plate number is required."); return; }
     if (!form.permitURL && !form.permitFile) { setError("Car permit (Proof of ownership) is required."); return; }
     setError("");
@@ -255,7 +255,7 @@ export default function MyVehicles() {
               
               <div style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "11px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Make</div>
+                  <div style={{ fontSize: "11px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Car Brand</div>
                   <input style={{ ...inputStyle, marginBottom: 0 }} placeholder="e.g. Toyota" value={form.make} onChange={(e) => setForm((f) => ({ ...f, make: e.target.value }))} />
                 </div>
                 <div style={{ flex: 1 }}>

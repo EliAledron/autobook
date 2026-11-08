@@ -31,7 +31,7 @@ const FAQ_LIST = [
   {
     q: "How do I register or update my vehicles?",
     category: "Vehicles",
-    a: "Tap 'My Vehicles' from the dashboard. You can add new vehicles by specifying the make, model, year, and plate number, as well as manage your existing car profiles."
+    a: "Tap 'My Vehicles' from the dashboard. You can add new vehicles by specifying the car brand, model, year, and plate number, as well as manage your existing car profiles."
   },
   {
     q: "What should I do if a shop doesn't respond or does poor work?",

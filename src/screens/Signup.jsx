@@ -315,7 +315,7 @@ export default function Signup() {
     e.preventDefault();
     setError("");
     if (!licenseFile) return setError("Driver's license is required.");
-    if (!vehicleMake.trim() || !vehicleModel.trim()) return setError("Vehicle make and model are required.");
+    if (!vehicleMake.trim() || !vehicleModel.trim()) return setError("Car brand and model are required.");
     if (!vehiclePlate.trim()) return setError("Vehicle plate number is required.");
 
     setLoading(true);
@@ -710,7 +710,7 @@ export default function Signup() {
                 }
               </div>
 
-              <label style={s.label}>Vehicle Make *</label>
+              <label style={s.label}>Car Brand *</label>
               <input type="text" placeholder="e.g. Toyota" value={vehicleMake} onChange={(e) => setVehicleMake(e.target.value)} style={s.input} required />
 
               <label style={s.label}>Vehicle Model *</label>

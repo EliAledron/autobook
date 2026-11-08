@@ -519,7 +519,7 @@ function SignupForm({ goBack, navigate, onSwitch }) {
     e.preventDefault();
     setError("");
     if (!licenseFile) return setError("Driver's license is required.");
-    if (!vehicleMake.trim() || !vehicleModel.trim()) return setError("Vehicle make and model are required.");
+    if (!vehicleMake.trim() || !vehicleModel.trim()) return setError("Car brand and model are required.");
     if (!vehiclePlate.trim()) return setError("Vehicle plate number is required.");
 
     setLoading(true);
@@ -802,15 +802,15 @@ function SignupForm({ goBack, navigate, onSwitch }) {
                 }
               </div>
 
-              <label style={s.label}>Vehicle Make *</label>
+              <label style={s.label}>Car Brand *</label>
               <CustomDropdown
                 value={vehicleMake}
                 onChange={(val) => { setVehicleMake(val); setVehicleModel(""); }}
                 options={[
-                  { value: "", label: "Select Make" },
+                  { value: "", label: "Select Car Brand" },
                   ...Object.keys(CAR_BRANDS_AND_MODELS).sort().map(make => ({ value: make, label: make }))
                 ]}
-                placeholder="Select Make"
+                placeholder="Select Car Brand"
                 style={{ ...s.input, backgroundColor: '#f9fafb', padding: "14px 36px 14px 16px", borderRadius: "14px" }}
               />
 
