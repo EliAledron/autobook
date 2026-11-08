@@ -432,7 +432,7 @@ export default function MechanicRequests() {
         <div style={sh.sectionLabel}>Requests ({filtered.length})</div>
         <div style={sh.card}>
           {loading ? (
-            <SkeletonLoader count={3} type="card" />
+            <SkeletonLoader count={3} type="rows" />
           ) : filtered.length === 0 ? (
             <EmptyState
               icon={<MapPin size={48} color={colors.warning} />}

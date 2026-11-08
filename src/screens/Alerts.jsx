@@ -141,7 +141,7 @@ export default function Alerts() {
 
       <div style={sh.content} className="stagger-slide-up">
         {loading ? (
-          <SkeletonLoader count={3} type="card" />
+          <SkeletonLoader count={4} type="alerts" />
         ) : notifications.length === 0 ? (
           <EmptyState
             icon={<Bell size={48} />}

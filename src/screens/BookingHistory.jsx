@@ -496,7 +496,7 @@ export default function BookingHistory() {
         {/* BOOKINGS LIST */}
         <div style={{ ...sh.sectionLabel, fontSize: "13px", color: colors.textPrimary, letterSpacing: "0.5px" }}>Bookings ({filtered.length})</div>
         {loading ? (
-          <SkeletonLoader count={3} type="card" />
+          <SkeletonLoader count={3} type="history" />
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={<ClipboardList size={48} />}

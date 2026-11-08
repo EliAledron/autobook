@@ -72,7 +72,7 @@ export default function CustomerReviews() {
 
       <div style={sh.content} className="stagger-slide-up">
         {loading ? (
-          <SkeletonLoader count={3} type="card" />
+          <SkeletonLoader count={3} type="reviews" />
         ) : reviews.length === 0 ? (
           <EmptyState
             icon={<Star fill="currentColor" size={48} />}

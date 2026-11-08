@@ -169,7 +169,7 @@ export default function ShopSelect() {
         </div>
 
         {loading ? (
-          <SkeletonLoader count={3} type="card" />
+          <SkeletonLoader count={3} type="shops" />
         ) : filteredShops.length === 0 ? (
           <EmptyState
             icon={<Store size={48} />}

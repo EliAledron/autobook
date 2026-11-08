@@ -214,7 +214,7 @@ export default function BookService() {
     transition: "border-color 0.2s, box-shadow 0.2s",
   };
 
-  if (loading) return <SkeletonLoader count={3} type="card" />;
+  if (loading) return <SkeletonLoader type="booking-form" />;
 
   if (done) return (
     <div style={{ ...sh.page, justifyContent: "center", alignItems: "center", display: "flex", flexDirection: "column", padding: "2rem" }}>

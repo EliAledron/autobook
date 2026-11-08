@@ -246,7 +246,7 @@ export default function MechanicBookings() {
         {/* LIST */}
         <div style={sh.card}>
           {loading ? (
-            <SkeletonLoader count={3} type="card" />
+            <SkeletonLoader count={3} type="rows" />
           ) : filtered.length === 0 ? (
             <EmptyState icon={<Wrench size={48} color={colors.info} />} title={`No ${activeTab !== "All" ? activeTab.toLowerCase() + " " : ""}bookings`} subtitle="No assigned bookings match this filter." />
           ) : (

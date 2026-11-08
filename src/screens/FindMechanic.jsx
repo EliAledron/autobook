@@ -220,7 +220,7 @@ export default function FindMechanic() {
         </div>
 
         {loadingShops ? (
-          <SkeletonLoader count={3} type="card" />
+          <SkeletonLoader count={3} type="shops" />
         ) : filteredShops.length === 0 ? (
           <div style={{ padding: "40px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>{search || minRating > 0 ? "No shops match your search criteria." : "No shops available right now."}</div>
         ) : (

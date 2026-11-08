@@ -670,7 +670,7 @@ export default function AutoShopProfile() {
 
           </div>
         )}
-        <SkeletonLoader count={3} type="card" />
+        <SkeletonLoader type="shop-profile" />
       </div>
     );
     if (isAdmin) return <DesktopOnly><AdminLayout>{content}</AdminLayout></DesktopOnly>;

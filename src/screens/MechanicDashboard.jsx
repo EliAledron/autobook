@@ -103,7 +103,7 @@ export default function MechanicDashboard() {
   if (loading) {
     return (
       <div style={{ minHeight: "100vh", background: colors.bg, paddingBottom: "80px" }}>
-        <SkeletonLoader type="dashboard" />
+        <SkeletonLoader type="mechanic-dashboard" />
       </div>
     );
   }

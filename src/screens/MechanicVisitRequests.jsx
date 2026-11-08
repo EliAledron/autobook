@@ -193,7 +193,7 @@ export default function MechanicVisitRequests() {
         <div style={{ fontSize: "11px", fontWeight: "700", color: colors.textMuted, letterSpacing: "0.7px", textTransform: "uppercase", marginBottom: "0.6rem" }}>Requests ({filtered.length})</div>
         <div style={sh.card}>
           {loading ? (
-            <SkeletonLoader count={3} type="card" />
+            <SkeletonLoader count={3} type="rows" />
           ) : filtered.length === 0 ? (
             <EmptyState icon={<MapPin size={48} color={colors.warning} />} title="No requests" subtitle="Visit requests assigned to you by owners will appear here." />
           ) : (

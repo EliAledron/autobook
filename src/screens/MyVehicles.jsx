@@ -168,7 +168,7 @@ export default function MyVehicles() {
 
       <div style={sh.content} className="stagger-slide-up">
         {loading ? (
-          <SkeletonLoader count={2} type="card" />
+          <SkeletonLoader count={2} type="vehicles" />
         ) : showForm ? (
           <>
             <div style={{ ...sh.sectionLabel, fontSize: "13px", color: colors.textPrimary, letterSpacing: "0.5px" }}>{editingId ? "Edit vehicle" : "Add new vehicle"}</div>
