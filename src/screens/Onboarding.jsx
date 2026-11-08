@@ -445,6 +445,7 @@ function SignupForm({ goBack, navigate, onSwitch }) {
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, new GoogleAuthProvider());
+      sessionStorage.setItem("justLoggedIn", "true");
       const user = result.user;
       const snap = await getDoc(doc(db, "users", user.uid));
       if (snap.exists()) { navigate("/pending"); return; }
@@ -915,6 +916,7 @@ function LoginForm({ goBack, navigate, onSwitch }) {
     setLoading(true);
     try {
       const { user } = await signInWithEmailAndPassword(auth, email, password);
+      sessionStorage.setItem("justLoggedIn", "true");
       await checkStatusAndNavigate(user.uid, navigate, setError);
     } catch (err) {
       const bad = ["auth/user-not-found", "auth/wrong-password", "auth/invalid-credential"];

@@ -79,6 +79,7 @@ export default function Login() {
     setLoading(true);
     try {
       const { user } = await signInWithEmailAndPassword(auth, trimmedEmail, password);
+      sessionStorage.setItem("justLoggedIn", "true");
       await checkStatusAndNavigate(user.uid, navigate, setError);
     } catch (err) {
       const bad = ["auth/user-not-found", "auth/wrong-password", "auth/invalid-credential"];
@@ -93,6 +94,7 @@ export default function Login() {
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, new GoogleAuthProvider());
+      sessionStorage.setItem("justLoggedIn", "true");
       await checkStatusAndNavigate(result.user.uid, navigate, setError);
     } catch (err) {
       console.error("Google sign-in error:", err);

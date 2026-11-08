@@ -4,6 +4,7 @@ import { auth, db } from "../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc, collection, query, where, getDocs, updateDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import CarLoader from "./CarLoader";
+import SkeletonLoader from "./SkeletonLoader";
 import CustomerDashboard from "./CustomerDashboard";
 import OwnerDashboard from "./OwnerDashboard";
 import MechanicDashboard from "./MechanicDashboard";
@@ -23,7 +24,21 @@ function resolveName(a, b) {
 export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  // CarLoader only shows up when the user has just logged in to their account
+  const [showLoginLoader, setShowLoginLoader] = useState(() => {
+    return sessionStorage.getItem("justLoggedIn") === "true";
+  });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (showLoginLoader) {
+      sessionStorage.removeItem("justLoggedIn");
+      const timer = setTimeout(() => {
+        setShowLoginLoader(false);
+      }, 1800);
+      return () => clearTimeout(timer);
+    }
+  }, [showLoginLoader]);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -162,7 +177,19 @@ export default function Dashboard() {
     navigate("/");
   };
 
-  if (loading) return <CarLoader text="Loading your dashboard" />;
+  // 1. Only show full-screen animated CarLoader when user has just logged in
+  if (showLoginLoader) {
+    return <CarLoader text="Logging you in to AutoBook" />;
+  }
+
+  // 2. Normal screen transition: render SkeletonLoader instead of full-screen car animation
+  if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#f8fafc", paddingBottom: "80px" }}>
+        <SkeletonLoader type="dashboard" />
+      </div>
+    );
+  }
 
   const props = { user, onLogout: handleLogout };
   const role = user?.role?.toLowerCase();

@@ -6,6 +6,7 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, s
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { sh, colors, EmptyState, ErrorModal } from "./dashboardShared";
 import BackButton from "../components/BackButton";
+import SkeletonLoader from "./SkeletonLoader";
 import { Camera, Car, FileText } from "lucide-react";
 
 const emptyVehicle = () => ({ make: "", model: "", year: "", plate: "", color: "", mileage: "", photoURL: "", photoFile: null, localPreview: null, permitURL: "", permitFile: null, permitPreview: null });
@@ -167,7 +168,7 @@ export default function MyVehicles() {
 
       <div style={sh.content} className="stagger-slide-up">
         {loading ? (
-          <div style={{ padding: "40px", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>Loading...</div>
+          <SkeletonLoader count={2} type="card" />
         ) : showForm ? (
           <>
             <div style={{ ...sh.sectionLabel, fontSize: "13px", color: colors.textPrimary, letterSpacing: "0.5px" }}>{editingId ? "Edit vehicle" : "Add new vehicle"}</div>

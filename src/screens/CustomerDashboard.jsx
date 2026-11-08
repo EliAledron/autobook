@@ -7,7 +7,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, collection, query, where, getDocs, orderBy, addDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { sh, colors, getGreeting, EmptyState } from "./dashboardShared";
 import TopbarAvatar from "./TopbarAvatar";
-import CarLoader from "./CarLoader";
+import SkeletonLoader from "./SkeletonLoader";
 // push notifications managed globally via UserContext
 import { 
   Droplet, Settings, ShieldAlert, Snowflake, AlertTriangle, 
@@ -304,7 +304,13 @@ export default function CustomerDashboard() {
     return () => unsub();
   }, [navigate]);
 
-  if (loading) return <CarLoader text="Loading your dashboard" />;
+  if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", background: colors.bg, paddingBottom: "80px" }}>
+        <SkeletonLoader type="dashboard" />
+      </div>
+    );
+  }
 
   const firstName = user?.displayName?.split(" ")[0] || "there";
   const stats = {

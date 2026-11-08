@@ -6,6 +6,7 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { sh, colors, getInitials, ErrorModal } from "./dashboardShared";
 import { useUser } from "../UserContext";
 import BackButton from "../components/BackButton";
+import SkeletonLoader from "./SkeletonLoader";
 import { Save, LifeBuoy } from "lucide-react";
 import ReviewAppModal from "../components/ReviewAppModal";
 import HelpSupportModal from "../components/HelpSupportModal";
@@ -197,8 +198,8 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", background: colors.bg }}>
-        <p style={{ color: colors.textMuted, fontFamily: "'Segoe UI', sans-serif" }}>Loading…</p>
+      <div style={{ minHeight: "100vh", background: colors.bg, paddingBottom: "80px" }}>
+        <SkeletonLoader type="profile" />
       </div>
     );
   }

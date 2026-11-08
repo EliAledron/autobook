@@ -203,6 +203,7 @@ export default function Signup() {
         }
         await updateProfile(user, { displayName: dName });
       }
+      sessionStorage.setItem("justLoggedIn", "true");
       await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() }, permitUrl, shopNameStr, {}, dtiUrl);
       navigate("/pending", { replace: true });
     } catch (err) {

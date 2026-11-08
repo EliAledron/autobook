@@ -5,6 +5,7 @@ import { doc, updateDoc, addDoc, setDoc, collection, serverTimestamp, getDocs, q
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import BackButton from "../components/BackButton";
+import SkeletonLoader from "./SkeletonLoader";
 import { Store, AlertTriangle, FileText, Check, Star, Edit, Flag, Calendar, Heart, Phone, MapPin, MessageSquare } from "lucide-react";
 import { useUser } from "../UserContext";
 import AdminLayout from "../components/AdminLayout";
@@ -669,7 +670,7 @@ export default function AutoShopProfile() {
 
           </div>
         )}
-        <div style={{ padding: "4rem 2rem", textAlign: "center", color: colors.textSecondary }}>Loading shop details...</div>
+        <SkeletonLoader count={3} type="card" />
       </div>
     );
     if (isAdmin) return <DesktopOnly><AdminLayout>{content}</AdminLayout></DesktopOnly>;
