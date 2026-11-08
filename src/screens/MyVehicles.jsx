@@ -6,7 +6,7 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, s
 import { sh, colors, EmptyState, ErrorModal, SuccessModal } from "./dashboardShared";
 import BackButton from "../components/BackButton";
 import SkeletonLoader from "./SkeletonLoader";
-import { Camera, Car, FileText } from "lucide-react";
+import { Camera, Car, FileText, Plus } from "lucide-react";
 
 /* ── Cloudinary config ── */
 const CLOUDINARY_CLOUD = "dpwojan8w";
@@ -189,14 +189,6 @@ export default function MyVehicles() {
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
           <BackButton />
         </div>
-        {!showForm && (
-          <button
-            onClick={() => { setForm(emptyVehicle()); setEditingId(null); setShowForm(true); setError(""); }}
-            style={{ background: colors.accent, border: "none", color: colors.navy, fontSize: "13px", fontWeight: "700", padding: "8px 16px", borderRadius: "20px", cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(70,233,255,0.2)" }}
-          >
-            + Add
-          </button>
-        )}
       </div>
 
       {/* HERO */}
@@ -374,43 +366,68 @@ export default function MyVehicles() {
                 }
               />
             ) : (
-              vehicles.map((v) => (
-                <div key={v.id} style={{ background: colors.white, borderRadius: "20px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 20px rgba(0,0,0,0.05)", padding: "16px", marginBottom: "1.25rem" }}>
-                  {v.photoURL && (
-                    <img src={v.photoURL} alt="vehicle" style={{ display: "block", width: "100%", height: "160px", objectFit: "cover", borderRadius: "14px", marginBottom: "12px" }} />
-                  )}
-                  {v.permitURL && (
-                    <div style={{ fontSize: "12px", color: colors.success, background: colors.successBg, padding: "6px 12px", borderRadius: "8px", marginBottom: "12px", display: "inline-flex", alignItems: "center", gap: "6px", fontWeight: "700" }}>
-                      <FileText size={14} /> Proof of Ownership Attached
-                    </div>
-                  )}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <div>
-                      <div style={{ fontWeight: "800", fontSize: "16px", color: colors.textPrimary, marginBottom: "4px" }}>
-                        {v.year} {v.make} {v.model}
+              <>
+                {vehicles.map((v) => (
+                  <div key={v.id} style={{ background: colors.white, borderRadius: "20px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 20px rgba(0,0,0,0.05)", padding: "16px", marginBottom: "1.25rem" }}>
+                    {v.photoURL && (
+                      <img src={v.photoURL} alt="vehicle" style={{ display: "block", width: "100%", height: "160px", objectFit: "cover", borderRadius: "14px", marginBottom: "12px" }} />
+                    )}
+                    {v.permitURL && (
+                      <div style={{ fontSize: "12px", color: colors.success, background: colors.successBg, padding: "6px 12px", borderRadius: "8px", marginBottom: "12px", display: "inline-flex", alignItems: "center", gap: "6px", fontWeight: "700" }}>
+                        <FileText size={14} /> Proof of Ownership Attached
                       </div>
-                      <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>
-                        {v.plate} {v.color ? `· ${v.color}` : ""} {v.mileage ? `· ${Number(v.mileage).toLocaleString()} km` : ""}
+                    )}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div>
+                        <div style={{ fontWeight: "800", fontSize: "16px", color: colors.textPrimary, marginBottom: "4px" }}>
+                          {v.year} {v.make} {v.model}
+                        </div>
+                        <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: "500" }}>
+                          {v.plate} {v.color ? `· ${v.color}` : ""} {v.mileage ? `· ${Number(v.mileage).toLocaleString()} km` : ""}
+                        </div>
                       </div>
-                    </div>
-                    <div style={{ display: "flex", gap: "10px" }}>
-                      <button
-                        onClick={() => handleEdit(v)}
-                        style={{ background: colors.infoBg, color: colors.info, border: "none", padding: "8px 14px", borderRadius: "10px", cursor: "pointer", fontSize: "12px", fontWeight: "700", fontFamily: "inherit" }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(v.id)}
-                        disabled={deleting === v.id}
-                        style={{ background: colors.dangerBg, color: colors.danger, border: "none", padding: "8px 14px", borderRadius: "10px", cursor: "pointer", fontSize: "12px", fontWeight: "700", fontFamily: "inherit" }}
-                      >
-                        {deleting === v.id ? "..." : "Delete"}
-                      </button>
+                      <div style={{ display: "flex", gap: "10px" }}>
+                        <button
+                          onClick={() => handleEdit(v)}
+                          style={{ background: colors.infoBg, color: colors.info, border: "none", padding: "8px 14px", borderRadius: "10px", cursor: "pointer", fontSize: "12px", fontWeight: "700", fontFamily: "inherit" }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(v.id)}
+                          disabled={deleting === v.id}
+                          style={{ background: colors.dangerBg, color: colors.danger, border: "none", padding: "8px 14px", borderRadius: "10px", cursor: "pointer", fontSize: "12px", fontWeight: "700", fontFamily: "inherit" }}
+                        >
+                          {deleting === v.id ? "..." : "Delete"}
+                        </button>
+                      </div>
                     </div>
                   </div>
+                ))}
+
+                {/* PROMINENT BOTTOM CENTER ADD BUTTON */}
+                <div style={{ marginTop: "0.5rem", marginBottom: "2rem", display: "flex", justifyContent: "center" }}>
+                  <button
+                    onClick={() => { setForm(emptyVehicle()); setEditingId(null); setShowForm(true); setError(""); }}
+                    style={{
+                      ...sh.primaryBtn,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "10px",
+                      padding: "16px 24px",
+                      borderRadius: "18px",
+                      fontSize: "15px",
+                      fontWeight: "800",
+                      boxShadow: "0 8px 24px rgba(26,58,92,0.25)",
+                      width: "100%",
+                      letterSpacing: "0.3px",
+                    }}
+                  >
+                    <Plus size={20} strokeWidth={2.5} /> Add Vehicle
+                  </button>
                 </div>
-              ))
+              </>
             )}
           </>
         )}

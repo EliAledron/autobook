@@ -376,6 +376,8 @@ export default function SkeletonLoader({ count = 3, type = "card" }) {
             </div>
           </div>
         ))}
+        {/* Prominent Bottom Add Button Placeholder */}
+        <div style={lightShimmer("52px", "100%", "18px", { marginTop: "4px" })} />
       </div>
     );
   }
