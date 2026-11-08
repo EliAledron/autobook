@@ -91,7 +91,7 @@ export const sh = {
   },
   topbar: {
     background: colors.navy,
-    padding: "calc(0.9rem + 1px) 1.25rem 0.9rem",
+    padding: "0.65rem 1.25rem",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
@@ -117,25 +117,25 @@ export const sh = {
   },
   hero: {
     background: `linear-gradient(180deg, ${colors.navy} 0%, ${colors.blue} 100%)`,
-    padding: "1.5rem 1.25rem 1.75rem",
+    padding: "0.5rem 1.25rem 1.15rem",
   },
   rolePill: {
     display: "inline-flex", alignItems: "center", gap: "6px",
     background: "rgba(70,233,255,0.18)", border: "0.5px solid rgba(70,233,255,0.4)",
-    borderRadius: "20px", padding: "3px 10px", marginBottom: "0.5rem",
+    borderRadius: "20px", padding: "3px 10px", marginBottom: "0.35rem",
   },
   roleDot: { width: "6px", height: "6px", borderRadius: "50%", background: colors.accent },
   roleText: { fontSize: "10px", color: colors.accent, fontWeight: "600", letterSpacing: "0.5px", textTransform: "uppercase" },
   heroGreeting: { fontSize: "20px", fontWeight: "700", color: "#fff", marginBottom: "0.2rem" },
   heroSub: { fontSize: "13px", color: "rgba(255,255,255,0.65)" },
-  content: { padding: "1.25rem", flex: 1 },
+  content: { padding: "0.85rem 1.25rem 1.25rem", flex: 1 },
   sectionLabel: {
     fontSize: "11px", fontWeight: "700", color: colors.textMuted,
     letterSpacing: "0.7px", textTransform: "uppercase", marginBottom: "0.65rem",
   },
   card: {
     background: colors.white, borderRadius: "20px",
-    padding: "1.25rem", marginBottom: "1.25rem",
+    padding: "1.25rem", marginBottom: "1rem",
     boxShadow: "0 4px 16px rgba(0,0,0,0.04)",
     border: `1px solid ${colors.border}`,
   },

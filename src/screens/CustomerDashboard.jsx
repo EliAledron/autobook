@@ -73,8 +73,8 @@ const statusStyle = (s) => {
   return sh.badge(colors.warningBg, colors.warning);
 };
 
-const SectionTitle = ({ title, badge, action }) => (
-  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem", marginTop: "2rem" }}>
+const SectionTitle = ({ title, badge, action, style = {} }) => (
+  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem", marginTop: "1.25rem", ...style }}>
     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
       <div style={{ width: "5px", height: "20px", borderRadius: "3px", background: colors.accent }}></div>
       <span style={{ fontSize: "18px", fontWeight: "800", color: colors.textPrimary, letterSpacing: "-0.3px" }}>{title}</span>
@@ -479,7 +479,7 @@ export default function CustomerDashboard() {
       </div>
 
       {/* HERO */}
-      <div style={{ ...sh.hero, paddingBottom: "2.5rem", borderRadius: "0 0 24px 24px", marginBottom: "0", position: "relative", zIndex: 1, overflow: "hidden" }}>
+      <div style={{ ...sh.hero, paddingBottom: "1.25rem", borderRadius: "0 0 24px 24px", marginBottom: "0", position: "relative", zIndex: 1, overflow: "hidden" }}>
         {/* Decorative icons */}
         <div style={{ position: "absolute", right: "-20px", top: "-20px", opacity: 0.08, transform: "rotate(30deg)", userSelect: "none", pointerEvents: "none" }}>
           <svg width="140" height="140" viewBox="0 0 24 24" fill="#fff"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
@@ -493,10 +493,10 @@ export default function CustomerDashboard() {
         <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.8)" }}>Ready to book your next service?</div>
       </div>
 
-      <div style={{ ...sh.content, paddingTop: "2rem", position: "relative", zIndex: 2 }} className="stagger-slide-up">
+      <div style={{ ...sh.content, paddingTop: "0.85rem", position: "relative", zIndex: 2 }} className="stagger-slide-up">
 
         {unreadCount > 0 && (
-          <div className="customer-card" onClick={() => navigate("/customer/alerts")} style={{ background: colors.white, borderRadius: "16px", padding: "16px", marginBottom: "12px", display: "flex", alignItems: "center", gap: "14px", cursor: "pointer", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}` }}>
+          <div className="customer-card" onClick={() => navigate("/customer/alerts")} style={{ background: colors.white, borderRadius: "16px", padding: "16px", marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: "14px", cursor: "pointer", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", border: `1px solid ${colors.border}` }}>
             <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: colors.dangerBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <PulseDot color={colors.danger} size={12} />
             </div>
@@ -508,7 +508,7 @@ export default function CustomerDashboard() {
           </div>
         )}
 
-        <SectionTitle title="My Bookings" />
+        <SectionTitle title="My Bookings" style={{ marginTop: unreadCount > 0 ? "0.5rem" : "0.25rem" }} />
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px", marginBottom: "1.5rem" }}>
           <div style={{ ...sh.card, display: "flex", alignItems: "center", gap: "20px", marginBottom: 0 }}>
             <div style={{
@@ -595,7 +595,7 @@ export default function CustomerDashboard() {
         </div>
 
         <SectionTitle title="Quick Actions" />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", marginBottom: "1.5rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", marginBottom: "1rem" }}>
           {QUICK_ACTIONS.map(({ id, Icon, label, sub, path, iconColor, iconBg }) => (
             <div
               key={id}

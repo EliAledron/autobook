@@ -59,7 +59,7 @@ export default function SkeletonLoader({ count = 3, type = "card" }) {
         </div>
 
         {/* Real Hero Banner */}
-        <div style={{ ...sh.hero, paddingBottom: "2.5rem", borderRadius: "0 0 24px 24px", position: "relative", zIndex: 1, overflow: "hidden" }}>
+        <div style={{ ...sh.hero, paddingBottom: "1.25rem", borderRadius: "0 0 24px 24px", position: "relative", zIndex: 1, overflow: "hidden" }}>
           {/* Role Pill */}
           <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(70,233,255,0.18)", border: "0.5px solid rgba(70,233,255,0.4)", borderRadius: "20px", padding: "3px 10px", marginBottom: "0.5rem" }}>
             <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: colors.accent }} />
@@ -76,16 +76,16 @@ export default function SkeletonLoader({ count = 3, type = "card" }) {
         </div>
 
         {/* Content Section */}
-        <div style={{ ...sh.content, paddingTop: "2rem", position: "relative", zIndex: 2 }}>
+        <div style={{ ...sh.content, paddingTop: "0.85rem", position: "relative", zIndex: 2 }}>
           
           {/* My Bookings Section Title */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "1.25rem", marginTop: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "0.75rem", marginTop: "0.25rem" }}>
             <div style={{ width: "5px", height: "20px", borderRadius: "3px", background: colors.accent }} />
             <span style={{ fontSize: "18px", fontWeight: "800", color: colors.textPrimary, letterSpacing: "-0.3px" }}>My Bookings</span>
           </div>
 
           {/* Gauge Card Skeleton */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px", marginBottom: "1.5rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px", marginBottom: "1rem" }}>
             <div style={{ ...sh.card, display: "flex", alignItems: "center", gap: "20px", marginBottom: 0 }}>
               {/* Semi-circle Gauge placeholder */}
               <div style={{ width: "120px", height: "60px", flexShrink: 0, position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
@@ -107,13 +107,13 @@ export default function SkeletonLoader({ count = 3, type = "card" }) {
           </div>
 
           {/* Quick Actions Section Title */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "1.25rem", marginTop: "1.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "0.75rem", marginTop: "1.25rem" }}>
             <div style={{ width: "5px", height: "20px", borderRadius: "3px", background: colors.accent }} />
             <span style={{ fontSize: "18px", fontWeight: "800", color: colors.textPrimary, letterSpacing: "-0.3px" }}>Quick Actions</span>
           </div>
 
           {/* 2x2 Quick Actions Grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", marginBottom: "1.5rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", marginBottom: "1rem" }}>
             {[1, 2, 3, 4].map(idx => (
               <div key={idx} style={{ background: colors.white, borderRadius: "20px", padding: "16px", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "12px", border: `1px solid ${colors.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
                 <div style={lightShimmer("48px", "48px", "16px")} />
@@ -126,7 +126,7 @@ export default function SkeletonLoader({ count = 3, type = "card" }) {
           </div>
 
           {/* Maintenance Roadmap Section Title */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "1.25rem", marginTop: "1.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "0.75rem", marginTop: "1.25rem" }}>
             <div style={{ width: "5px", height: "20px", borderRadius: "3px", background: colors.accent }} />
             <span style={{ fontSize: "18px", fontWeight: "800", color: colors.textPrimary, letterSpacing: "-0.3px" }}>Maintenance Roadmap</span>
           </div>
@@ -141,7 +141,7 @@ export default function SkeletonLoader({ count = 3, type = "card" }) {
           </div>
 
           {/* Recent Activity Section Title */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "1.25rem", marginTop: "1.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "0.75rem", marginTop: "1.25rem" }}>
             <div style={{ width: "5px", height: "20px", borderRadius: "3px", background: colors.accent }} />
             <span style={{ fontSize: "18px", fontWeight: "800", color: colors.textPrimary, letterSpacing: "-0.3px" }}>Recent Activity</span>
           </div>

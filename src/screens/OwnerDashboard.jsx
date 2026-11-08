@@ -157,7 +157,7 @@ function toDate(val) {
 }
 
 const SectionTitle = ({ title, badge, action }) => (
-  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem", marginTop: "2rem" }}>
+  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem", marginTop: "1.25rem" }}>
     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
       <div style={{ width: "5px", height: "20px", borderRadius: "3px", background: colors.accent }}></div>
       <span style={{ fontSize: "18px", fontWeight: "800", color: colors.textPrimary, letterSpacing: "-0.3px" }}>{title}</span>
@@ -725,7 +725,7 @@ export default function OwnerDashboard({ user }) {
       </div>
 
       {/* HERO */}
-      <div style={{ ...sh.hero, paddingBottom: "2.5rem", borderRadius: "0 0 24px 24px", marginBottom: "0", position: "relative", zIndex: 1, overflow: "hidden" }}>
+      <div style={{ ...sh.hero, paddingBottom: "1.25rem", borderRadius: "0 0 24px 24px", marginBottom: "0", position: "relative", zIndex: 1, overflow: "hidden" }}>
         {/* Decorative icons */}
         <div style={{ position: "absolute", right: "-20px", top: "-20px", opacity: 0.08, transform: "rotate(30deg)", userSelect: "none", pointerEvents: "none" }}>
           <svg width="140" height="140" viewBox="0 0 24 24" fill="#fff"><path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/></svg>
