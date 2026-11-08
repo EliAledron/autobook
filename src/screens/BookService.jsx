@@ -177,6 +177,7 @@ export default function BookService() {
         estimatedCompletionTime: calculatedReadyTime,
         notes: notes.trim(),
         status: "Pending",
+        isRead: false,
         createdAt: serverTimestamp(),
       });
 

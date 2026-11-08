@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { collection, getDocs, updateDoc, doc, getDoc, addDoc, serverTimestamp, query, where, deleteDoc } from "firebase/firestore";
+import React, { useEffect, useState, useMemo } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { collection, getDocs, updateDoc, doc, getDoc, addDoc, serverTimestamp, query, where, deleteDoc, writeBatch } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import RoleBasedWrapper from "../components/RoleBasedWrapper";
@@ -75,6 +75,13 @@ function isNew(timestamp) {
   return diff < 24 * 60 * 60 * 1000; // Less than 24 hours
 }
 
+function isBookingUnread(b) {
+  if (!b) return false;
+  if (b.isRead === true) return false;
+  if (b.isRead === false) return true;
+  return (b.status || "Pending").toLowerCase() === "pending";
+}
+
 const keyframes = `
   
   
@@ -119,12 +126,13 @@ const keyframes = `
 
 export default function AdminBookings() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [animate, setAnimate] = useState(false);
   const [bookings, setBookings] = useState([]);
   // FIX: combined mechanic list from both users collection and shopMechanics collection
   const [mechanics, setMechanics] = useState([]);
   const [users, setUsers] = useState([]);
-  const [activeTab, setActiveTab] = useState("All");
+  const [activeTab, setActiveTab] = useState(location.state?.statusFilter || "All");
   const [selected, setSelected] = useState(null);
   const [customerPhones, setCustomerPhones] = useState({});
   const [loading, setLoading] = useState(true);
@@ -148,6 +156,41 @@ export default function AdminBookings() {
   const [deleting, setDeleting] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [search, setSearch] = useState("");
+
+  const unreadCountsByTab = useMemo(() => {
+    const counts = { All: 0, Pending: 0, "In Progress": 0, Completed: 0, Cancelled: 0, Archived: 0 };
+    bookings.forEach((b) => {
+      if (!isBookingUnread(b)) return;
+      if (b.archived === true) {
+        counts.Archived = (counts.Archived || 0) + 1;
+      } else {
+        counts.All = (counts.All || 0) + 1;
+        const s = (b.status || "Pending").toLowerCase();
+        if (s === "pending") counts.Pending = (counts.Pending || 0) + 1;
+        else if (s === "in progress") counts["In Progress"] = (counts["In Progress"] || 0) + 1;
+        else if (s === "completed") counts.Completed = (counts.Completed || 0) + 1;
+        else if (s === "cancelled") counts.Cancelled = (counts.Cancelled || 0) + 1;
+      }
+    });
+    return counts;
+  }, [bookings]);
+
+  const handleMarkAllAsRead = async () => {
+    const unreadBookings = bookings.filter((b) => isBookingUnread(b));
+    if (unreadBookings.length === 0) return;
+
+    setBookings((prev) => prev.map((b) => ({ ...b, isRead: true })));
+
+    try {
+      const batch = writeBatch(db);
+      unreadBookings.forEach((b) => {
+        batch.update(doc(db, "bookings", b.id), { isRead: true });
+      });
+      await batch.commit();
+    } catch (e) {
+      console.error("Failed to mark all as read:", e);
+    }
+  };
   const [toast, setToast] = useState(null);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDateStr, setSelectedDateStr] = useState(null);
@@ -715,7 +758,7 @@ export default function AdminBookings() {
 
   const renderBookingCard = (b) => {
     const daysAgo = getDaysAgo(b.createdAt);
-    const isUnread = !b.isRead;
+    const isUnread = isBookingUnread(b);
     
     const showNew = isUnread && daysAgo < 1;
     const showOverdue = isUnread && daysAgo >= 1;
@@ -1063,22 +1106,85 @@ export default function AdminBookings() {
         )}
 
         {/* STATUS TABS */}
-        <div style={sh.sectionLabel}>Filter by status</div>
-        <div style={{ display: "flex", gap: "8px", overflowX: "auto", marginBottom: "1rem", paddingBottom: "4px" }}>
-          {STATUS_TABS.map((tab) => (
-            <button key={tab} onClick={() => setActiveTab(tab)} style={{
-              padding: "6px 14px", borderRadius: "20px",
-              border: activeTab === tab ? "none" : `1px solid ${colors.border}`,
-              cursor: "pointer", fontSize: "12px", fontWeight: "600", whiteSpace: "nowrap",
-              fontFamily: "inherit",
-              background: activeTab === tab ? `linear-gradient(135deg, ${colors.navy}, ${colors.blue})` : colors.white,
-              color: activeTab === tab ? "#fff" : colors.textSecondary,
-              boxShadow: activeTab === tab ? "0 2px 8px rgba(26,58,92,0.25)" : "none",
-              transition: "all 0.2s ease",
-            }}>
-              {tab}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+          <div style={{ ...sh.sectionLabel, marginBottom: 0 }}>Filter by status</div>
+          {unreadCountsByTab.All > 0 && (
+            <button
+              onClick={handleMarkAllAsRead}
+              title="Mark all unread bookings as read"
+              style={{
+                background: "transparent",
+                border: "none",
+                color: colors.blue,
+                fontSize: "11px",
+                fontWeight: "700",
+                cursor: "pointer",
+                padding: "2px 8px",
+                borderRadius: "6px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+                transition: "all 0.15s ease",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = colors.navy; e.currentTarget.style.textDecoration = "underline"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = colors.blue; e.currentTarget.style.textDecoration = "none"; }}
+            >
+              <Check size={12} strokeWidth={2.5} /> Mark all as read
             </button>
-          ))}
+          )}
+        </div>
+        <div style={{ display: "flex", gap: "8px", overflowX: "auto", marginBottom: "1rem", paddingBottom: "4px" }}>
+          {STATUS_TABS.map((tab) => {
+            const count = unreadCountsByTab[tab] || 0;
+            const isSelected = activeTab === tab;
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  padding: "6px 14px",
+                  borderRadius: "20px",
+                  border: isSelected ? "none" : `1px solid ${colors.border}`,
+                  cursor: "pointer",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  whiteSpace: "nowrap",
+                  fontFamily: "inherit",
+                  background: isSelected ? `linear-gradient(135deg, ${colors.navy}, ${colors.blue})` : colors.white,
+                  color: isSelected ? "#fff" : colors.textSecondary,
+                  boxShadow: isSelected ? "0 2px 8px rgba(26,58,92,0.25)" : "none",
+                  transition: "all 0.2s ease",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <span>{tab}</span>
+                {count > 0 && (
+                  <span
+                    style={{
+                      minWidth: "17px",
+                      height: "17px",
+                      padding: "0 5px",
+                      borderRadius: "9px",
+                      fontSize: "10px",
+                      fontWeight: "800",
+                      background: colors.danger,
+                      color: "#fff",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      lineHeight: 1,
+                      boxShadow: isSelected ? "0 1px 3px rgba(0,0,0,0.3)" : "0 1px 4px rgba(239,68,68,0.35)",
+                      border: isSelected ? "1px solid rgba(255,255,255,0.4)" : "none",
+                    }}
+                  >
+                    {count > 99 ? "99+" : count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* SEARCH BAR */}
@@ -1180,10 +1286,10 @@ export default function AdminBookings() {
                         <span style={{ display: "inline-block", padding: "6px 12px", borderRadius: "8px", fontSize: "12px", fontWeight: "800", background: (b.status === "Pending" ? colors.warningBg : b.status === "In Progress" ? colors.infoBg : b.status === "Completed" ? colors.successBg : colors.dangerBg), color: (b.status === "Pending" ? colors.warning : b.status === "In Progress" ? colors.info : b.status === "Completed" ? colors.success : colors.danger) }}>
                           {b.status || "Pending"}
                         </span>
-                        {!b.isRead && getDaysAgo(b.createdAt) < 1 && (
+                        {isBookingUnread(b) && getDaysAgo(b.createdAt) < 1 && (
                           <span style={{ fontSize: "10px", fontWeight: "800", background: colors.danger, color: "#fff", padding: "3px 6px", borderRadius: "6px", letterSpacing: "0.5px" }}>NEW</span>
                         )}
-                        {!b.isRead && getDaysAgo(b.createdAt) >= 1 && (
+                        {isBookingUnread(b) && getDaysAgo(b.createdAt) >= 1 && (
                           <span style={{ fontSize: "10px", fontWeight: "800", background: colors.warning, color: "#fff", padding: "3px 6px", borderRadius: "6px", letterSpacing: "0.5px" }}>UNREAD</span>
                         )}
                       </div>
