@@ -759,16 +759,16 @@ export default function AutoShopProfile() {
               <h1 style={{ margin: "0 0 4px 0", fontSize: "28px", fontWeight: "800", color: "#fff", letterSpacing: "-0.5px", textShadow: "0 2px 4px rgba(0,0,0,0.3)", lineHeight: 1.1, wordBreak: "break-word" }}>{shop.name}</h1>
               <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.85)", marginBottom: "8px", fontWeight: "500" }}>{shop.tagline || "Quality auto services"}</div>
               
-              {shop.phone && (
+              {(shop.phone || ownerData?.phone) && (
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px", flexWrap: "wrap" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <Phone size={14} color="rgba(255,255,255,0.85)" />
-                    <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.9)", fontWeight: "600" }}>{shop.phone}</span>
+                    <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.9)", fontWeight: "600" }}>{shop.phone || ownerData?.phone}</span>
                   </div>
                   {!isOwner && (
                     <div style={{ display: "flex", gap: "6px" }}>
                       <a
-                        href={`tel:${shop.phone}`}
+                        href={`tel:${shop.phone || ownerData?.phone}`}
                         style={{
                           display: "inline-flex",
                           alignItems: "center",
@@ -786,7 +786,7 @@ export default function AutoShopProfile() {
                         <Phone size={12} /> Call
                       </a>
                       <a
-                        href={`sms:${shop.phone}`}
+                        href={`sms:${shop.phone || ownerData?.phone}`}
                         style={{
                           display: "inline-flex",
                           alignItems: "center",
@@ -829,7 +829,7 @@ export default function AutoShopProfile() {
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: "10px" }}>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
               {isOwner ? (
                 <button 
                   onClick={() => setShowEditModal(true)}
@@ -839,6 +839,30 @@ export default function AutoShopProfile() {
                 </button>
               ) : (
                 <>
+                  {(shop.phone || ownerData?.phone) && (
+                    <a
+                      href={`tel:${shop.phone || ownerData?.phone}`}
+                      style={{
+                        padding: "12px 20px",
+                        background: "#10b981",
+                        color: "#fff",
+                        borderRadius: "14px",
+                        fontWeight: "800",
+                        display: "inline-flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        gap: "8px",
+                        cursor: "pointer",
+                        fontSize: "14px",
+                        fontFamily: "inherit",
+                        textDecoration: "none",
+                        boxShadow: "0 4px 16px rgba(16, 185, 129, 0.3)",
+                        transition: "all 0.2s",
+                      }}
+                    >
+                      <Phone size={16} /> Call Shop
+                    </a>
+                  )}
                   <button 
                     onClick={handleFlagShopClick}
                     style={{ padding: "12px 16px", background: "rgba(239, 68, 68, 0.15)", color: "#fca5a5", border: "1px solid rgba(239, 68, 68, 0.4)", borderRadius: "14px", fontWeight: "700", display: "flex", justifyContent: "center", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "14px", fontFamily: "inherit", backdropFilter: "blur(8px)", transition: "all 0.2s" }}
@@ -959,7 +983,7 @@ export default function AutoShopProfile() {
               {shop.tagline || "No additional information provided."}
             </div>
 
-            {shop.phone && (
+            {(shop.phone || ownerData?.phone) && (
               <div style={{
                 background: "#f0fdf4",
                 border: "1px solid #bbf7d0",
@@ -974,12 +998,12 @@ export default function AutoShopProfile() {
               }}>
                 <div>
                   <div style={{ fontSize: "11px", fontWeight: "700", color: "#166534", textTransform: "uppercase", letterSpacing: "0.5px" }}>Direct Contact</div>
-                  <div style={{ fontSize: "15px", fontWeight: "800", color: "#14532d", marginTop: "2px" }}>{shop.phone}</div>
+                  <div style={{ fontSize: "15px", fontWeight: "800", color: "#14532d", marginTop: "2px" }}>{shop.phone || ownerData?.phone}</div>
                 </div>
                 {!isOwner && (
                   <div style={{ display: "flex", gap: "8px" }}>
                     <a
-                      href={`tel:${shop.phone}`}
+                      href={`tel:${shop.phone || ownerData?.phone}`}
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
@@ -996,7 +1020,7 @@ export default function AutoShopProfile() {
                       <Phone size={14} /> Call Shop
                     </a>
                     <a
-                      href={`sms:${shop.phone}`}
+                      href={`sms:${shop.phone || ownerData?.phone}`}
                       style={{
                         display: "inline-flex",
                         alignItems: "center",

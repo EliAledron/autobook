@@ -8,7 +8,7 @@ import { STANDARD_SERVICES } from "../utils/servicesList";
 import { calculateShopRating } from "../utils/ratingUtils";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
-import { Store, MapPin, CheckCircle2, Star } from "lucide-react";
+import { Store, MapPin, CheckCircle2, Star, Phone } from "lucide-react";
 
 export default function FindMechanic() {
   const navigate = useNavigate();
@@ -252,6 +252,28 @@ export default function FindMechanic() {
                   </div>
                   <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "500", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shop.tagline || "Quality auto services"}</div>
                 </div>
+                {shop.phone && (
+                  <a
+                    href={`tel:${shop.phone}`}
+                    onClick={(e) => e.stopPropagation()}
+                    title={`Call ${shop.name}`}
+                    style={{
+                      width: "30px",
+                      height: "30px",
+                      borderRadius: "50%",
+                      background: "#dcfce7",
+                      color: "#16a34a",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      textDecoration: "none",
+                      border: "1px solid #bbf7d0",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Phone size={13} />
+                  </a>
+                )}
                 {selected?.id === shop.id
                   ? <div style={{ width: "30px", height: "30px", borderRadius: "50%", background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "14px", fontWeight: "700", flexShrink: 0 }}>✓</div>
                   : <div style={{ width: "30px", height: "30px", borderRadius: "50%", background: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.textSecondary, fontSize: "16px", fontWeight: "700", flexShrink: 0 }}>›</div>
@@ -268,11 +290,37 @@ export default function FindMechanic() {
               
               {!requestSent ? (
                 <>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
                     <div style={{ fontSize: "18px", fontWeight: "800", color: colors.navy, display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <MapPin size={20} color={colors.blue} /> Request from {selected.shortName}
                     </div>
                   </div>
+
+                  {selected.phone && (
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "12px", padding: "10px 14px", marginBottom: "14px" }}>
+                      <div>
+                        <div style={{ fontSize: "11px", fontWeight: "700", color: "#166534", textTransform: "uppercase" }}>Need Urgent Help?</div>
+                        <div style={{ fontSize: "13px", fontWeight: "800", color: "#14532d" }}>{selected.phone}</div>
+                      </div>
+                      <a
+                        href={`tel:${selected.phone}`}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          padding: "6px 12px",
+                          borderRadius: "8px",
+                          background: "#10b981",
+                          color: "#fff",
+                          fontSize: "12px",
+                          fontWeight: "700",
+                          textDecoration: "none",
+                        }}
+                      >
+                        <Phone size={12} /> Call Shop
+                      </a>
+                    </div>
+                  )}
 
                   <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Your address / location *</div>
                   <input

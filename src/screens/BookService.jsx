@@ -6,7 +6,7 @@ import { collection, addDoc, getDocs, getDoc, doc, query, where, serverTimestamp
 import { sh, colors, CustomDropdown, ErrorModal } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
-import { Car, Wrench, Camera, Calendar, Clock, Users, Info, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Car, Wrench, Camera, Calendar, Clock, Users, Info, ShieldCheck, CheckCircle2, AlertCircle, Phone } from 'lucide-react';
 import { getServiceDuration, calculateReadyTime, getConcurrentBookingsAtSlot, ALL_TIME_SLOTS } from "../utils/serviceDurations";
 
 const CLOUDINARY_CLOUD = "dpwojan8w";
@@ -225,9 +225,30 @@ export default function BookService() {
         </svg>
       </div>
       <div style={{ fontSize: "20px", fontWeight: "700", color: colors.textPrimary, marginBottom: "8px", textAlign: "center" }}>Booking Submitted!</div>
-      <div style={{ fontSize: "14px", color: colors.textSecondary, textAlign: "center", marginBottom: "2rem" }}>
+      <div style={{ fontSize: "14px", color: colors.textSecondary, textAlign: "center", marginBottom: "1.5rem" }}>
         Your booking at {shop?.name} has been received. You'll be notified once it's confirmed.
       </div>
+      {shop?.phone && (
+        <a
+          href={`tel:${shop.phone}`}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "12px 20px",
+            borderRadius: "14px",
+            background: "#10b981",
+            color: "#fff",
+            fontSize: "14px",
+            fontWeight: "700",
+            textDecoration: "none",
+            marginBottom: "1.5rem",
+            boxShadow: "0 4px 14px rgba(16,185,129,0.3)",
+          }}
+        >
+          <Phone size={16} /> Call {shop.name} ({shop.phone})
+        </a>
+      )}
       <button onClick={() => navigate("/customer/dashboard")} style={sh.primaryBtn}>Back to Dashboard</button>
       <div style={{ height: "10px" }} />
       <button onClick={() => navigate("/customer/history")} style={sh.outlineBtn}>View My Bookings</button>

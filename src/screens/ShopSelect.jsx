@@ -5,7 +5,7 @@ import { db } from "../firebase";
 import { sh, colors, EmptyState, SharedSearchBar, SharedFilterSelect, CustomMultiSelectDropdown } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
-import { Store, Star, Sparkles, X } from "lucide-react";
+import { Store, Star, Sparkles, X, Phone } from "lucide-react";
 import { STANDARD_SERVICES } from "../utils/servicesList";
 import { calculateShopRating } from "../utils/ratingUtils";
 
@@ -213,6 +213,30 @@ export default function ShopSelect() {
 
               {/* CTA */}
               <div style={{ display: "flex", gap: "8px" }}>
+                {shop.phone && (
+                  <a
+                    href={`tel:${shop.phone}`}
+                    onClick={(e) => e.stopPropagation()}
+                    title={`Call ${shop.name}`}
+                    style={{
+                      padding: "10px 14px",
+                      background: "#dcfce7",
+                      border: "1px solid #bbf7d0",
+                      borderRadius: "12px",
+                      fontSize: "13px",
+                      fontWeight: "700",
+                      color: "#16a34a",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "5px",
+                      textDecoration: "none",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Phone size={14} /> Call
+                  </a>
+                )}
                 <button
                   onClick={(e) => { e.stopPropagation(); navigate("/customer/shop-profile", { state: { shopId: shop.id } }); }}
                   style={{ flex: 1, padding: "10px", background: colors.bg, border: `1px solid ${colors.border}`, borderRadius: "12px", fontSize: "13px", fontWeight: "700", color: colors.textSecondary, cursor: "pointer" }}
