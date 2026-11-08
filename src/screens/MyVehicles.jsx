@@ -3,11 +3,43 @@ import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp } from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { sh, colors, EmptyState, ErrorModal } from "./dashboardShared";
+import { sh, colors, EmptyState, ErrorModal, SuccessModal } from "./dashboardShared";
 import BackButton from "../components/BackButton";
 import SkeletonLoader from "./SkeletonLoader";
 import { Camera, Car, FileText } from "lucide-react";
+
+/* ── Cloudinary config ── */
+const CLOUDINARY_CLOUD = "dpwojan8w";
+const CLOUDINARY_PRESET = "autobook_uploads";
+
+async function uploadToCloudinary(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", CLOUDINARY_PRESET);
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 35000);
+
+  try {
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`,
+      { method: "POST", body: formData, signal: controller.signal }
+    );
+    clearTimeout(timeoutId);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(`Upload failed: ${err.error?.message || res.statusText}`);
+    }
+    const data = await res.json();
+    return data.secure_url;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === "AbortError") {
+      throw new Error("Upload timed out. Please check your internet connection.");
+    }
+    throw err;
+  }
+}
 
 const emptyVehicle = () => ({ make: "", model: "", year: "", plate: "", color: "", mileage: "", photoURL: "", photoFile: null, localPreview: null, permitURL: "", permitFile: null, permitPreview: null });
 
@@ -26,6 +58,7 @@ export default function MyVehicles() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(null);
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
@@ -68,32 +101,35 @@ export default function MyVehicles() {
   const handleSave = async () => {
     setShowConfirm(false);
     setSaving(true);
+    setError("");
+
+    const currentUid = uid || auth.currentUser?.uid;
+    if (!currentUid) {
+      setError("You must be logged in to save a vehicle.");
+      setSaving(false);
+      return;
+    }
 
     try {
-      let finalPhotoURL = form.photoURL;
-      let finalPermitURL = form.permitURL;
-      const storage = getStorage();
+      let finalPhotoURL = form.photoURL || "";
+      let finalPermitURL = form.permitURL || "";
 
       if (form.photoFile) {
-        const photoRef = ref(storage, `vehiclePhotos/${uid}/${form.plate}_${Date.now()}`);
-        await uploadBytes(photoRef, form.photoFile);
-        finalPhotoURL = await getDownloadURL(photoRef);
+        finalPhotoURL = await uploadToCloudinary(form.photoFile);
       }
 
       if (form.permitFile) {
-        const permitRefStorage = ref(storage, `vehiclePermits/${uid}/${form.plate}_${Date.now()}`);
-        await uploadBytes(permitRefStorage, form.permitFile);
-        finalPermitURL = await getDownloadURL(permitRefStorage);
+        finalPermitURL = await uploadToCloudinary(form.permitFile);
       }
 
       const data = {
-        ownerId: uid,
-        make: form.make.trim(),
-        model: form.model.trim(),
-        year: form.year.trim(),
-        plate: form.plate.trim().toUpperCase(),
-        color: form.color,
-        mileage: form.mileage ? parseInt(form.mileage, 10) : null,
+        ownerId: currentUid,
+        make: (form.make || "").trim(),
+        model: (form.model || "").trim(),
+        year: form.year ? String(form.year).trim() : "",
+        plate: (form.plate || "").trim().toUpperCase(),
+        color: form.color || "White",
+        mileage: form.mileage !== "" && form.mileage !== null && !isNaN(Number(form.mileage)) ? Number(form.mileage) : null,
         photoURL: finalPhotoURL,
         permitURL: finalPermitURL,
         updatedAt: serverTimestamp(),
@@ -105,12 +141,14 @@ export default function MyVehicles() {
         await addDoc(collection(db, "vehicles"), { ...data, createdAt: serverTimestamp() });
       }
 
-      await loadVehicles(uid);
+      await loadVehicles(currentUid);
       setShowForm(false);
       setEditingId(null);
       setForm(emptyVehicle());
+      setSuccessMsg(editingId ? "Vehicle updated successfully!" : "Vehicle registered successfully!");
     } catch (e) {
-      setError("Failed to save: " + e.message);
+      console.error("Save vehicle error:", e);
+      setError("Failed to save: " + (e.message || "Unknown error occurred."));
     } finally {
       setSaving(false);
     }
@@ -143,11 +181,13 @@ export default function MyVehicles() {
 
   return (
     <div style={sh.page}>
+      <SuccessModal message={successMsg} onClose={() => setSuccessMsg("")} />
+      <ErrorModal error={error} onClose={() => setError("")} />
+
       {/* TOPBAR */}
       <div style={sh.topbar}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
           <BackButton />
-
         </div>
         {!showForm && (
           <button
@@ -172,7 +212,6 @@ export default function MyVehicles() {
         ) : showForm ? (
           <>
             <div style={{ ...sh.sectionLabel, fontSize: "13px", color: colors.textPrimary, letterSpacing: "0.5px" }}>{editingId ? "Edit vehicle" : "Add new vehicle"}</div>
-            <ErrorModal error={error} onClose={() => setError("")} />
 
             {/* VEHICLE PHOTO */}
             <div style={{ ...sh.card, padding: "24px", marginBottom: "1.5rem" }}>
@@ -215,7 +254,10 @@ export default function MyVehicles() {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                   <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: colors.successBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.success }}><FileText size={16} /></div>
-                  <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary }}>Car Permit (Proof of Ownership) *</div>
+                  <div>
+                    <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary }}>Car Permit / Proof of Ownership *</div>
+                    <div style={{ fontSize: "12px", color: colors.textSecondary }}>Official Receipt / Certificate of Registration (OR/CR)</div>
+                  </div>
                 </div>
                 {(form.permitPreview || form.permitURL) && (
                   <button
@@ -241,7 +283,7 @@ export default function MyVehicles() {
               >
                 {form.permitPreview || form.permitURL
                   ? <img src={form.permitPreview || form.permitURL} alt="permit" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                  : <span style={{display:'flex', alignItems:'center', gap:'6px'}}><FileText size={16} /> Tap to add car permit</span>
+                  : <span style={{display:'flex', alignItems:'center', gap:'6px'}}><FileText size={16} /> Tap to upload OR/CR photo</span>
                 }
               </div>
             </div>
@@ -286,7 +328,6 @@ export default function MyVehicles() {
                 />
               </div>
 
-              {/* Color picker */}
               <div style={{ fontSize: "11px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px" }}>Color</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
                 {COLORS_LIST.map((c) => (
@@ -313,7 +354,7 @@ export default function MyVehicles() {
               {saving ? "Saving..." : editingId ? "Save Changes" : "Add Vehicle"}
             </button>
             <div style={{ height: "12px" }} />
-            <button onClick={() => { setShowForm(false); setEditingId(null); setError(""); }} style={{ ...sh.outlineBtn, padding: "16px", borderRadius: "16px", fontSize: "15px", border: "none", background: colors.bg, color: colors.textSecondary, fontWeight: "700", marginBottom: "2rem" }}>Cancel</button>
+            <button onClick={() => { setShowForm(false); setEditingId(null); setError(""); }} disabled={saving} style={{ ...sh.outlineBtn, padding: "16px", borderRadius: "16px", fontSize: "15px", border: "none", background: colors.bg, color: colors.textSecondary, fontWeight: "700", marginBottom: "2rem" }}>Cancel</button>
           </>
         ) : (
           <>
@@ -391,6 +432,6 @@ export default function MyVehicles() {
           </div>
         </div>
       )}
-          </div>
+    </div>
   );
 }
