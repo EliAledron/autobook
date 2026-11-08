@@ -6,7 +6,7 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, s
 import { sh, colors, EmptyState, ErrorModal, SuccessModal } from "./dashboardShared";
 import BackButton from "../components/BackButton";
 import SkeletonLoader from "./SkeletonLoader";
-import { Camera, Car, FileText, Plus } from "lucide-react";
+import { Camera, Car, FileText, Plus, AlertCircle } from "lucide-react";
 
 /* ── Cloudinary config ── */
 const CLOUDINARY_CLOUD = "dpwojan8w";
@@ -49,6 +49,14 @@ export default function MyVehicles() {
   const navigate = useNavigate();
   const fileRef = useRef(null);
   const permitRef = useRef(null);
+
+  // Field refs for bringing user directly to missed/mistaken fields
+  const permitBoxRef = useRef(null);
+  const makeRef = useRef(null);
+  const modelRef = useRef(null);
+  const yearRef = useRef(null);
+  const plateRef = useRef(null);
+
   const [uid, setUid] = useState(null);
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +66,7 @@ export default function MyVehicles() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(null);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [successMsg, setSuccessMsg] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -88,12 +97,53 @@ export default function MyVehicles() {
     const file = e.target.files[0];
     if (!file) return;
     setForm((f) => ({ ...f, permitFile: file, permitPreview: URL.createObjectURL(file) }));
+    if (fieldErrors.permit) {
+      setFieldErrors((prev) => ({ ...prev, permit: null }));
+    }
   };
 
   const handlePreSubmit = () => {
-    if (!form.make.trim() || !form.model.trim()) { setError("Car brand and model are required."); return; }
-    if (!form.plate.trim()) { setError("Plate number is required."); return; }
-    if (!form.permitURL && !form.permitFile) { setError("Car permit (Proof of ownership) is required."); return; }
+    const errs = {};
+    let targetRef = null;
+
+    if (!form.permitURL && !form.permitFile) {
+      errs.permit = "Car permit (Proof of ownership) is required.";
+      if (!targetRef) targetRef = permitBoxRef;
+    }
+    if (!form.make || !form.make.trim()) {
+      errs.make = "Car brand is required.";
+      if (!targetRef) targetRef = makeRef;
+    }
+    if (!form.model || !form.model.trim()) {
+      errs.model = "Model is required.";
+      if (!targetRef) targetRef = modelRef;
+    }
+    if (form.year && form.year.trim()) {
+      const y = parseInt(form.year.trim(), 10);
+      const maxYear = new Date().getFullYear() + 1;
+      if (isNaN(y) || y < 1900 || y > maxYear) {
+        errs.year = `Valid year required (1900 - ${maxYear}).`;
+        if (!targetRef) targetRef = yearRef;
+      }
+    }
+    if (!form.plate || !form.plate.trim()) {
+      errs.plate = "Plate number is required.";
+      if (!targetRef) targetRef = plateRef;
+    }
+
+    setFieldErrors(errs);
+
+    if (Object.keys(errs).length > 0) {
+      // Smoothly bring the user directly to the first missing / mistaken input field
+      if (targetRef && targetRef.current) {
+        targetRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (targetRef.current.focus) {
+          setTimeout(() => targetRef.current?.focus(), 250);
+        }
+      }
+      return;
+    }
+
     setError("");
     setShowConfirm(true);
   };
@@ -144,6 +194,7 @@ export default function MyVehicles() {
       await loadVehicles(currentUid);
       setShowForm(false);
       setEditingId(null);
+      setFieldErrors({});
       setForm(emptyVehicle());
       setSuccessMsg(editingId ? "Vehicle updated successfully!" : "Vehicle registered successfully!");
     } catch (e) {
@@ -157,6 +208,7 @@ export default function MyVehicles() {
   const handleEdit = (v) => {
     setForm({ ...v, mileage: v.mileage || "", photoFile: null, localPreview: null, permitFile: null, permitPreview: null });
     setEditingId(v.id);
+    setFieldErrors({});
     setShowForm(true);
     setError("");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -175,12 +227,28 @@ export default function MyVehicles() {
     width: "100%", padding: "14px 16px", borderRadius: "14px",
     border: `1.5px solid ${colors.border}`, fontSize: "14px",
     background: "#f9fafb", color: colors.textPrimary,
-    fontFamily: "inherit", boxSizing: "border-box", outline: "none", marginBottom: "16px",
-    transition: "border-color 0.2s, box-shadow 0.2s",
+    fontFamily: "inherit", boxSizing: "border-box", outline: "none", marginBottom: "4px",
+    transition: "border-color 0.2s, box-shadow 0.2s, background-color 0.2s",
   };
+
+  const getDynamicInputStyle = (hasError) => ({
+    ...inputStyle,
+    border: hasError ? "1.5px solid #ef4444" : `1.5px solid ${colors.border}`,
+    background: hasError ? "#fef2f2" : "#f9fafb",
+    boxShadow: hasError ? "0 0 0 3px rgba(239, 68, 68, 0.18)" : "none",
+    animation: hasError ? "ab-shake 0.35s ease" : "none",
+  });
 
   return (
     <div style={sh.page}>
+      <style>{`
+        @keyframes ab-shake {
+          0%, 100% { transform: translateX(0); }
+          20%, 60% { transform: translateX(-4px); }
+          40%, 80% { transform: translateX(4px); }
+        }
+      `}</style>
+
       <SuccessModal message={successMsg} onClose={() => setSuccessMsg("")} />
       <ErrorModal error={error} onClose={() => setError("")} />
 
@@ -203,7 +271,30 @@ export default function MyVehicles() {
           <SkeletonLoader count={2} type="vehicles" />
         ) : showForm ? (
           <>
-            <div style={{ ...sh.sectionLabel, fontSize: "13px", color: colors.textPrimary, letterSpacing: "0.5px" }}>{editingId ? "Edit vehicle" : "Add new vehicle"}</div>
+            <div style={{ ...sh.sectionLabel, fontSize: "13px", color: colors.textPrimary, letterSpacing: "0.5px" }}>
+              {editingId ? "Edit vehicle" : "Add new vehicle"}
+            </div>
+
+            {/* ERROR BANNER IF ANY FIELD IS MISSED */}
+            {Object.keys(fieldErrors).some(k => fieldErrors[k]) && (
+              <div style={{
+                background: "#fef2f2",
+                border: "1px solid #fecaca",
+                borderRadius: "14px",
+                padding: "12px 16px",
+                marginBottom: "1.25rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                color: "#b91c1c",
+                fontSize: "13px",
+                fontWeight: "600",
+                animation: "ab-shake 0.35s ease"
+              }}>
+                <AlertCircle size={18} color="#dc2626" style={{ flexShrink: 0 }} />
+                <span>Please complete the highlighted field{Object.values(fieldErrors).filter(Boolean).length > 1 ? "s" : ""} below.</span>
+              </div>
+            )}
 
             {/* VEHICLE PHOTO */}
             <div style={{ ...sh.card, padding: "24px", marginBottom: "1.5rem" }}>
@@ -241,19 +332,34 @@ export default function MyVehicles() {
               </div>
             </div>
 
-            {/* CAR PERMIT */}
-            <div style={{ ...sh.card, padding: "24px", marginBottom: "1.5rem" }}>
+            {/* CAR PERMIT (REQUIRED) */}
+            <div ref={permitBoxRef} style={{
+              ...sh.card,
+              padding: "24px",
+              marginBottom: "1.5rem",
+              border: fieldErrors.permit ? "1.5px solid #ef4444" : `1px solid ${colors.border}`,
+              background: fieldErrors.permit ? "#fffcfc" : colors.white,
+              boxShadow: fieldErrors.permit ? "0 0 0 3px rgba(239, 68, 68, 0.15), 0 4px 16px rgba(0,0,0,0.04)" : "0 4px 16px rgba(0,0,0,0.04)",
+              animation: fieldErrors.permit ? "ab-shake 0.35s ease" : "none",
+              transition: "all 0.2s ease"
+            }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: colors.successBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.success }}><FileText size={16} /></div>
+                  <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: fieldErrors.permit ? "#fee2e2" : colors.successBg, display: "flex", alignItems: "center", justifyContent: "center", color: fieldErrors.permit ? "#dc2626" : colors.success }}>
+                    <FileText size={16} />
+                  </div>
                   <div>
-                    <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary }}>Car Permit / Proof of Ownership *</div>
+                    <div style={{ fontSize: "16px", fontWeight: "800", color: fieldErrors.permit ? "#dc2626" : colors.textPrimary }}>
+                      Car Permit / Proof of Ownership *
+                    </div>
                     <div style={{ fontSize: "12px", color: colors.textSecondary }}>Official Receipt / Certificate of Registration (OR/CR)</div>
                   </div>
                 </div>
                 {(form.permitPreview || form.permitURL) && (
                   <button
-                    onClick={() => setForm(f => ({ ...f, permitFile: null, permitPreview: null, permitURL: "" }))}
+                    onClick={() => {
+                      setForm(f => ({ ...f, permitFile: null, permitPreview: null, permitURL: "" }));
+                    }}
                     style={{ background: colors.dangerBg, color: colors.danger, border: "none", padding: "6px 12px", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit" }}
                   >
                     Remove Permit
@@ -265,12 +371,14 @@ export default function MyVehicles() {
                 onClick={() => permitRef.current?.click()}
                 style={{
                   width: "100%", height: form.permitPreview || form.permitURL ? "180px" : "100px",
-                  background: colors.bg, borderRadius: "14px",
-                  border: form.permitPreview || form.permitURL ? "none" : `1.5px dashed ${colors.border}`,
+                  background: fieldErrors.permit ? "#fef2f2" : colors.bg,
+                  borderRadius: "14px",
+                  border: form.permitPreview || form.permitURL ? "none" : fieldErrors.permit ? "2px dashed #ef4444" : `1.5px dashed ${colors.border}`,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   cursor: "pointer", overflow: "hidden",
-                  fontSize: "13px", color: colors.textMuted,
-                  position: "relative"
+                  fontSize: "13px", color: fieldErrors.permit ? "#dc2626" : colors.textMuted,
+                  position: "relative",
+                  transition: "all 0.2s ease"
                 }}
               >
                 {form.permitPreview || form.permitURL
@@ -278,6 +386,11 @@ export default function MyVehicles() {
                   : <span style={{display:'flex', alignItems:'center', gap:'6px'}}><FileText size={16} /> Tap to upload OR/CR photo</span>
                 }
               </div>
+              {fieldErrors.permit && (
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "12px", fontWeight: "600", marginTop: "10px" }}>
+                  <AlertCircle size={14} /> {fieldErrors.permit}
+                </div>
+              )}
             </div>
 
             {/* VEHICLE DETAILS */}
@@ -289,23 +402,87 @@ export default function MyVehicles() {
               
               <div style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "11px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Car Brand</div>
-                  <input style={{ ...inputStyle, marginBottom: 0 }} placeholder="e.g. Toyota" value={form.make} onChange={(e) => setForm((f) => ({ ...f, make: e.target.value }))} />
+                  <div style={{ fontSize: "11px", color: fieldErrors.make ? "#dc2626" : colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>
+                    Car Brand *
+                  </div>
+                  <input
+                    ref={makeRef}
+                    style={getDynamicInputStyle(!!fieldErrors.make)}
+                    placeholder="e.g. Toyota"
+                    value={form.make}
+                    onChange={(e) => {
+                      setForm((f) => ({ ...f, make: e.target.value }));
+                      if (fieldErrors.make) setFieldErrors(prev => ({ ...prev, make: null }));
+                    }}
+                  />
+                  {fieldErrors.make && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#dc2626", fontSize: "11px", fontWeight: "600", marginTop: "4px" }}>
+                      <AlertCircle size={12} /> {fieldErrors.make}
+                    </div>
+                  )}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "11px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Model</div>
-                  <input style={{ ...inputStyle, marginBottom: 0 }} placeholder="e.g. Vios" value={form.model} onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))} />
+                  <div style={{ fontSize: "11px", color: fieldErrors.model ? "#dc2626" : colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>
+                    Model *
+                  </div>
+                  <input
+                    ref={modelRef}
+                    style={getDynamicInputStyle(!!fieldErrors.model)}
+                    placeholder="e.g. Vios"
+                    value={form.model}
+                    onChange={(e) => {
+                      setForm((f) => ({ ...f, model: e.target.value }));
+                      if (fieldErrors.model) setFieldErrors(prev => ({ ...prev, model: null }));
+                    }}
+                  />
+                  {fieldErrors.model && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#dc2626", fontSize: "11px", fontWeight: "600", marginTop: "4px" }}>
+                      <AlertCircle size={12} /> {fieldErrors.model}
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "11px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Year</div>
-                  <input style={{ ...inputStyle, marginBottom: 0 }} placeholder="e.g. 2020" value={form.year} onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))} />
+                  <div style={{ fontSize: "11px", color: fieldErrors.year ? "#dc2626" : colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>
+                    Year
+                  </div>
+                  <input
+                    ref={yearRef}
+                    style={getDynamicInputStyle(!!fieldErrors.year)}
+                    placeholder="e.g. 2020"
+                    value={form.year}
+                    onChange={(e) => {
+                      setForm((f) => ({ ...f, year: e.target.value.replace(/[^0-9]/g, '') }));
+                      if (fieldErrors.year) setFieldErrors(prev => ({ ...prev, year: null }));
+                    }}
+                  />
+                  {fieldErrors.year && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#dc2626", fontSize: "11px", fontWeight: "600", marginTop: "4px" }}>
+                      <AlertCircle size={12} /> {fieldErrors.year}
+                    </div>
+                  )}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "11px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Plate Number</div>
-                  <input style={{ ...inputStyle, marginBottom: 0 }} placeholder="Plate number" value={form.plate} onChange={(e) => setForm((f) => ({ ...f, plate: e.target.value }))} />
+                  <div style={{ fontSize: "11px", color: fieldErrors.plate ? "#dc2626" : colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>
+                    Plate Number *
+                  </div>
+                  <input
+                    ref={plateRef}
+                    style={getDynamicInputStyle(!!fieldErrors.plate)}
+                    placeholder="Plate number"
+                    value={form.plate}
+                    onChange={(e) => {
+                      setForm((f) => ({ ...f, plate: e.target.value }));
+                      if (fieldErrors.plate) setFieldErrors(prev => ({ ...prev, plate: null }));
+                    }}
+                  />
+                  {fieldErrors.plate && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#dc2626", fontSize: "11px", fontWeight: "600", marginTop: "4px" }}>
+                      <AlertCircle size={12} /> {fieldErrors.plate}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -346,7 +523,7 @@ export default function MyVehicles() {
               {saving ? "Saving..." : editingId ? "Save Changes" : "Add Vehicle"}
             </button>
             <div style={{ height: "12px" }} />
-            <button onClick={() => { setShowForm(false); setEditingId(null); setError(""); }} disabled={saving} style={{ ...sh.outlineBtn, padding: "16px", borderRadius: "16px", fontSize: "15px", border: "none", background: colors.bg, color: colors.textSecondary, fontWeight: "700", marginBottom: "2rem" }}>Cancel</button>
+            <button onClick={() => { setShowForm(false); setEditingId(null); setError(""); setFieldErrors({}); }} disabled={saving} style={{ ...sh.outlineBtn, padding: "16px", borderRadius: "16px", fontSize: "15px", border: "none", background: colors.bg, color: colors.textSecondary, fontWeight: "700", marginBottom: "2rem" }}>Cancel</button>
           </>
         ) : (
           <>
@@ -358,7 +535,7 @@ export default function MyVehicles() {
                 subtitle="Register your car to easily book services and track maintenance."
                 action={
                   <button
-                    onClick={() => { setForm(emptyVehicle()); setEditingId(null); setShowForm(true); }}
+                    onClick={() => { setForm(emptyVehicle()); setEditingId(null); setFieldErrors({}); setShowForm(true); }}
                     style={{ ...sh.primaryBtn, width: "auto", padding: "14px 28px", borderRadius: "14px", fontSize: "14px" }}
                   >
                     + Add Your First Vehicle
@@ -408,7 +585,7 @@ export default function MyVehicles() {
                 {/* PROMINENT BOTTOM CENTER ADD BUTTON */}
                 <div style={{ marginTop: "0.5rem", marginBottom: "2rem", display: "flex", justifyContent: "center" }}>
                   <button
-                    onClick={() => { setForm(emptyVehicle()); setEditingId(null); setShowForm(true); setError(""); }}
+                    onClick={() => { setForm(emptyVehicle()); setEditingId(null); setFieldErrors({}); setShowForm(true); setError(""); }}
                     style={{
                       ...sh.primaryBtn,
                       display: "flex",
