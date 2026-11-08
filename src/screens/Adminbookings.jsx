@@ -870,7 +870,7 @@ export default function AdminBookings() {
   };
 
   return (
-    <RoleBasedWrapper title="Management">
+    <RoleBasedWrapper>
       <style>{keyframes}</style>
 
       {toast && (

@@ -654,7 +654,7 @@ export default function AdminMechanics() {
   });
 
   return (
-    <RoleBasedWrapper title="Management">
+    <RoleBasedWrapper>
       <style>{keyframes}</style>
 
       {/* TOPBAR */}

@@ -262,7 +262,7 @@ export default function AdminReports() {
   };
 
   return (
-    <RoleBasedWrapper title="Management">
+    <RoleBasedWrapper>
 
       {/* TOPBAR */}
       <div style={sh.hero}>

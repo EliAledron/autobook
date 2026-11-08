@@ -167,7 +167,7 @@ export default function AdminCarParts() {
   });
 
   return (
-    <RoleBasedWrapper title="Management">
+    <RoleBasedWrapper>
 
       {/* TOPBAR */}
       <div style={sh.hero}>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useUser } from "../UserContext";
 import AdminLayout from "./AdminLayout";
 import DesktopOnly from "./DesktopOnly";
+import BackButton from "./BackButton";
 import { sh } from "../screens/dashboardShared";
 
 export default function RoleBasedWrapper({ children, title, onBack }) {
@@ -33,11 +34,9 @@ export default function RoleBasedWrapper({ children, title, onBack }) {
   return (
     <div style={sh.page}>
       <div style={sh.topbar}>
-        <button onClick={handleBack} style={{ background: "transparent", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center" }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-        </button>
-        <div style={sh.topbarLogo}>{title}</div>
-        <div style={{ width: "24px" }} />
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <BackButton onClick={handleBack} />
+        </div>
       </div>
       {children}
     </div>

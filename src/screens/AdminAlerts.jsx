@@ -260,7 +260,7 @@ export default function AdminAlerts() {
   );
 
   return (
-    <RoleBasedWrapper title="Management">
+    <RoleBasedWrapper>
       {/* TOPBAR */}
       <div style={sh.hero}>
         <div style={sh.rolePill}><div style={sh.roleDot} /><span style={sh.roleText}>{currentUser?.role || "Owner"}</span></div>
