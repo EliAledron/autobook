@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import BackButton from "../components/BackButton";
 import { sendCustomVerificationEmail } from "../utils/notifications";
+import { getFriendlyErrorMessage } from "../utils/authErrorUtils";
 import { AlertTriangle, Car, Store, Wrench, Paperclip, FileText, CreditCard, Camera } from "lucide-react";
 import {
   createUserWithEmailAndPassword,
@@ -195,8 +196,12 @@ export default function Signup() {
           user = newUser;
         } catch (authErr) {
           if (authErr.code === "auth/email-already-in-use") {
-            const { user: existingUser } = await signInWithEmailAndPassword(auth, email, password);
-            user = existingUser;
+            try {
+              const { user: existingUser } = await signInWithEmailAndPassword(auth, email, password);
+              user = existingUser;
+            } catch (_signInErr) {
+              throw new Error("This email is already registered. If you already have an account, please log in with your password, or use a different email to sign up.");
+            }
           } else {
             throw authErr;
           }
@@ -207,11 +212,8 @@ export default function Signup() {
       await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() }, permitUrl, shopNameStr, {}, dtiUrl);
       navigate("/pending", { replace: true });
     } catch (err) {
-      setError(
-        err.code === "auth/email-already-in-use"
-          ? "This email is already registered."
-          : err.message
-      );
+      console.error("Execute signup error:", err);
+      setError(getFriendlyErrorMessage(err, "signup"));
       setLoading(false);
     } finally {
       setLoading(false);
@@ -237,20 +239,8 @@ export default function Signup() {
       else setStep(3);
     } catch (err) {
       console.error("Google sign-up error:", err);
-      if (err.code === "auth/popup-closed-by-user") {
-        // user dismissed — do nothing
-      } else if (err.code === "auth/unauthorized-domain") {
-        setError(`This domain (${window.location.hostname}) is not authorized in Firebase. Please add "${window.location.hostname}" to Firebase Console > Authentication > Settings > Authorized domains.`);
-      } else if (err.code === "auth/popup-blocked") {
-        setError("The Google Sign-In popup was blocked by your browser. Please allow popups for this site and try again.");
-      } else if (
-        err.code === "auth/web-storage-unsupported" ||
-        (err.message && err.message.toLowerCase().includes("sessionstorage"))
-      ) {
-        setError("Google sign-in needs browser storage to work. Please open this page in your browser's normal (non-private) mode, or enable cookies in your browser settings, then try again.");
-      } else {
-        setError(err.message || "Google sign-up failed. Please try again.");
-      }
+      const friendly = getFriendlyErrorMessage(err, "signup");
+      if (friendly) setError(friendly);
       setLoading(false);
     }
   };
@@ -271,8 +261,12 @@ export default function Signup() {
           user = newUser;
         } catch (authErr) {
           if (authErr.code === "auth/email-already-in-use") {
-            const { user: existingUser } = await signInWithEmailAndPassword(auth, email, password);
-            user = existingUser;
+            try {
+              const { user: existingUser } = await signInWithEmailAndPassword(auth, email, password);
+              user = existingUser;
+            } catch (_signInErr) {
+              throw new Error("This email is already registered. If you already have an account, please log in with your password, or use a different email to sign up.");
+            }
           } else {
             throw authErr;
           }
@@ -288,7 +282,8 @@ export default function Signup() {
       );
       navigate("/pending", { replace: true });
     } catch (err) {
-      setError(err.code === "auth/email-already-in-use" ? "This email is already registered." : err.message);
+      console.error("Mechanic signup error:", err);
+      setError(getFriendlyErrorMessage(err, "signup"));
       setLoading(false);
     }
   };
@@ -306,7 +301,8 @@ export default function Signup() {
       const dtiUrl = await uploadToCloudinary(dtiFile);
       await executeSignup(permitUrl, shopName.trim(), dtiUrl);
     } catch (err) {
-      setError(err.message || "Failed to upload permit.");
+      console.error("Owner submit error:", err);
+      setError(getFriendlyErrorMessage(err, "signup"));
       setLoading(false);
     }
   };
@@ -329,8 +325,12 @@ export default function Signup() {
           user = newUser;
         } catch (authErr) {
           if (authErr.code === "auth/email-already-in-use") {
-            const { user: existingUser } = await signInWithEmailAndPassword(auth, email, password);
-            user = existingUser;
+            try {
+              const { user: existingUser } = await signInWithEmailAndPassword(auth, email, password);
+              user = existingUser;
+            } catch (_signInErr) {
+              throw new Error("This email is already registered. If you already have an account, please log in with your password, or use a different email to sign up.");
+            }
           } else {
             throw authErr;
           }
@@ -367,7 +367,8 @@ export default function Signup() {
 
       navigate("/pending", { replace: true });
     } catch (err) {
-      setError(err.code === "auth/email-already-in-use" ? "This email is already registered." : err.message);
+      console.error("Customer submit error:", err);
+      setError(getFriendlyErrorMessage(err, "signup"));
       setLoading(false);
     }
   };
@@ -394,7 +395,7 @@ export default function Signup() {
             <div style={s.errorModal}>
               <div style={s.errorModalIcon}><AlertTriangle size={24} /></div>
               <h3 style={s.errorModalTitle}>Oops!</h3>
-              <p style={s.errorModalText}>{error}</p>
+              <p style={s.errorModalText}>{getFriendlyErrorMessage(error, "signup")}</p>
               <button style={s.errorModalBtn} onClick={() => setError("")}>Okay</button>
             </div>
           </div>

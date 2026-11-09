@@ -4,6 +4,7 @@ import { auth } from "../firebase";
 import { sendPasswordResetEmail } from "firebase/auth";
 import BackButton from "../components/BackButton";
 import { AlertTriangle, CheckCircle } from "lucide-react";
+import { getFriendlyErrorMessage } from "../utils/authErrorUtils";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -27,8 +28,8 @@ export default function ForgotPassword() {
       await sendPasswordResetEmail(auth, email);
       setSuccess(true);
     } catch (err) {
-      const bad = ["auth/user-not-found", "auth/invalid-email"];
-      setError(bad.includes(err.code) ? "Invalid email address or user not found." : err.message);
+      console.error("Password reset error:", err);
+      setError(getFriendlyErrorMessage(err, "reset"));
     } finally {
       setLoading(false);
     }
@@ -58,7 +59,7 @@ export default function ForgotPassword() {
             <div style={s.errorModal}>
               <div style={s.errorModalIcon}><AlertTriangle size={24} color="#ef4444" /></div>
               <h3 style={s.errorModalTitle}>Oops!</h3>
-              <p style={s.errorModalText}>{error}</p>
+              <p style={s.errorModalText}>{getFriendlyErrorMessage(error, "reset")}</p>
               <button style={s.errorModalBtn} onClick={() => setError("")}>Okay</button>
             </div>
           </div>

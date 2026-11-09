@@ -5,6 +5,7 @@ import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuth
 import BackButton from "../components/BackButton";
 import { doc, getDoc } from "firebase/firestore";
 import { AlertTriangle, Wrench } from "lucide-react";
+import { getFriendlyErrorMessage } from "../utils/authErrorUtils";
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
@@ -82,8 +83,8 @@ export default function Login() {
       sessionStorage.setItem("justLoggedIn", "true");
       await checkStatusAndNavigate(user.uid, navigate, setError);
     } catch (err) {
-      const bad = ["auth/user-not-found", "auth/wrong-password", "auth/invalid-credential"];
-      setError(bad.includes(err.code) ? "Incorrect email or password." : err.message);
+      console.error("Login error:", err);
+      setError(getFriendlyErrorMessage(err, "login"));
     } finally {
       setLoading(false);
     }
@@ -98,20 +99,8 @@ export default function Login() {
       await checkStatusAndNavigate(result.user.uid, navigate, setError);
     } catch (err) {
       console.error("Google sign-in error:", err);
-      if (err.code === "auth/popup-closed-by-user") {
-        // user dismissed — do nothing
-      } else if (err.code === "auth/unauthorized-domain") {
-        setError(`This domain (${window.location.hostname}) is not authorized in Firebase. Please add "${window.location.hostname}" to Firebase Console > Authentication > Settings > Authorized domains.`);
-      } else if (err.code === "auth/popup-blocked") {
-        setError("The Google Sign-In popup was blocked by your browser. Please allow popups for this site and try again.");
-      } else if (
-        err.code === "auth/web-storage-unsupported" ||
-        (err.message && err.message.toLowerCase().includes("sessionstorage"))
-      ) {
-        setError("Google sign-in needs browser storage to work. Please open this page in your browser's normal (non-private) mode, or enable cookies in your browser settings, then try again.");
-      } else {
-        setError(err.message || "Google sign-in failed. Please try again.");
-      }
+      const friendly = getFriendlyErrorMessage(err, "login");
+      if (friendly) setError(friendly);
       setLoading(false);
     }
   };
@@ -140,7 +129,7 @@ export default function Login() {
             <div style={s.errorModal}>
               <div style={s.errorModalIcon}><AlertTriangle size={24} color="#ef4444" /></div>
               <h3 style={s.errorModalTitle}>Oops!</h3>
-              <p style={s.errorModalText}>{error}</p>
+              <p style={s.errorModalText}>{getFriendlyErrorMessage(error, "login")}</p>
               <button style={s.errorModalBtn} onClick={() => setError("")}>Okay</button>
             </div>
           </div>

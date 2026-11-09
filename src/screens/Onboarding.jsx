@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { CustomDropdown } from "./dashboardShared";
 import { sendCustomVerificationEmail } from "../utils/notifications";
+import { getFriendlyErrorMessage } from "../utils/authErrorUtils";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -129,10 +130,11 @@ async function uploadToCloudinary(file) {
 async function checkStatusAndNavigate(uid, navigate, setError) {
   const snap = await getDoc(doc(db, "users", uid));
   if (!snap.exists()) { navigate("/pending"); return; }
-  const { status, role = "", rejectionReason } = snap.data();
+  const snapData = snap.data() || {};
+  const { status, role = "", rejectionReason } = snapData;
   const r = role.toLowerCase();
   if (r === "admin") { navigate("/dashboard"); return; }
-  const isVerified = auth.currentUser?.emailVerified || data.emailVerified === true || status === "approved";
+  const isVerified = auth.currentUser?.emailVerified || snapData.emailVerified === true || status === "approved";
   if (!isVerified) { navigate("/pending"); return; }
   if (status === "approved") { navigate("/dashboard"); return; }
   navigate("/pending");
@@ -460,20 +462,8 @@ function SignupForm({ goBack, navigate, onSwitch }) {
       else setStep(3);
     } catch (err) {
       console.error("Google sign-up error:", err);
-      if (err.code === "auth/popup-closed-by-user") {
-        // user dismissed — do nothing
-      } else if (err.code === "auth/unauthorized-domain") {
-        setError(`This domain (${window.location.hostname}) is not authorized in Firebase. Please add "${window.location.hostname}" to Firebase Console > Authentication > Settings > Authorized domains.`);
-      } else if (err.code === "auth/popup-blocked") {
-        setError("The Google Sign-In popup was blocked by your browser. Please allow popups for this site and try again.");
-      } else if (
-        err.code === "auth/web-storage-unsupported" ||
-        (err.message && err.message.toLowerCase().includes("sessionstorage"))
-      ) {
-        setError("Google sign-in needs browser storage to work. Please open this page in your browser's normal (non-private) mode, or enable cookies in your browser settings, then try again.");
-      } else {
-        setError(err.message || "Google sign-up failed. Please try again.");
-      }
+      const friendly = getFriendlyErrorMessage(err, "signup");
+      if (friendly) setError(friendly);
       setLoading(false);
     }
   };
@@ -495,8 +485,12 @@ function SignupForm({ goBack, navigate, onSwitch }) {
           user = newUser;
         } catch (authErr) {
           if (authErr.code === "auth/email-already-in-use") {
-            const { user: existingUser } = await signInWithEmailAndPassword(auth, email, password);
-            user = existingUser;
+            try {
+              const { user: existingUser } = await signInWithEmailAndPassword(auth, email, password);
+              user = existingUser;
+            } catch (_signInErr) {
+              throw new Error("This email is already registered. If you already have an account, please log in with your password, or use a different email to sign up.");
+            }
           } else {
             throw authErr;
           }
@@ -510,7 +504,8 @@ function SignupForm({ goBack, navigate, onSwitch }) {
       await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() }, permitUrl, shopName.trim(), "", { dtiUrl });
       navigate("/pending", { replace: true });
     } catch (err) {
-      setError(err.code === "auth/email-already-in-use" ? "This email is already registered." : err.message);
+      console.error("Owner signup error:", err);
+      setError(getFriendlyErrorMessage(err, "signup"));
       setLoading(false);
     }
   };
@@ -532,8 +527,12 @@ function SignupForm({ goBack, navigate, onSwitch }) {
           user = newUser;
         } catch (authErr) {
           if (authErr.code === "auth/email-already-in-use") {
-            const { user: existingUser } = await signInWithEmailAndPassword(auth, email, password);
-            user = existingUser;
+            try {
+              const { user: existingUser } = await signInWithEmailAndPassword(auth, email, password);
+              user = existingUser;
+            } catch (_signInErr) {
+              throw new Error("This email is already registered. If you already have an account, please log in with your password, or use a different email to sign up.");
+            }
           } else {
             throw authErr;
           }
@@ -567,7 +566,8 @@ function SignupForm({ goBack, navigate, onSwitch }) {
 
       navigate("/pending", { replace: true });
     } catch (err) {
-      setError(err.code === "auth/email-already-in-use" ? "This email is already registered." : err.message);
+      console.error("Customer signup error:", err);
+      setError(getFriendlyErrorMessage(err, "signup"));
       setLoading(false);
     }
   };
@@ -588,8 +588,12 @@ function SignupForm({ goBack, navigate, onSwitch }) {
           user = newUser;
         } catch (authErr) {
           if (authErr.code === "auth/email-already-in-use") {
-            const { user: existingUser } = await signInWithEmailAndPassword(auth, email, password);
-            user = existingUser;
+            try {
+              const { user: existingUser } = await signInWithEmailAndPassword(auth, email, password);
+              user = existingUser;
+            } catch (_signInErr) {
+              throw new Error("This email is already registered. If you already have an account, please log in with your password, or use a different email to sign up.");
+            }
           } else {
             throw authErr;
           }
@@ -601,7 +605,8 @@ function SignupForm({ goBack, navigate, onSwitch }) {
       await saveUser(user, role, { firstName: firstName.trim(), middleName: middleName.trim(), lastName: lastName.trim() }, "", mechanicShopName.trim(), mechanicSpecialization);
       navigate("/pending", { replace: true });
     } catch (err) {
-      setError(err.code === "auth/email-already-in-use" ? "This email is already registered." : err.message);
+      console.error("Mechanic signup error:", err);
+      setError(getFriendlyErrorMessage(err, "signup"));
       setLoading(false);
     }
   };
@@ -631,7 +636,7 @@ function SignupForm({ goBack, navigate, onSwitch }) {
             <div style={s.errorModal}>
               <div style={s.errorModalIcon}><AlertTriangle size={32} /></div>
               <h3 style={s.errorModalTitle}>Oops!</h3>
-              <p style={s.errorModalText}>{error}</p>
+              <p style={s.errorModalText}>{getFriendlyErrorMessage(error, "signup")}</p>
               <button style={s.errorModalBtn} onClick={() => setError("")}>Okay</button>
             </div>
           </div>
@@ -913,14 +918,23 @@ function LoginForm({ goBack, navigate, onSwitch }) {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    const trimmedEmail = (email || "").trim();
+    if (!trimmedEmail) {
+      setError("Please enter your email address.");
+      return;
+    }
+    if (!password) {
+      setError("Please enter your password.");
+      return;
+    }
     setLoading(true);
     try {
-      const { user } = await signInWithEmailAndPassword(auth, email, password);
+      const { user } = await signInWithEmailAndPassword(auth, trimmedEmail, password);
       sessionStorage.setItem("justLoggedIn", "true");
       await checkStatusAndNavigate(user.uid, navigate, setError);
     } catch (err) {
-      const bad = ["auth/user-not-found", "auth/wrong-password", "auth/invalid-credential"];
-      setError(bad.includes(err.code) ? "Incorrect email or password." : err.message);
+      console.error("Login error:", err);
+      setError(getFriendlyErrorMessage(err, "login"));
     } finally {
       setLoading(false);
     }
@@ -934,20 +948,8 @@ function LoginForm({ goBack, navigate, onSwitch }) {
       await checkStatusAndNavigate(result.user.uid, navigate, setError);
     } catch (err) {
       console.error("Google sign-in error:", err);
-      if (err.code === "auth/popup-closed-by-user") {
-        // user dismissed — do nothing
-      } else if (err.code === "auth/unauthorized-domain") {
-        setError(`This domain (${window.location.hostname}) is not authorized in Firebase. Please add "${window.location.hostname}" to Firebase Console > Authentication > Settings > Authorized domains.`);
-      } else if (err.code === "auth/popup-blocked") {
-        setError("The Google Sign-In popup was blocked by your browser. Please allow popups for this site and try again.");
-      } else if (
-        err.code === "auth/web-storage-unsupported" ||
-        (err.message && err.message.toLowerCase().includes("sessionstorage"))
-      ) {
-        setError("Google sign-in needs browser storage to work. Please open this page in your browser's normal (non-private) mode, or enable cookies in your browser settings, then try again.");
-      } else {
-        setError(err.message || "Google sign-in failed. Please try again.");
-      }
+      const friendly = getFriendlyErrorMessage(err, "login");
+      if (friendly) setError(friendly);
       setLoading(false);
     }
   };
@@ -977,7 +979,7 @@ function LoginForm({ goBack, navigate, onSwitch }) {
             <div style={s.errorModal}>
               <div style={s.errorModalIcon}><AlertTriangle size={32} /></div>
               <h3 style={s.errorModalTitle}>Oops!</h3>
-              <p style={s.errorModalText}>{error}</p>
+              <p style={s.errorModalText}>{getFriendlyErrorMessage(error, "login")}</p>
               <button style={s.errorModalBtn} onClick={() => setError("")}>Okay</button>
             </div>
           </div>
