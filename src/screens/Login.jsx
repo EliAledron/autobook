@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "firebase/auth";
@@ -53,8 +53,31 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const emailRef = useRef(null);
+  const passwordRef = useRef(null);
+
+  const clearFieldError = (f) => {
+    if (fieldErrors[f]) {
+      setFieldErrors(prev => {
+        const next = { ...prev };
+        delete next[f];
+        return next;
+      });
+    }
+  };
+
+  const renderFieldError = (field) => {
+    if (!fieldErrors[field]) return null;
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "11px", fontWeight: "600", marginTop: "-12px", marginBottom: "16px" }}>
+        <AlertTriangle size={13} color="#dc2626" /> {fieldErrors[field]}
+      </div>
+    );
+  };
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
@@ -68,15 +91,34 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    const errs = {};
+    let firstRef = null;
+
     const trimmedEmail = (email || "").trim();
     if (!trimmedEmail) {
-      setError("Please enter your email address.");
-      return;
+      errs.email = "Please enter your email address.";
+      if (!firstRef) firstRef = emailRef;
+    } else if (!trimmedEmail.includes("@")) {
+      errs.email = "Please enter a valid email address.";
+      if (!firstRef) firstRef = emailRef;
     }
     if (!password) {
-      setError("Please enter your password.");
+      errs.password = "Please enter your password.";
+      if (!firstRef) firstRef = passwordRef;
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      if (firstRef && firstRef.current) {
+        firstRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (firstRef.current.focus) {
+          setTimeout(() => firstRef.current?.focus(), 250);
+        }
+      }
       return;
     }
+
+    setFieldErrors({});
     setLoading(true);
     try {
       const { user } = await signInWithEmailAndPassword(auth, trimmedEmail, password);
@@ -92,6 +134,7 @@ export default function Login() {
 
   const handleGoogleLogin = async () => {
     setError("");
+    setFieldErrors({});
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, new GoogleAuthProvider());
@@ -107,6 +150,13 @@ export default function Login() {
 
   return (
     <div style={s.page}>
+      <style>{`
+        @keyframes ab-shake {
+          0%, 100% { transform: translateX(0); }
+          20%, 60% { transform: translateX(-4px); }
+          40%, 80% { transform: translateX(4px); }
+        }
+      `}</style>
       {/* Background with blur and navy gradient overlay matching Onboarding */}
       <div style={s.bgImage} />
       <div style={s.bgOverlay} />
@@ -136,11 +186,51 @@ export default function Login() {
         )}
 
         <div style={s.card}>
-          <label style={s.label}>Email</label>
-          <input type="email" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} style={s.input} required />
+          <label style={s.label}>Email *</label>
+          <input
+            ref={emailRef}
+            type="email"
+            placeholder="you@email.com"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              clearFieldError("email");
+            }}
+            style={{
+              ...s.input,
+              marginBottom: fieldErrors.email ? "8px" : "20px",
+              ...(fieldErrors.email ? {
+                border: "2px solid #ef4444",
+                backgroundColor: "#fef2f2",
+                animation: "ab-shake 0.35s ease",
+              } : {}),
+            }}
+            required
+          />
+          {renderFieldError("email")}
 
-          <label style={s.label}>Password</label>
-          <input type="password" placeholder="Your password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ ...s.input, marginBottom: "8px" }} required />
+          <label style={s.label}>Password *</label>
+          <input
+            ref={passwordRef}
+            type="password"
+            placeholder="Your password"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              clearFieldError("password");
+            }}
+            style={{
+              ...s.input,
+              marginBottom: fieldErrors.password ? "8px" : "8px",
+              ...(fieldErrors.password ? {
+                border: "2px solid #ef4444",
+                backgroundColor: "#fef2f2",
+                animation: "ab-shake 0.35s ease",
+              } : {}),
+            }}
+            required
+          />
+          {renderFieldError("password")}
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "16px" }}>
             <button
               type="button"

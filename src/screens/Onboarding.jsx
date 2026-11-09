@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Bell, Settings, Stethoscope, User, Check, Car, Store, Wrench, Paperclip, FileText, CreditCard, Camera, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
@@ -426,24 +426,119 @@ function SignupForm({ goBack, navigate, onSwitch }) {
   const [licensePreview, setLicensePreview] = useState(null);
 
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  // Field refs for auto-scrolling to missed/mistaken fields
+  const firstNameRef = useRef(null);
+  const lastNameRef = useRef(null);
+  const emailRef = useRef(null);
+  const passwordRef = useRef(null);
+  const confirmPasswordRef = useRef(null);
+  const roleBoxRef = useRef(null);
+
+  const shopNameRef = useRef(null);
+  const permitBoxRef = useRef(null);
+  const dtiBoxRef = useRef(null);
+
+  const licenseBoxRef = useRef(null);
+  const makeBoxRef = useRef(null);
+  const modelBoxRef = useRef(null);
+  const yearRef = useRef(null);
+  const plateRef = useRef(null);
+
+  const mechanicShopRef = useRef(null);
+  const specializationBoxRef = useRef(null);
+
+  const scrollToRef = (ref) => {
+    if (ref && ref.current) {
+      ref.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (ref.current.focus) {
+        setTimeout(() => ref.current?.focus(), 250);
+      }
+    }
+  };
+
+  const clearFieldError = (field) => {
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
+
+  const renderFieldError = (field) => {
+    if (!fieldErrors[field]) return null;
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "11px", fontWeight: "600", marginTop: "-12px", marginBottom: "16px" }}>
+        <AlertTriangle size={13} color="#dc2626" /> {fieldErrors[field]}
+      </div>
+    );
+  };
+
+  const getFieldInputStyle = (field, customBase = {}) => ({
+    ...s.input,
+    ...customBase,
+    ...(fieldErrors[field] ? {
+      border: "2px solid #ef4444",
+      backgroundColor: "#fef2f2",
+      animation: "ab-shake 0.35s ease",
+      marginBottom: "8px",
+    } : {}),
+  });
 
   const handleNext = () => {
     setError("");
-    if (!firstName.trim() || !lastName.trim()) return setError("Please enter your first and last name.");
-    if (!email.trim() || !email.includes("@")) return setError("Please enter a valid email address.");
-    if (!password || password.length < 6) return setError("Password must be at least 6 characters.");
-    if (password !== confirmPassword) return setError("Passwords do not match.");
-    if (!role) return setError("Please select a role.");
+    const errs = {};
+    let firstRef = null;
 
+    if (!firstName.trim()) {
+      errs.firstName = "First name is required.";
+      if (!firstRef) firstRef = firstNameRef;
+    }
+    if (!lastName.trim()) {
+      errs.lastName = "Last name is required.";
+      if (!firstRef) firstRef = lastNameRef;
+    }
+    if (!email.trim() || !email.includes("@")) {
+      errs.email = "Please enter a valid email address.";
+      if (!firstRef) firstRef = emailRef;
+    }
+    if (!password || password.length < 6) {
+      errs.password = "Password must be at least 6 characters.";
+      if (!firstRef) firstRef = passwordRef;
+    }
+    if (password !== confirmPassword) {
+      errs.confirmPassword = "Passwords do not match.";
+      if (!firstRef) firstRef = confirmPasswordRef;
+    }
+    if (!role) {
+      errs.role = "Please select a role to continue.";
+      if (!firstRef) firstRef = roleBoxRef;
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      scrollToRef(firstRef);
+      return;
+    }
+
+    setFieldErrors({});
     if (role === "Owner") setStep(2);
     else if (role === "Mechanic") setStep(4);
     else setStep(3);
   };
 
   const handleGoogleSignup = async () => {
-    if (!role) return setError("Please select a role before continuing with Google.");
+    if (!role) {
+      setFieldErrors({ role: "Please select a role before continuing with Google." });
+      scrollToRef(roleBoxRef);
+      return;
+    }
     setError("");
+    setFieldErrors({});
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, new GoogleAuthProvider());
@@ -471,10 +566,29 @@ function SignupForm({ goBack, navigate, onSwitch }) {
   const handleOwnerSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!shopName.trim()) return setError("Please enter your shop name.");
-    if (!permitFile) return setError("Please upload your business permit.");
-    if (!dtiFile) return setError("Please upload your DTI Certificate.");
+    const errs = {};
+    let firstRef = null;
 
+    if (!shopName.trim()) {
+      errs.shopName = "Please enter your shop name.";
+      if (!firstRef) firstRef = shopNameRef;
+    }
+    if (!permitFile) {
+      errs.permit = "Business permit / proof of business is required.";
+      if (!firstRef) firstRef = permitBoxRef;
+    }
+    if (!dtiFile) {
+      errs.dti = "DTI Certificate is required.";
+      if (!firstRef) firstRef = dtiBoxRef;
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      scrollToRef(firstRef);
+      return;
+    }
+
+    setFieldErrors({});
     setLoading(true);
     try {
       let user = createdUser;
@@ -513,10 +627,41 @@ function SignupForm({ goBack, navigate, onSwitch }) {
   const handleCustomerSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!licenseFile) return setError("Driver's license is required.");
-    if (!vehicleMake.trim() || !vehicleModel.trim()) return setError("Car brand and model are required.");
-    if (!vehiclePlate.trim()) return setError("Vehicle plate number is required.");
+    const errs = {};
+    let firstRef = null;
 
+    if (!licenseFile) {
+      errs.license = "Driver's license is required.";
+      if (!firstRef) firstRef = licenseBoxRef;
+    }
+    if (!vehicleMake.trim()) {
+      errs.vehicleMake = "Please select your car brand.";
+      if (!firstRef) firstRef = makeBoxRef;
+    }
+    if (!vehicleModel.trim()) {
+      errs.vehicleModel = "Please select your vehicle model.";
+      if (!firstRef) firstRef = modelBoxRef;
+    }
+    if (vehicleYear.trim()) {
+      const y = parseInt(vehicleYear.trim(), 10);
+      const maxYear = new Date().getFullYear() + 1;
+      if (isNaN(y) || y < 1900 || y > maxYear) {
+        errs.vehicleYear = `Please enter a valid year (1900 - ${maxYear}).`;
+        if (!firstRef) firstRef = yearRef;
+      }
+    }
+    if (!vehiclePlate.trim()) {
+      errs.vehiclePlate = "Vehicle plate number is required.";
+      if (!firstRef) firstRef = plateRef;
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      scrollToRef(firstRef);
+      return;
+    }
+
+    setFieldErrors({});
     setLoading(true);
     try {
       let user = createdUser;
@@ -575,9 +720,25 @@ function SignupForm({ goBack, navigate, onSwitch }) {
   const handleMechanicSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!mechanicShopName.trim()) return setError("Please enter your shop name or employer.");
-    if (!mechanicSpecialization.trim()) return setError("Please select your specialization.");
+    const errs = {};
+    let firstRef = null;
 
+    if (!mechanicShopName.trim()) {
+      errs.mechanicShop = "Please enter your shop name or employer.";
+      if (!firstRef) firstRef = mechanicShopRef;
+    }
+    if (!mechanicSpecialization.trim()) {
+      errs.mechanicSpecialization = "Please select your specialization.";
+      if (!firstRef) firstRef = specializationBoxRef;
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      scrollToRef(firstRef);
+      return;
+    }
+
+    setFieldErrors({});
     setLoading(true);
     try {
       let user = createdUser;
@@ -645,32 +806,110 @@ function SignupForm({ goBack, navigate, onSwitch }) {
         <div style={s.formCard}>
           {step === 1 ? (
             <>
-              <label style={s.label}>First Name</label>
-              <input className="ab-input" type="text" placeholder="First name" value={firstName} onChange={e => setFirstName(e.target.value.replace(/[^a-zA-Z\s-]/g, ''))} style={s.input} />
+              <label style={s.label}>First Name *</label>
+              <input
+                ref={firstNameRef}
+                className="ab-input"
+                type="text"
+                placeholder="First name"
+                value={firstName}
+                onChange={e => {
+                  setFirstName(e.target.value.replace(/[^a-zA-Z\s-]/g, ''));
+                  clearFieldError("firstName");
+                }}
+                style={getFieldInputStyle("firstName")}
+              />
+              {renderFieldError("firstName")}
 
               <label style={s.label}>Middle Name</label>
-              <input className="ab-input" type="text" placeholder="Middle name (optional)" value={middleName} onChange={e => setMiddleName(e.target.value.replace(/[^a-zA-Z\s-]/g, ''))} style={s.input} />
+              <input
+                className="ab-input"
+                type="text"
+                placeholder="Middle name (optional)"
+                value={middleName}
+                onChange={e => setMiddleName(e.target.value.replace(/[^a-zA-Z\s-]/g, ''))}
+                style={s.input}
+              />
 
-              <label style={s.label}>Last Name</label>
-              <input className="ab-input" type="text" placeholder="Last name" value={lastName} onChange={e => setLastName(e.target.value.replace(/[^a-zA-Z\s-]/g, ''))} style={s.input} />
+              <label style={s.label}>Last Name *</label>
+              <input
+                ref={lastNameRef}
+                className="ab-input"
+                type="text"
+                placeholder="Last name"
+                value={lastName}
+                onChange={e => {
+                  setLastName(e.target.value.replace(/[^a-zA-Z\s-]/g, ''));
+                  clearFieldError("lastName");
+                }}
+                style={getFieldInputStyle("lastName")}
+              />
+              {renderFieldError("lastName")}
 
-              <label style={s.label}>Email Address</label>
-              <input className="ab-input" type="email" placeholder="you@email.com" value={email} onChange={e => setEmail(e.target.value)} style={s.input} />
+              <label style={s.label}>Email Address *</label>
+              <input
+                ref={emailRef}
+                className="ab-input"
+                type="email"
+                placeholder="you@email.com"
+                value={email}
+                onChange={e => {
+                  setEmail(e.target.value);
+                  clearFieldError("email");
+                }}
+                style={getFieldInputStyle("email")}
+              />
+              {renderFieldError("email")}
 
-              <label style={s.label}>Create Password</label>
-              <input className="ab-input" type="password" placeholder="At least 6 characters" value={password} onChange={e => setPassword(e.target.value)} style={s.input} />
+              <label style={s.label}>Create Password *</label>
+              <input
+                ref={passwordRef}
+                className="ab-input"
+                type="password"
+                placeholder="At least 6 characters"
+                value={password}
+                onChange={e => {
+                  setPassword(e.target.value);
+                  clearFieldError("password");
+                }}
+                style={getFieldInputStyle("password")}
+              />
+              {renderFieldError("password")}
 
-              <label style={s.label}>Confirm Password</label>
-              <input className="ab-input" type="password" placeholder="Re-enter your password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} style={s.input} />
+              <label style={s.label}>Confirm Password *</label>
+              <input
+                ref={confirmPasswordRef}
+                className="ab-input"
+                type="password"
+                placeholder="Re-enter your password"
+                value={confirmPassword}
+                onChange={e => {
+                  setConfirmPassword(e.target.value);
+                  clearFieldError("confirmPassword");
+                }}
+                style={getFieldInputStyle("confirmPassword")}
+              />
+              {renderFieldError("confirmPassword")}
 
-              <label style={s.label}>Select Your Role</label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "28px" }}>
+              <label style={s.label}>Select Your Role *</label>
+              <div
+                ref={roleBoxRef}
+                style={{
+                  display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px",
+                  marginBottom: fieldErrors.role ? "8px" : "28px",
+                  padding: fieldErrors.role ? "4px" : "0",
+                  borderRadius: "18px",
+                  border: fieldErrors.role ? "2px solid #ef4444" : "none",
+                  background: fieldErrors.role ? "rgba(239,68,68,0.06)" : "transparent",
+                  animation: fieldErrors.role ? "ab-shake 0.35s ease" : "none",
+                }}
+              >
                 {ROLES.map((r) => {
                   const isSelected = role === r;
                   return (
                   <div
                     key={r}
-                    onClick={() => { setRole(r); setError(""); }}
+                    onClick={() => { setRole(r); setError(""); clearFieldError("role"); }}
                     style={{
                       padding: "16px 12px",
                       borderRadius: "16px",
@@ -696,6 +935,7 @@ function SignupForm({ goBack, navigate, onSwitch }) {
                   )
                 })}
               </div>
+              {renderFieldError("role")}
 
               <button onClick={handleNext} className="ab-btn" style={{ ...s.primaryBtn, opacity: loading ? 0.75 : 1 }} disabled={loading}>
                 {loading ? "Please wait…" : role ? "Next Step" : "Create Account"}
@@ -712,31 +952,83 @@ function SignupForm({ goBack, navigate, onSwitch }) {
               <h3 style={{ marginTop: 0, color: "#111827", fontSize: "18px", fontWeight: "700" }}>Shop Details</h3>
               <p style={{ fontSize: "13px", color: "#6b7280", marginBottom: "16px", marginTop: "-4px" }}>Please provide your auto shop details and proof of business.</p>
 
-              <label style={s.label}>Shop Name</label>
-              <input className="ab-input" type="text" placeholder="Your shop name" value={shopName} onChange={e => setShopName(e.target.value.replace(/[^a-zA-Z\s]/g, ''))} style={s.input} />
+              <label style={s.label}>Shop Name *</label>
+              <input
+                ref={shopNameRef}
+                className="ab-input"
+                type="text"
+                placeholder="Your shop name"
+                value={shopName}
+                onChange={e => {
+                  setShopName(e.target.value.replace(/[^a-zA-Z\s]/g, ''));
+                  clearFieldError("shopName");
+                }}
+                style={getFieldInputStyle("shopName")}
+              />
+              {renderFieldError("shopName")}
 
               <label style={s.label}>Business Permit / Proof *</label>
               <input type="file" accept="image/*" id="permitUpload" style={{ display: "none" }} onChange={(e) => {
                 const file = e.target.files[0];
-                if (file) { setPermitFile(file); setPermitPreview(URL.createObjectURL(file)); }
+                if (file) {
+                  setPermitFile(file);
+                  setPermitPreview(URL.createObjectURL(file));
+                  clearFieldError("permit");
+                }
               }} />
-              <div onClick={() => document.getElementById("permitUpload").click()} style={{ width: "100%", height: permitPreview ? "160px" : "100px", background: "#f9fafb", borderRadius: "14px", border: "1.5px dashed #d1d5db", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", marginBottom: "20px", fontSize: "13px", color: "#9ca3af" }}>
+              <div
+                ref={permitBoxRef}
+                onClick={() => document.getElementById("permitUpload").click()}
+                style={{
+                  width: "100%", height: permitPreview ? "160px" : "100px",
+                  background: fieldErrors.permit ? "#fef2f2" : "#f9fafb",
+                  borderRadius: "14px",
+                  border: fieldErrors.permit ? "2px dashed #ef4444" : "1.5px dashed #d1d5db",
+                  animation: fieldErrors.permit ? "ab-shake 0.35s ease" : "none",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer", overflow: "hidden",
+                  marginBottom: fieldErrors.permit ? "8px" : "20px",
+                  fontSize: "13px",
+                  color: fieldErrors.permit ? "#dc2626" : "#9ca3af"
+                }}
+              >
                 {permitPreview ? <img src={permitPreview} alt="permit" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} /> : <><Paperclip size={16} /> Tap to upload permit photo</>}
               </div>
+              {renderFieldError("permit")}
 
               <label style={s.label}>DTI Certificate *</label>
               <input type="file" accept="image/*" id="dtiUpload" style={{ display: "none" }} onChange={(e) => {
                 const file = e.target.files[0];
-                if (file) { setDtiFile(file); setDtiPreview(URL.createObjectURL(file)); }
+                if (file) {
+                  setDtiFile(file);
+                  setDtiPreview(URL.createObjectURL(file));
+                  clearFieldError("dti");
+                }
               }} />
-              <div onClick={() => document.getElementById("dtiUpload").click()} style={{ width: "100%", height: dtiPreview ? "160px" : "100px", background: "#f9fafb", borderRadius: "14px", border: "1.5px dashed #d1d5db", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", marginBottom: "20px", fontSize: "13px", color: "#9ca3af" }}>
+              <div
+                ref={dtiBoxRef}
+                onClick={() => document.getElementById("dtiUpload").click()}
+                style={{
+                  width: "100%", height: dtiPreview ? "160px" : "100px",
+                  background: fieldErrors.dti ? "#fef2f2" : "#f9fafb",
+                  borderRadius: "14px",
+                  border: fieldErrors.dti ? "2px dashed #ef4444" : "1.5px dashed #d1d5db",
+                  animation: fieldErrors.dti ? "ab-shake 0.35s ease" : "none",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer", overflow: "hidden",
+                  marginBottom: fieldErrors.dti ? "8px" : "20px",
+                  fontSize: "13px",
+                  color: fieldErrors.dti ? "#dc2626" : "#9ca3af"
+                }}
+              >
                 {dtiPreview ? <img src={dtiPreview} alt="DTI" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} /> : <><FileText size={16} /> Tap to upload DTI Certificate</>}
               </div>
+              {renderFieldError("dti")}
 
               <button onClick={handleOwnerSubmit} className="ab-btn" style={{ ...s.primaryBtn, opacity: loading ? 0.75 : 1 }} disabled={loading}>
                 {loading ? "Submitting…" : "Complete Sign Up"}
               </button>
-              <button onClick={() => setStep(1)} className="ab-btn" style={s.outlineBtn} disabled={loading}>
+              <button onClick={() => { setStep(1); setFieldErrors({}); }} className="ab-btn" style={s.outlineBtn} disabled={loading}>
                 Back
               </button>
             </>
@@ -756,18 +1048,24 @@ function SignupForm({ goBack, navigate, onSwitch }) {
                   if (file) {
                     setLicenseFile(file);
                     setLicensePreview(URL.createObjectURL(file));
+                    clearFieldError("license");
                   }
                 }}
               />
               <div
+                ref={licenseBoxRef}
                 onClick={() => document.getElementById("licenseUpload").click()}
                 style={{
                   width: "100%", height: licensePreview ? "160px" : "100px",
-                  background: "#f9fafb", borderRadius: "14px",
-                  border: "1.5px dashed #d1d5db",
+                  background: fieldErrors.license ? "#fef2f2" : "#f9fafb",
+                  borderRadius: "14px",
+                  border: fieldErrors.license ? "2px dashed #ef4444" : "1.5px dashed #d1d5db",
+                  animation: fieldErrors.license ? "ab-shake 0.35s ease" : "none",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  cursor: "pointer", overflow: "hidden", marginBottom: "20px",
-                  fontSize: "13px", color: "#9ca3af",
+                  cursor: "pointer", overflow: "hidden",
+                  marginBottom: fieldErrors.license ? "8px" : "20px",
+                  fontSize: "13px",
+                  color: fieldErrors.license ? "#dc2626" : "#9ca3af",
                 }}
               >
                 {licensePreview
@@ -775,6 +1073,7 @@ function SignupForm({ goBack, navigate, onSwitch }) {
                   : <><CreditCard size={16} /> Tap to upload driver's license</>
                 }
               </div>
+              {renderFieldError("license")}
 
               <label style={s.label}>Vehicle Photo (Optional)</label>
               <input
@@ -808,35 +1107,95 @@ function SignupForm({ goBack, navigate, onSwitch }) {
               </div>
 
               <label style={s.label}>Car Brand *</label>
-              <CustomDropdown
-                value={vehicleMake}
-                onChange={(val) => { setVehicleMake(val); setVehicleModel(""); }}
-                options={[
-                  { value: "", label: "Select Car Brand" },
-                  ...Object.keys(CAR_BRANDS_AND_MODELS).sort().map(make => ({ value: make, label: make }))
-                ]}
-                placeholder="Select Car Brand"
-                style={{ ...s.input, backgroundColor: '#f9fafb', padding: "14px 36px 14px 16px", borderRadius: "14px" }}
-              />
+              <div ref={makeBoxRef} style={{ marginBottom: fieldErrors.vehicleMake ? "8px" : "20px" }}>
+                <CustomDropdown
+                  value={vehicleMake}
+                  onChange={(val) => {
+                    setVehicleMake(val);
+                    setVehicleModel("");
+                    clearFieldError("vehicleMake");
+                  }}
+                  options={[
+                    { value: "", label: "Select Car Brand" },
+                    ...Object.keys(CAR_BRANDS_AND_MODELS).sort().map(make => ({ value: make, label: make }))
+                  ]}
+                  placeholder="Select Car Brand"
+                  style={{
+                    ...s.input,
+                    backgroundColor: '#f9fafb',
+                    padding: "14px 36px 14px 16px",
+                    borderRadius: "14px",
+                    marginBottom: 0,
+                    ...(fieldErrors.vehicleMake ? {
+                      border: "2px solid #ef4444",
+                      backgroundColor: "#fef2f2",
+                      animation: "ab-shake 0.35s ease",
+                    } : {}),
+                  }}
+                />
+              </div>
+              {renderFieldError("vehicleMake")}
 
               <label style={s.label}>Vehicle Model *</label>
-              <CustomDropdown
-                value={vehicleModel}
-                onChange={setVehicleModel}
-                options={[
-                  { value: "", label: "Select Model" },
-                  ...(vehicleMake && CAR_BRANDS_AND_MODELS[vehicleMake] ? [...CAR_BRANDS_AND_MODELS[vehicleMake]].sort().map(model => ({ value: model, label: model })) : [])
-                ]}
-                placeholder="Select Model"
-                disabled={!vehicleMake}
-                style={{ ...s.input, backgroundColor: '#f9fafb', padding: "14px 36px 14px 16px", borderRadius: "14px" }}
-              />
+              <div ref={modelBoxRef} style={{ marginBottom: fieldErrors.vehicleModel ? "8px" : "20px" }}>
+                <CustomDropdown
+                  value={vehicleModel}
+                  onChange={(val) => {
+                    setVehicleModel(val);
+                    clearFieldError("vehicleModel");
+                  }}
+                  options={[
+                    { value: "", label: "Select Model" },
+                    ...(vehicleMake && CAR_BRANDS_AND_MODELS[vehicleMake] ? [...CAR_BRANDS_AND_MODELS[vehicleMake]].sort().map(model => ({ value: model, label: model })) : [])
+                  ]}
+                  placeholder="Select Model"
+                  disabled={!vehicleMake}
+                  style={{
+                    ...s.input,
+                    backgroundColor: '#f9fafb',
+                    padding: "14px 36px 14px 16px",
+                    borderRadius: "14px",
+                    marginBottom: 0,
+                    ...(fieldErrors.vehicleModel ? {
+                      border: "2px solid #ef4444",
+                      backgroundColor: "#fef2f2",
+                      animation: "ab-shake 0.35s ease",
+                    } : {}),
+                  }}
+                />
+              </div>
+              {renderFieldError("vehicleModel")}
 
               <label style={s.label}>Year</label>
-              <input className="ab-input" type="text" placeholder="e.g. 2023" value={vehicleYear} onChange={(e) => setVehicleYear(e.target.value.replace(/[^0-9]/g, ''))} style={s.input} />
+              <input
+                ref={yearRef}
+                className="ab-input"
+                type="text"
+                placeholder="e.g. 2023"
+                value={vehicleYear}
+                onChange={(e) => {
+                  setVehicleYear(e.target.value.replace(/[^0-9]/g, ''));
+                  clearFieldError("vehicleYear");
+                }}
+                style={getFieldInputStyle("vehicleYear")}
+              />
+              {renderFieldError("vehicleYear")}
 
               <label style={s.label}>Plate Number *</label>
-              <input className="ab-input" type="text" placeholder="ABC 1234" value={vehiclePlate} onChange={(e) => setVehiclePlate(e.target.value)} style={s.input} required />
+              <input
+                ref={plateRef}
+                className="ab-input"
+                type="text"
+                placeholder="ABC 1234"
+                value={vehiclePlate}
+                onChange={(e) => {
+                  setVehiclePlate(e.target.value);
+                  clearFieldError("vehiclePlate");
+                }}
+                style={getFieldInputStyle("vehiclePlate")}
+                required
+              />
+              {renderFieldError("vehiclePlate")}
 
               <label style={s.label}>Color</label>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "20px" }}>
@@ -863,7 +1222,7 @@ function SignupForm({ goBack, navigate, onSwitch }) {
               <button onClick={handleCustomerSubmit} className="ab-btn" style={{ ...s.primaryBtn, opacity: loading ? 0.75 : 1 }} disabled={loading}>
                 {loading ? "Creating Account…" : "Complete Sign Up"}
               </button>
-              <button onClick={() => setStep(1)} className="ab-btn" style={s.outlineBtn} disabled={loading}>
+              <button onClick={() => { setStep(1); setFieldErrors({}); }} className="ab-btn" style={s.outlineBtn} disabled={loading}>
                 Back
               </button>
             </>
@@ -872,25 +1231,54 @@ function SignupForm({ goBack, navigate, onSwitch }) {
               <h3 style={{ marginTop: 0, color: "#111827", fontSize: "18px", fontWeight: "700" }}>Mechanic Details</h3>
               <p style={{ fontSize: "13px", color: "#6b7280", marginBottom: "16px", marginTop: "-4px" }}>Please provide your professional details.</p>
 
-              <label style={s.label}>Shop / Employer Name</label>
-              <input className="ab-input" type="text" placeholder="Where do you work?" value={mechanicShopName} onChange={e => setMechanicShopName(e.target.value)} style={s.input} />
-
-              <label style={s.label}>Primary Specialization</label>
-              <CustomDropdown
-                value={mechanicSpecialization}
-                onChange={setMechanicSpecialization}
-                options={[
-                  { value: "", label: "Select specialization..." },
-                  ...MECHANIC_SPECIALTIES.map(spec => ({ value: spec, label: spec }))
-                ]}
-                placeholder="Select specialization..."
-                style={{ ...s.input, backgroundColor: '#fff', padding: "14px 36px 14px 16px", borderRadius: "14px" }}
+              <label style={s.label}>Shop / Employer Name *</label>
+              <input
+                ref={mechanicShopRef}
+                className="ab-input"
+                type="text"
+                placeholder="Where do you work?"
+                value={mechanicShopName}
+                onChange={e => {
+                  setMechanicShopName(e.target.value);
+                  clearFieldError("mechanicShop");
+                }}
+                style={getFieldInputStyle("mechanicShop")}
               />
+              {renderFieldError("mechanicShop")}
+
+              <label style={s.label}>Primary Specialization *</label>
+              <div ref={specializationBoxRef} style={{ marginBottom: fieldErrors.mechanicSpecialization ? "8px" : "20px" }}>
+                <CustomDropdown
+                  value={mechanicSpecialization}
+                  onChange={(val) => {
+                    setMechanicSpecialization(val);
+                    clearFieldError("mechanicSpecialization");
+                  }}
+                  options={[
+                    { value: "", label: "Select specialization..." },
+                    ...MECHANIC_SPECIALTIES.map(spec => ({ value: spec, label: spec }))
+                  ]}
+                  placeholder="Select specialization..."
+                  style={{
+                    ...s.input,
+                    backgroundColor: '#fff',
+                    padding: "14px 36px 14px 16px",
+                    borderRadius: "14px",
+                    marginBottom: 0,
+                    ...(fieldErrors.mechanicSpecialization ? {
+                      border: "2px solid #ef4444",
+                      backgroundColor: "#fef2f2",
+                      animation: "ab-shake 0.35s ease",
+                    } : {}),
+                  }}
+                />
+              </div>
+              {renderFieldError("mechanicSpecialization")}
 
               <button onClick={handleMechanicSubmit} className="ab-btn" style={{ ...s.primaryBtn, opacity: loading ? 0.75 : 1 }} disabled={loading}>
                 {loading ? "Submitting…" : "Complete Sign Up"}
               </button>
-              <button onClick={() => setStep(1)} className="ab-btn" style={s.outlineBtn} disabled={loading}>
+              <button onClick={() => { setStep(1); setFieldErrors({}); }} className="ab-btn" style={s.outlineBtn} disabled={loading}>
                 Back
               </button>
             </>
@@ -913,20 +1301,62 @@ function LoginForm({ goBack, navigate, onSwitch }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  const loginEmailRef = useRef(null);
+  const loginPasswordRef = useRef(null);
+
+  const clearFieldError = (f) => {
+    if (fieldErrors[f]) {
+      setFieldErrors(prev => {
+        const next = { ...prev };
+        delete next[f];
+        return next;
+      });
+    }
+  };
+
+  const renderFieldError = (field) => {
+    if (!fieldErrors[field]) return null;
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "11px", fontWeight: "600", marginTop: "-12px", marginBottom: "16px" }}>
+        <AlertTriangle size={13} color="#dc2626" /> {fieldErrors[field]}
+      </div>
+    );
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    const errs = {};
+    let firstRef = null;
+
     const trimmedEmail = (email || "").trim();
     if (!trimmedEmail) {
-      setError("Please enter your email address.");
-      return;
+      errs.email = "Please enter your email address.";
+      if (!firstRef) firstRef = loginEmailRef;
+    } else if (!trimmedEmail.includes("@")) {
+      errs.email = "Please enter a valid email address.";
+      if (!firstRef) firstRef = loginEmailRef;
     }
     if (!password) {
-      setError("Please enter your password.");
+      errs.password = "Please enter your password.";
+      if (!firstRef) firstRef = loginPasswordRef;
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      if (firstRef && firstRef.current) {
+        firstRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (firstRef.current.focus) {
+          setTimeout(() => firstRef.current?.focus(), 250);
+        }
+      }
       return;
     }
+
+    setFieldErrors({});
     setLoading(true);
     try {
       const { user } = await signInWithEmailAndPassword(auth, trimmedEmail, password);
@@ -986,11 +1416,51 @@ function LoginForm({ goBack, navigate, onSwitch }) {
         )}
 
         <div style={s.formCard}>
-          <label style={s.label}>Email</label>
-          <input className="ab-input" type="email" placeholder="you@email.com" value={email} onChange={e => setEmail(e.target.value)} style={s.input} />
+          <label style={s.label}>Email *</label>
+          <input
+            ref={loginEmailRef}
+            className="ab-input"
+            type="email"
+            placeholder="you@email.com"
+            value={email}
+            onChange={e => {
+              setEmail(e.target.value);
+              clearFieldError("email");
+            }}
+            style={{
+              ...s.input,
+              ...(fieldErrors.email ? {
+                border: "2px solid #ef4444",
+                backgroundColor: "#fef2f2",
+                animation: "ab-shake 0.35s ease",
+                marginBottom: "8px",
+              } : {}),
+            }}
+          />
+          {renderFieldError("email")}
 
-          <label style={s.label}>Password</label>
-          <input className="ab-input" type="password" placeholder="Your password" value={password} onChange={e => setPassword(e.target.value)} style={{ ...s.input, marginBottom: "8px" }} />
+          <label style={s.label}>Password *</label>
+          <input
+            ref={loginPasswordRef}
+            className="ab-input"
+            type="password"
+            placeholder="Your password"
+            value={password}
+            onChange={e => {
+              setPassword(e.target.value);
+              clearFieldError("password");
+            }}
+            style={{
+              ...s.input,
+              marginBottom: fieldErrors.password ? "8px" : "8px",
+              ...(fieldErrors.password ? {
+                border: "2px solid #ef4444",
+                backgroundColor: "#fef2f2",
+                animation: "ab-shake 0.35s ease",
+              } : {}),
+            }}
+          />
+          {renderFieldError("password")}
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px" }}>
             <button
               type="button"

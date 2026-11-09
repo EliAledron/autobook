@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import BackButton from "../components/BackButton";
@@ -119,7 +119,68 @@ export default function Signup() {
   const [createdUser, setCreatedUser] = useState(null);
 
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  // Field refs for auto-scrolling to missed/mistaken fields
+  const firstNameRef = useRef(null);
+  const lastNameRef = useRef(null);
+  const emailRef = useRef(null);
+  const passwordRef = useRef(null);
+  const confirmPasswordRef = useRef(null);
+  const roleBoxRef = useRef(null);
+
+  const shopNameRef = useRef(null);
+  const permitBoxRef = useRef(null);
+  const dtiBoxRef = useRef(null);
+
+  const mechShopRef = useRef(null);
+  const mechSpecializationBoxRef = useRef(null);
+
+  const licenseBoxRef = useRef(null);
+  const makeRef = useRef(null);
+  const modelRef = useRef(null);
+  const yearRef = useRef(null);
+  const plateRef = useRef(null);
+
+  const scrollToRef = (ref) => {
+    if (ref && ref.current) {
+      ref.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (ref.current.focus) {
+        setTimeout(() => ref.current?.focus(), 250);
+      }
+    }
+  };
+
+  const clearFieldError = (field) => {
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
+
+  const renderFieldError = (field) => {
+    if (!fieldErrors[field]) return null;
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "11px", fontWeight: "600", marginTop: "-12px", marginBottom: "16px" }}>
+        <AlertTriangle size={13} color="#dc2626" /> {fieldErrors[field]}
+      </div>
+    );
+  };
+
+  const getFieldInputStyle = (field, customBase = {}) => ({
+    ...s.input,
+    ...customBase,
+    ...(fieldErrors[field] ? {
+      border: "2px solid #ef4444",
+      backgroundColor: "#fef2f2",
+      animation: "ab-shake 0.35s ease",
+      marginBottom: "8px",
+    } : {}),
+  });
 
   const saveUser = async (user, resolvedRole, names, permitUrl = "", shopNameStr = "", extraData = {}, dtiUrl = "") => {
     const finalRole = resolvedRole || "Customer";
@@ -170,11 +231,41 @@ export default function Signup() {
   const handleNext = async (e) => {
     e.preventDefault();
     setError("");
-    if (!firstName.trim() || !lastName.trim()) return setError("Please enter your first and last name.");
-    if (password !== confirmPassword) return setError("Passwords do not match.");
-    if (password.length < 6) return setError("Password must be at least 6 characters.");
-    if (!role) return setError("Please select a role.");
+    const errs = {};
+    let firstRef = null;
 
+    if (!firstName.trim()) {
+      errs.firstName = "First name is required.";
+      if (!firstRef) firstRef = firstNameRef;
+    }
+    if (!lastName.trim()) {
+      errs.lastName = "Last name is required.";
+      if (!firstRef) firstRef = lastNameRef;
+    }
+    if (!email.trim() || !email.includes("@")) {
+      errs.email = "Please enter a valid email address.";
+      if (!firstRef) firstRef = emailRef;
+    }
+    if (!password || password.length < 6) {
+      errs.password = "Password must be at least 6 characters.";
+      if (!firstRef) firstRef = passwordRef;
+    }
+    if (password !== confirmPassword) {
+      errs.confirmPassword = "Passwords do not match.";
+      if (!firstRef) firstRef = confirmPasswordRef;
+    }
+    if (!role) {
+      errs.role = "Please select a role to continue.";
+      if (!firstRef) firstRef = roleBoxRef;
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      scrollToRef(firstRef);
+      return;
+    }
+
+    setFieldErrors({});
     if (role === "Owner") {
       setStep(2);
     } else if (role === "Mechanic") {
@@ -221,8 +312,13 @@ export default function Signup() {
   };
 
   const handleGoogleSignup = async () => {
-    if (!role) return setError("Please select a role before continuing with Google.");
+    if (!role) {
+      setFieldErrors({ role: "Please select a role before continuing with Google." });
+      scrollToRef(roleBoxRef);
+      return;
+    }
     setError("");
+    setFieldErrors({});
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, new GoogleAuthProvider());
@@ -248,9 +344,25 @@ export default function Signup() {
   const handleMechanicSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!mechShopName.trim()) return setError("Please enter the shop name you work at.");
-    if (!mechSpecialization) return setError("Please select your specialization.");
+    const errs = {};
+    let firstRef = null;
 
+    if (!mechShopName.trim()) {
+      errs.mechShopName = "Please enter the shop name you work at.";
+      if (!firstRef) firstRef = mechShopRef;
+    }
+    if (!mechSpecialization) {
+      errs.mechSpecialization = "Please select your specialization.";
+      if (!firstRef) firstRef = mechSpecializationBoxRef;
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      scrollToRef(firstRef);
+      return;
+    }
+
+    setFieldErrors({});
     setLoading(true);
     try {
       let user = createdUser;
@@ -291,10 +403,29 @@ export default function Signup() {
   const handleOwnerSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!shopName.trim()) return setError("Please enter your shop name.");
-    if (!permitFile) return setError("Please upload your business permit.");
-    if (!dtiFile) return setError("Please upload your DTI Certificate.");
+    const errs = {};
+    let firstRef = null;
 
+    if (!shopName.trim()) {
+      errs.shopName = "Please enter your shop name.";
+      if (!firstRef) firstRef = shopNameRef;
+    }
+    if (!permitFile) {
+      errs.permit = "Business permit / proof of business is required.";
+      if (!firstRef) firstRef = permitBoxRef;
+    }
+    if (!dtiFile) {
+      errs.dti = "DTI Certificate is required.";
+      if (!firstRef) firstRef = dtiBoxRef;
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      scrollToRef(firstRef);
+      return;
+    }
+
+    setFieldErrors({});
     setLoading(true);
     try {
       const permitUrl = await uploadToCloudinary(permitFile);
@@ -310,10 +441,41 @@ export default function Signup() {
   const handleCustomerSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!licenseFile) return setError("Driver's license is required.");
-    if (!vehicleMake.trim() || !vehicleModel.trim()) return setError("Car brand and model are required.");
-    if (!vehiclePlate.trim()) return setError("Vehicle plate number is required.");
+    const errs = {};
+    let firstRef = null;
 
+    if (!licenseFile) {
+      errs.license = "Driver's license is required.";
+      if (!firstRef) firstRef = licenseBoxRef;
+    }
+    if (!vehicleMake.trim()) {
+      errs.vehicleMake = "Car brand is required.";
+      if (!firstRef) firstRef = makeRef;
+    }
+    if (!vehicleModel.trim()) {
+      errs.vehicleModel = "Vehicle model is required.";
+      if (!firstRef) firstRef = modelRef;
+    }
+    if (vehicleYear.trim()) {
+      const y = parseInt(vehicleYear.trim(), 10);
+      const maxYear = new Date().getFullYear() + 1;
+      if (isNaN(y) || y < 1900 || y > maxYear) {
+        errs.vehicleYear = `Please enter a valid year (1900 - ${maxYear}).`;
+        if (!firstRef) firstRef = yearRef;
+      }
+    }
+    if (!vehiclePlate.trim()) {
+      errs.vehiclePlate = "Vehicle plate number is required.";
+      if (!firstRef) firstRef = plateRef;
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      scrollToRef(firstRef);
+      return;
+    }
+
+    setFieldErrors({});
     setLoading(true);
     try {
       let user = createdUser;
@@ -375,6 +537,13 @@ export default function Signup() {
 
   return (
     <div style={s.page}>
+      <style>{`
+        @keyframes ab-shake {
+          0%, 100% { transform: translateX(0); }
+          20%, 60% { transform: translateX(-4px); }
+          40%, 80% { transform: translateX(4px); }
+        }
+      `}</style>
       {/* Background with blur and navy gradient overlay matching Onboarding */}
       <div style={s.bgImage} />
       <div style={s.bgOverlay} />
@@ -404,15 +573,20 @@ export default function Signup() {
         <div style={s.card}>
           {step === 1 ? (
             <>
-              <label style={s.label}>First Name</label>
+              <label style={s.label}>First Name *</label>
               <input
+                ref={firstNameRef}
                 type="text"
                 placeholder="First name"
                 value={firstName}
-                onChange={(e) => setFirstName(e.target.value.replace(/[^a-zA-Z\s-]/g, ''))}
-                style={s.input}
+                onChange={(e) => {
+                  setFirstName(e.target.value.replace(/[^a-zA-Z\s-]/g, ''));
+                  clearFieldError("firstName");
+                }}
+                style={getFieldInputStyle("firstName")}
                 required
               />
+              {renderFieldError("firstName")}
 
               <label style={s.label}>Middle Name</label>
               <input
@@ -423,48 +597,80 @@ export default function Signup() {
                 style={s.input}
               />
 
-              <label style={s.label}>Last Name</label>
+              <label style={s.label}>Last Name *</label>
               <input
+                ref={lastNameRef}
                 type="text"
                 placeholder="Last name"
                 value={lastName}
-                onChange={(e) => setLastName(e.target.value.replace(/[^a-zA-Z\s-]/g, ''))}
-                style={s.input}
+                onChange={(e) => {
+                  setLastName(e.target.value.replace(/[^a-zA-Z\s-]/g, ''));
+                  clearFieldError("lastName");
+                }}
+                style={getFieldInputStyle("lastName")}
                 required
               />
+              {renderFieldError("lastName")}
 
-              <label style={s.label}>Email</label>
+              <label style={s.label}>Email *</label>
               <input
+                ref={emailRef}
                 type="email"
                 placeholder="you@email.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                style={s.input}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  clearFieldError("email");
+                }}
+                style={getFieldInputStyle("email")}
                 required
               />
+              {renderFieldError("email")}
 
-              <label style={s.label}>Password</label>
+              <label style={s.label}>Password *</label>
               <input
+                ref={passwordRef}
                 type="password"
                 placeholder="At least 6 characters"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                style={s.input}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  clearFieldError("password");
+                }}
+                style={getFieldInputStyle("password")}
                 required
               />
+              {renderFieldError("password")}
 
-              <label style={s.label}>Confirm password</label>
+              <label style={s.label}>Confirm password *</label>
               <input
+                ref={confirmPasswordRef}
                 type="password"
                 placeholder="Re-enter password"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                style={s.input}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  clearFieldError("confirmPassword");
+                }}
+                style={getFieldInputStyle("confirmPassword")}
                 required
               />
+              {renderFieldError("confirmPassword")}
 
-              <label style={s.label}>I am a…</label>
-              <div style={{ display: "flex", gap: "8px", marginBottom: "20px", flexWrap: "wrap" }}>
+              <label style={s.label}>I am a… *</label>
+              <div
+                ref={roleBoxRef}
+                style={{
+                  display: "flex", gap: "8px",
+                  marginBottom: fieldErrors.role ? "8px" : "20px",
+                  flexWrap: "wrap",
+                  padding: fieldErrors.role ? "4px" : "0",
+                  borderRadius: "14px",
+                  border: fieldErrors.role ? "2px solid #ef4444" : "none",
+                  background: fieldErrors.role ? "rgba(239,68,68,0.06)" : "transparent",
+                  animation: fieldErrors.role ? "ab-shake 0.35s ease" : "none",
+                }}
+              >
                 {ROLES.map((r) => {
                   const roleIcon = r === "Customer" ? <Car size={16} style={{marginBottom: "-2px"}} /> : r === "Owner" ? <Store size={16} style={{marginBottom: "-2px"}} /> : <Wrench size={16} style={{marginBottom: "-2px"}} />;
                   const roleSub  = r === "Customer" ? "Book services" : r === "Owner" ? "Manage the shop" : "Fix & repair";
@@ -472,7 +678,7 @@ export default function Signup() {
                     <button
                       key={r}
                       type="button"
-                      onClick={() => { setRole(r); setError(""); }}
+                      onClick={() => { setRole(r); setError(""); clearFieldError("role"); }}
                       style={{
                         flex: 1, minWidth: "90px", padding: "14px 8px", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit",
                         border: role === r ? "none" : "1.5px solid #e5e7eb",
@@ -488,6 +694,7 @@ export default function Signup() {
                   );
                 })}
               </div>
+              {renderFieldError("role")}
 
               <button
                 onClick={handleNext}
@@ -515,21 +722,40 @@ export default function Signup() {
 
               <label style={s.label}>Shop Name You Work At *</label>
               <input
+                ref={mechShopRef}
                 type="text"
                 placeholder="e.g. JME Auto Shop"
                 value={mechShopName}
-                onChange={(e) => setMechShopName(e.target.value)}
-                style={s.input}
+                onChange={(e) => {
+                  setMechShopName(e.target.value);
+                  clearFieldError("mechShopName");
+                }}
+                style={getFieldInputStyle("mechShopName")}
                 required
               />
+              {renderFieldError("mechShopName")}
 
               <label style={s.label}>Your Specialization *</label>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "20px" }}>
+              <div
+                ref={mechSpecializationBoxRef}
+                style={{
+                  display: "flex", flexWrap: "wrap", gap: "8px",
+                  marginBottom: fieldErrors.mechSpecialization ? "8px" : "20px",
+                  padding: fieldErrors.mechSpecialization ? "4px" : "0",
+                  borderRadius: "14px",
+                  border: fieldErrors.mechSpecialization ? "2px solid #ef4444" : "none",
+                  background: fieldErrors.mechSpecialization ? "rgba(239,68,68,0.06)" : "transparent",
+                  animation: fieldErrors.mechSpecialization ? "ab-shake 0.35s ease" : "none",
+                }}
+              >
                 {MECHANIC_SPECIALTIES.map((spec) => (
                   <button
                     key={spec}
                     type="button"
-                    onClick={() => setMechSpecialization(spec)}
+                    onClick={() => {
+                      setMechSpecialization(spec);
+                      clearFieldError("mechSpecialization");
+                    }}
                     style={{
                       padding: "8px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit",
                       border: mechSpecialization === spec ? "none" : "1.5px solid #e5e7eb",
@@ -541,6 +767,7 @@ export default function Signup() {
                   >{spec}</button>
                 ))}
               </div>
+              {renderFieldError("mechSpecialization")}
 
               <button
                 onClick={handleMechanicSubmit}
@@ -549,24 +776,29 @@ export default function Signup() {
               >
                 {loading ? "Submitting…" : "Complete Sign Up"}
               </button>
-              <button onClick={() => setStep(1)} style={{ ...s.outlineBtn, marginTop: "8px" }} disabled={loading}>Back</button>
+              <button onClick={() => { setStep(1); setFieldErrors({}); }} style={{ ...s.outlineBtn, marginTop: "8px" }} disabled={loading}>Back</button>
             </>
           ) : step === 2 ? (
             <>
               <h3 style={{ marginTop: 0, color: "#111827", fontSize: "18px", fontWeight: "700" }}>Shop Details</h3>
               <p style={{ fontSize: "13px", color: "#6b7280", marginBottom: "16px", marginTop: "-4px" }}>Please provide your auto shop details and proof of business.</p>
 
-              <label style={s.label}>Shop Name</label>
+              <label style={s.label}>Shop Name *</label>
               <input
+                ref={shopNameRef}
                 type="text"
                 placeholder="Your shop name"
                 value={shopName}
-                onChange={(e) => setShopName(e.target.value.replace(/[^a-zA-Z\s]/g, ''))}
-                style={s.input}
+                onChange={(e) => {
+                  setShopName(e.target.value.replace(/[^a-zA-Z\s]/g, ''));
+                  clearFieldError("shopName");
+                }}
+                style={getFieldInputStyle("shopName")}
                 required
               />
+              {renderFieldError("shopName")}
 
-              <label style={s.label}>Business Permit / Proof</label>
+              <label style={s.label}>Business Permit / Proof *</label>
               <input
                 type="file"
                 accept="image/*"
@@ -577,18 +809,24 @@ export default function Signup() {
                   if (file) {
                     setPermitFile(file);
                     setPermitPreview(URL.createObjectURL(file));
+                    clearFieldError("permit");
                   }
                 }}
               />
               <div
+                ref={permitBoxRef}
                 onClick={() => document.getElementById("permitUpload").click()}
                 style={{
                   width: "100%", height: permitPreview ? "160px" : "100px",
-                  background: "#f9fafb", borderRadius: "10px",
-                  border: "1.5px dashed #e5e7eb",
+                  background: fieldErrors.permit ? "#fef2f2" : "#f9fafb",
+                  borderRadius: "10px",
+                  border: fieldErrors.permit ? "2px dashed #ef4444" : "1.5px dashed #e5e7eb",
+                  animation: fieldErrors.permit ? "ab-shake 0.35s ease" : "none",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  cursor: "pointer", overflow: "hidden", marginBottom: "20px",
-                  fontSize: "13px", color: "#9ca3af",
+                  cursor: "pointer", overflow: "hidden",
+                  marginBottom: fieldErrors.permit ? "8px" : "20px",
+                  fontSize: "13px",
+                  color: fieldErrors.permit ? "#dc2626" : "#9ca3af",
                 }}
               >
                 {permitPreview
@@ -596,6 +834,7 @@ export default function Signup() {
                   : <div style={{display: "flex", alignItems: "center", gap: "4px"}}><Paperclip size={14} /> Tap to upload permit photo</div>
                 }
               </div>
+              {renderFieldError("permit")}
 
               <label style={s.label}>DTI Certificate *</label>
               <input
@@ -608,18 +847,24 @@ export default function Signup() {
                   if (file) {
                     setDtiFile(file);
                     setDtiPreview(URL.createObjectURL(file));
+                    clearFieldError("dti");
                   }
                 }}
               />
               <div
+                ref={dtiBoxRef}
                 onClick={() => document.getElementById("dtiUpload").click()}
                 style={{
                   width: "100%", height: dtiPreview ? "160px" : "100px",
-                  background: "#f9fafb", borderRadius: "10px",
-                  border: "1.5px dashed #e5e7eb",
+                  background: fieldErrors.dti ? "#fef2f2" : "#f9fafb",
+                  borderRadius: "10px",
+                  border: fieldErrors.dti ? "2px dashed #ef4444" : "1.5px dashed #e5e7eb",
+                  animation: fieldErrors.dti ? "ab-shake 0.35s ease" : "none",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  cursor: "pointer", overflow: "hidden", marginBottom: "20px",
-                  fontSize: "13px", color: "#9ca3af",
+                  cursor: "pointer", overflow: "hidden",
+                  marginBottom: fieldErrors.dti ? "8px" : "20px",
+                  fontSize: "13px",
+                  color: fieldErrors.dti ? "#dc2626" : "#9ca3af",
                 }}
               >
                 {dtiPreview
@@ -627,7 +872,7 @@ export default function Signup() {
                   : <div style={{display: "flex", alignItems: "center", gap: "4px"}}><FileText size={14} /> Tap to upload DTI Certificate</div>
                 }
               </div>
-
+              {renderFieldError("dti")}
 
               <button
                 onClick={handleOwnerSubmit}
@@ -637,7 +882,7 @@ export default function Signup() {
                 {loading ? "Submitting…" : "Complete Sign Up"}
               </button>
               <button
-                onClick={() => setStep(1)}
+                onClick={() => { setStep(1); setFieldErrors({}); }}
                 style={{ ...s.outlineBtn, marginTop: "8px" }}
                 disabled={loading}
               >
@@ -660,18 +905,24 @@ export default function Signup() {
                   if (file) {
                     setLicenseFile(file);
                     setLicensePreview(URL.createObjectURL(file));
+                    clearFieldError("license");
                   }
                 }}
               />
               <div
+                ref={licenseBoxRef}
                 onClick={() => document.getElementById("licenseUpload").click()}
                 style={{
                   width: "100%", height: licensePreview ? "160px" : "100px",
-                  background: "#f9fafb", borderRadius: "10px",
-                  border: "1.5px dashed #e5e7eb",
+                  background: fieldErrors.license ? "#fef2f2" : "#f9fafb",
+                  borderRadius: "10px",
+                  border: fieldErrors.license ? "2px dashed #ef4444" : "1.5px dashed #e5e7eb",
+                  animation: fieldErrors.license ? "ab-shake 0.35s ease" : "none",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  cursor: "pointer", overflow: "hidden", marginBottom: "20px",
-                  fontSize: "13px", color: "#9ca3af",
+                  cursor: "pointer", overflow: "hidden",
+                  marginBottom: fieldErrors.license ? "8px" : "20px",
+                  fontSize: "13px",
+                  color: fieldErrors.license ? "#dc2626" : "#9ca3af",
                 }}
               >
                 {licensePreview
@@ -679,6 +930,7 @@ export default function Signup() {
                   : <div style={{display: "flex", alignItems: "center", gap: "4px"}}><CreditCard size={14} /> Tap to upload driver's license</div>
                 }
               </div>
+              {renderFieldError("license")}
 
               <label style={s.label}>Vehicle Photo (Optional)</label>
               <input
@@ -712,16 +964,63 @@ export default function Signup() {
               </div>
 
               <label style={s.label}>Car Brand *</label>
-              <input type="text" placeholder="e.g. Toyota" value={vehicleMake} onChange={(e) => setVehicleMake(e.target.value)} style={s.input} required />
+              <input
+                ref={makeRef}
+                type="text"
+                placeholder="e.g. Toyota"
+                value={vehicleMake}
+                onChange={(e) => {
+                  setVehicleMake(e.target.value);
+                  clearFieldError("vehicleMake");
+                }}
+                style={getFieldInputStyle("vehicleMake")}
+                required
+              />
+              {renderFieldError("vehicleMake")}
 
               <label style={s.label}>Vehicle Model *</label>
-              <input type="text" placeholder="e.g. Vios" value={vehicleModel} onChange={(e) => setVehicleModel(e.target.value)} style={s.input} required />
+              <input
+                ref={modelRef}
+                type="text"
+                placeholder="e.g. Vios"
+                value={vehicleModel}
+                onChange={(e) => {
+                  setVehicleModel(e.target.value);
+                  clearFieldError("vehicleModel");
+                }}
+                style={getFieldInputStyle("vehicleModel")}
+                required
+              />
+              {renderFieldError("vehicleModel")}
 
               <label style={s.label}>Year</label>
-              <input type="text" placeholder="e.g. 2023" value={vehicleYear} onChange={(e) => setVehicleYear(e.target.value.replace(/[^0-9]/g, ''))} style={s.input} />
+              <input
+                ref={yearRef}
+                type="text"
+                placeholder="e.g. 2023"
+                value={vehicleYear}
+                onChange={(e) => {
+                  setVehicleYear(e.target.value.replace(/[^0-9]/g, ''));
+                  clearFieldError("vehicleYear");
+                }}
+                style={getFieldInputStyle("vehicleYear")}
+              />
+              {renderFieldError("vehicleYear")}
 
               <label style={s.label}>Plate Number *</label>
-              <input type="text" placeholder="ABC 1234" value={vehiclePlate} onChange={(e) => setVehiclePlate(e.target.value)} style={s.input} required />
+              <input
+                ref={plateRef}
+                type="text"
+                placeholder="ABC 1234"
+                value={vehiclePlate}
+                onChange={(e) => {
+                  setVehiclePlate(e.target.value);
+                  clearFieldError("vehiclePlate");
+                }}
+                style={getFieldInputStyle("vehiclePlate")}
+                required
+              />
+              {renderFieldError("vehiclePlate")}
 
               <label style={s.label}>Color</label>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "20px" }}>
@@ -748,7 +1047,7 @@ export default function Signup() {
                 {loading ? "Creating Account…" : "Complete Sign Up"}
               </button>
               <button
-                onClick={() => setStep(1)}
+                onClick={() => { setStep(1); setFieldErrors({}); }}
                 style={{ ...s.outlineBtn, marginTop: "8px" }}
                 disabled={loading}
               >
