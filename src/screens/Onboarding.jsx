@@ -39,7 +39,7 @@ const FEATURES = [
   },
   {
     icon: <Stethoscope size={24} />,
-    title: "Diagnostic Support",
+    title: "DSS System",
     desc: "Identify vehicle issues and get expert service recommendations.",
   },
 ];
