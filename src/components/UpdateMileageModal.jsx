@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { colors, sh, ErrorModal } from "../screens/dashboardShared";
-import { Gauge, X } from "lucide-react";
+import { Gauge, X, AlertTriangle } from "lucide-react";
 
 export default function UpdateMileageModal({ isOpen, onClose, vehicle, onUpdated }) {
   if (!isOpen || !vehicle) return null;
@@ -10,15 +10,24 @@ export default function UpdateMileageModal({ isOpen, onClose, vehicle, onUpdated
   const [mileage, setMileage] = useState(vehicle.mileage || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const mileageRef = useRef(null);
 
   const handleSave = async (e) => {
     e.preventDefault();
     if (!mileage || isNaN(Number(mileage)) || Number(mileage) < 0) {
-      setError("Please enter a valid odometer reading (km).");
+      setFieldErrors({ mileage: "Please enter a valid odometer reading (km)." });
+      setError("");
+      if (mileageRef.current) {
+        mileageRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        mileageRef.current.focus?.();
+      }
       return;
     }
 
     setSaving(true);
+    setFieldErrors({});
     setError("");
 
     try {
@@ -107,6 +116,13 @@ export default function UpdateMileageModal({ isOpen, onClose, vehicle, onUpdated
           </button>
         </div>
 
+        <style>{`
+          @keyframes ab-shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
+          }
+        `}</style>
         <ErrorModal error={error} onClose={() => setError("")} />
 
         <form onSubmit={handleSave}>
@@ -125,19 +141,24 @@ export default function UpdateMileageModal({ isOpen, onClose, vehicle, onUpdated
               Current Odometer Reading (km)
             </label>
             <input
+              ref={mileageRef}
               type="number"
               placeholder="e.g. 45200"
               value={mileage}
-              onChange={(e) => setMileage(e.target.value)}
+              onChange={(e) => {
+                setMileage(e.target.value);
+                if (fieldErrors.mileage) setFieldErrors({});
+              }}
               autoFocus
               style={{
                 width: "100%",
                 padding: "14px 16px",
                 borderRadius: "14px",
-                border: `1.5px solid ${colors.border}`,
+                border: fieldErrors.mileage ? "2px solid #ef4444" : `1.5px solid ${colors.border}`,
+                background: fieldErrors.mileage ? "#fef2f2" : "#f9fafb",
+                animation: fieldErrors.mileage ? "ab-shake 0.35s ease" : "none",
                 fontSize: "16px",
                 fontWeight: "700",
-                background: "#f9fafb",
                 color: colors.textPrimary,
                 fontFamily: "inherit",
                 boxSizing: "border-box",
@@ -145,6 +166,11 @@ export default function UpdateMileageModal({ isOpen, onClose, vehicle, onUpdated
               }}
               required
             />
+            {fieldErrors.mileage && (
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "12px", fontWeight: "700", marginTop: "6px" }}>
+                <AlertTriangle size={14} color="#dc2626" /> {fieldErrors.mileage}
+              </div>
+            )}
             <div style={{ fontSize: "12px", color: colors.textMuted, marginTop: "6px", lineHeight: 1.4 }}>
               Your maintenance roadmap uses this to calculate mileage-based service intervals (e.g. Oil change every 5,000 km).
             </div>

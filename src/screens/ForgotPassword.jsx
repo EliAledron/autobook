@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../firebase";
 import { sendPasswordResetEmail } from "firebase/auth";
@@ -9,23 +9,32 @@ import { getFriendlyErrorMessage } from "../utils/authErrorUtils";
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const emailRef = useRef(null);
+
   const handleResetPassword = async (e) => {
     e.preventDefault();
-    if (!email) {
-      setError("Please enter your email address.");
+    const trimmed = (email || "").trim();
+    if (!trimmed || !trimmed.includes("@")) {
+      setFieldErrors({ email: "Please enter a valid email address." });
+      if (emailRef.current) {
+        emailRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        emailRef.current.focus?.();
+      }
       return;
     }
 
     setError("");
+    setFieldErrors({});
     setSuccess(false);
     setLoading(true);
 
     try {
-      await sendPasswordResetEmail(auth, email);
+      await sendPasswordResetEmail(auth, trimmed);
       setSuccess(true);
     } catch (err) {
       console.error("Password reset error:", err);
@@ -37,6 +46,13 @@ export default function ForgotPassword() {
 
   return (
     <div style={s.page}>
+      <style>{`
+        @keyframes ab-shake {
+          0%, 100% { transform: translateX(0); }
+          20%, 60% { transform: translateX(-4px); }
+          40%, 80% { transform: translateX(4px); }
+        }
+      `}</style>
       {/* Background with blur and navy gradient overlay matching Onboarding */}
       <div style={s.bgImage} />
       <div style={s.bgOverlay} />
@@ -78,15 +94,32 @@ export default function ForgotPassword() {
 
         <div style={s.card}>
           <p style={s.instructions}>Enter the email address associated with your account, and we'll send you a link to reset your password.</p>
-          <label style={s.label}>Email</label>
+          <label style={s.label}>Email *</label>
           <input
+            ref={emailRef}
             type="email"
             placeholder="you@email.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={s.input}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (fieldErrors.email) setFieldErrors({});
+            }}
+            style={{
+              ...s.input,
+              marginBottom: fieldErrors.email ? "8px" : "20px",
+              ...(fieldErrors.email ? {
+                border: "2px solid #ef4444",
+                backgroundColor: "#fef2f2",
+                animation: "ab-shake 0.35s ease",
+              } : {}),
+            }}
             required
           />
+          {fieldErrors.email && (
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "11px", fontWeight: "600", marginTop: "-12px", marginBottom: "16px" }}>
+              <AlertTriangle size={13} color="#dc2626" /> {fieldErrors.email}
+            </div>
+          )}
 
           <button
             onClick={handleResetPassword}

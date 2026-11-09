@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -6,7 +6,7 @@ import { collection, addDoc, getDocs, getDoc, doc, query, where, serverTimestamp
 import { sh, colors, CustomDropdown, ErrorModal } from "./dashboardShared";
 import SkeletonLoader from "./SkeletonLoader";
 import BackButton from "../components/BackButton";
-import { Car, Wrench, Camera, Calendar, Clock, Users, Info, ShieldCheck, CheckCircle2, AlertCircle, Phone } from 'lucide-react';
+import { Car, Wrench, Camera, Calendar, Clock, Users, Info, ShieldCheck, CheckCircle2, AlertCircle, AlertTriangle, Phone } from 'lucide-react';
 import { getServiceDuration, calculateReadyTime, getConcurrentBookingsAtSlot, ALL_TIME_SLOTS } from "../utils/serviceDurations";
 
 const CLOUDINARY_CLOUD = "dpwojan8w";
@@ -56,6 +56,22 @@ export default function BookService() {
   const [issuePhotoFile, setIssuePhotoFile] = useState(null);
   const [issuePhotoPreview, setIssuePhotoPreview] = useState(null);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const vehicleRef = useRef(null);
+  const serviceRef = useRef(null);
+  const dateRef = useRef(null);
+  const timeRef = useRef(null);
+
+  const clearFieldError = (field) => {
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
@@ -124,11 +140,43 @@ export default function BookService() {
   }, [navigate, shop]);
 
   const handlePreSubmit = () => {
-    if (!customService.trim()) { setError("Please describe the service you need."); return; }
-    if (!vehicleId && vehicles.length > 0) { setError("Please select a vehicle."); return; }
-    if (!vehicleId && vehicles.length === 0) { setError("Please add a vehicle first."); return; }
-    if (!date) { setError("Please select a date."); return; }
-    if (!time) { setError("Please select a preferred drop-off time."); return; }
+    const errs = {};
+    let firstRef = null;
+
+    if (!vehicleId && vehicles.length > 0) {
+      errs.vehicle = "Please select a vehicle to proceed.";
+      if (!firstRef) firstRef = vehicleRef;
+    } else if (!vehicleId && vehicles.length === 0) {
+      errs.vehicle = "Please add a vehicle to your account first.";
+      if (!firstRef) firstRef = vehicleRef;
+    }
+
+    if (!customService.trim()) {
+      errs.service = "Please select or search for the service you need.";
+      if (!firstRef) firstRef = serviceRef;
+    }
+
+    if (!date) {
+      errs.date = "Please select an appointment date from the calendar.";
+      if (!firstRef) firstRef = dateRef;
+    }
+
+    if (!time) {
+      errs.time = "Please select a preferred drop-off / arrival time.";
+      if (!firstRef) firstRef = timeRef;
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      setError("");
+      if (firstRef && firstRef.current) {
+        firstRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (firstRef.current.focus) setTimeout(() => firstRef.current?.focus(), 250);
+      }
+      return;
+    }
+
+    setFieldErrors({});
     setError("");
     setShowConfirm(true);
   };
@@ -290,11 +338,31 @@ export default function BookService() {
         <div style={sh.heroSub}>{shop?.name}</div>
       </div>
 
+      <style>{`
+        @keyframes ab-shake {
+          0%, 100% { transform: translateX(0); }
+          20%, 60% { transform: translateX(-4px); }
+          40%, 80% { transform: translateX(4px); }
+        }
+      `}</style>
       <div style={sh.content} className="stagger-slide-up">
         <ErrorModal error={error} onClose={() => setError("")} />
 
         {/* VEHICLE INFORMATION */}
-        <div style={{ ...sh.card, padding: "24px", marginBottom: "1.5rem" }}>
+        <div
+          ref={vehicleRef}
+          style={{
+            ...sh.card,
+            padding: "24px",
+            marginBottom: "1.5rem",
+            transition: "all 0.2s ease",
+            ...(fieldErrors.vehicle ? {
+              border: "2px solid #ef4444",
+              backgroundColor: "#fef2f2",
+              animation: "ab-shake 0.35s ease",
+            } : {})
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
             <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.info }}><Car size={16} /></div>
             <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary }}>Vehicle Information</div>
@@ -315,7 +383,10 @@ export default function BookService() {
               {vehicles.map((v) => (
                 <button
                   key={v.id}
-                  onClick={() => setVehicleId(v.id)}
+                  onClick={() => {
+                    setVehicleId(v.id);
+                    clearFieldError("vehicle");
+                  }}
                   style={{
                     padding: "16px", borderRadius: "14px", fontSize: "13px",
                     fontWeight: "700", cursor: "pointer", fontFamily: "inherit", textAlign: "left",
@@ -333,10 +404,29 @@ export default function BookService() {
               ))}
             </div>
           )}
+
+          {fieldErrors.vehicle && (
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "12px", fontWeight: "700", marginTop: "14px" }}>
+              <AlertTriangle size={15} color="#dc2626" /> {fieldErrors.vehicle}
+            </div>
+          )}
         </div>
 
         {/* SERVICE DETAILS */}
-        <div style={{ ...sh.card, padding: "24px", marginBottom: "1.5rem" }}>
+        <div
+          ref={serviceRef}
+          style={{
+            ...sh.card,
+            padding: "24px",
+            marginBottom: "1.5rem",
+            transition: "all 0.2s ease",
+            ...(fieldErrors.service ? {
+              border: "2px solid #ef4444",
+              backgroundColor: "#fef2f2",
+              animation: "ab-shake 0.35s ease",
+            } : {})
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
             <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: colors.warningBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.warning }}><Wrench size={16} /></div>
             <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary }}>Service Details</div>
@@ -349,7 +439,10 @@ export default function BookService() {
               type="text"
               placeholder="Search available services..."
               value={serviceSearch}
-              onChange={(e) => setServiceSearch(e.target.value)}
+              onChange={(e) => {
+                setServiceSearch(e.target.value);
+                clearFieldError("service");
+              }}
               style={{
                 width: "100%", padding: "10px 14px", borderRadius: "12px", boxSizing: "border-box",
                 border: `1px solid ${colors.border}`, marginBottom: "12px",
@@ -368,7 +461,10 @@ export default function BookService() {
                   .map((s) => (
                     <button
                       key={s}
-                      onClick={() => setCustomService(s)}
+                      onClick={() => {
+                        setCustomService(s);
+                        clearFieldError("service");
+                      }}
                       style={{
                         padding: "8px 16px", borderRadius: "20px", fontSize: "13px",
                         fontWeight: "700", cursor: "pointer", fontFamily: "inherit",
@@ -384,6 +480,12 @@ export default function BookService() {
                   ))
               )}
             </div>
+
+            {fieldErrors.service && (
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "12px", fontWeight: "700", marginTop: "12px" }}>
+                <AlertTriangle size={15} color="#dc2626" /> {fieldErrors.service}
+              </div>
+            )}
 
             {customService && (
               <div style={{ marginTop: "14px", padding: "12px 14px", borderRadius: "14px", background: "#f0f9ff", border: "1px solid #bae6fd", display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -444,7 +546,20 @@ export default function BookService() {
             <div style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary }}>Schedule</div>
           </div>
           
-          <div style={{ marginBottom: "20px" }}>
+          <div
+            ref={dateRef}
+            style={{
+              marginBottom: "20px",
+              padding: "12px",
+              borderRadius: "16px",
+              transition: "all 0.2s ease",
+              ...(fieldErrors.date ? {
+                border: "2px solid #ef4444",
+                backgroundColor: "#fef2f2",
+                animation: "ab-shake 0.35s ease",
+              } : {})
+            }}
+          >
             <div style={{ fontSize: "11px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>Select Date *</div>
             
             {/* Calendar UI */}
@@ -508,7 +623,12 @@ export default function BookService() {
                   return (
                     <div 
                       key={dateStr}
-                      onClick={() => { if (!isPast && !isFull) setDate(dateStr); }}
+                      onClick={() => {
+                        if (!isPast && !isFull) {
+                          setDate(dateStr);
+                          clearFieldError("date");
+                        }
+                      }}
                       style={{ position: 'relative', background: isSelected ? colors.navy : (isPast ? colors.bg : colors.white), border: `1.5px solid ${isSelected ? colors.navy : colors.border}`, borderRadius: '14px', padding: '6px 2px', minHeight: '64px', cursor: isPast || isFull ? 'not-allowed' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: "center", transition: "all 0.2s", opacity: isPast ? 0.5 : (isFull && !isSelected ? 0.6 : 1), boxShadow: isSelected ? "0 4px 12px rgba(26,58,92,0.25)" : "none" }}
                     >
                       <span style={{ fontSize: '15px', fontWeight: '800', color: isSelected ? "#fff" : colors.textPrimary, marginBottom: !isPast ? "2px" : "0" }}>{day}</span>
@@ -522,9 +642,27 @@ export default function BookService() {
                   );
                 })}
               </div>
+
+            {fieldErrors.date && (
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "12px", fontWeight: "700", marginTop: "14px" }}>
+                <AlertTriangle size={15} color="#dc2626" /> {fieldErrors.date}
+              </div>
+            )}
           </div>
 
-          <div>
+          <div
+            ref={timeRef}
+            style={{
+              padding: "12px",
+              borderRadius: "16px",
+              transition: "all 0.2s ease",
+              ...(fieldErrors.time ? {
+                border: "2px solid #ef4444",
+                backgroundColor: "#fef2f2",
+                animation: "ab-shake 0.35s ease",
+              } : {})
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
               <div style={{ fontSize: "11px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                 Preferred Drop-off / Arrival Time *
@@ -590,7 +728,10 @@ export default function BookService() {
                       key={t}
                       type="button"
                       disabled={disabled}
-                      onClick={() => setTime(t)}
+                      onClick={() => {
+                        setTime(t);
+                        clearFieldError("time");
+                      }}
                       style={{
                         padding: "8px 6px", borderRadius: "12px", fontSize: "12px",
                         fontWeight: "700", cursor: disabled ? "not-allowed" : "pointer", fontFamily: "inherit",
@@ -647,6 +788,13 @@ export default function BookService() {
               })()}
             </div>
 
+            {fieldErrors.time && (
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "12px", fontWeight: "700", marginTop: "14px" }}>
+                <AlertTriangle size={15} color="#dc2626" /> {fieldErrors.time}
+              </div>
+            )}
+          </div>
+
             {/* DYNAMIC SCHEDULE SUMMARY CARD */}
             {date && time && (
               <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: "16px", padding: "16px", marginTop: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -667,7 +815,6 @@ export default function BookService() {
                 </div>
               </div>
             )}
-          </div>
         </div>
 
         <button onClick={handlePreSubmit} disabled={saving} style={{ ...sh.primaryBtn, padding: "16px", borderRadius: "16px", fontSize: "15px", boxShadow: "0 8px 20px rgba(42,82,152,0.25)", opacity: saving ? 0.75 : 1 }}>

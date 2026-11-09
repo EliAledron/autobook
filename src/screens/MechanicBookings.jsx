@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -59,6 +59,9 @@ export default function MechanicBookings() {
   const [newReadyTime, setNewReadyTime] = useState("");
   const [delayReason, setDelayReason] = useState("");
   const [updatingTime, setUpdatingTime] = useState(false);
+  const [readyTimeError, setReadyTimeError] = useState("");
+
+  const readyTimeRef = useRef(null);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
 
@@ -127,10 +130,15 @@ export default function MechanicBookings() {
   const handleUpdateReadyTime = async () => {
     if (!selected) return;
     if (!newReadyTime.trim()) {
-      showToast("Please provide an estimated completion time.");
+      setReadyTimeError("Please provide an estimated completion time.");
+      if (readyTimeRef.current) {
+        readyTimeRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        readyTimeRef.current.focus?.();
+      }
       return;
     }
 
+    setReadyTimeError("");
     setUpdatingTime(true);
     try {
       const updates = {
@@ -389,6 +397,13 @@ export default function MechanicBookings() {
       {showDelayModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 120, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }} onClick={() => setShowDelayModal(false)}>
           <div style={{ background: colors.white, borderRadius: "24px", width: "100%", maxWidth: "380px", padding: "24px", boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
+            <style>{`
+              @keyframes ab-shake {
+                0%, 100% { transform: translateX(0); }
+                20%, 60% { transform: translateX(-4px); }
+                40%, 80% { transform: translateX(4px); }
+              }
+            `}</style>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
               <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.info }}>
                 <Clock size={20} />
@@ -404,16 +419,28 @@ export default function MechanicBookings() {
                 Estimated Ready Time <span style={{ color: colors.danger }}>*</span>
               </div>
               <input
+                ref={readyTimeRef}
                 type="text"
                 placeholder="e.g. 11:30 AM or 03:00 PM"
                 value={newReadyTime}
-                onChange={e => setNewReadyTime(e.target.value)}
+                onChange={e => {
+                  setNewReadyTime(e.target.value);
+                  if (readyTimeError) setReadyTimeError("");
+                }}
                 style={{
                   width: "100%", padding: "12px 14px", borderRadius: "12px",
-                  border: `1.5px solid ${colors.border}`, fontSize: "14px", fontWeight: "600",
-                  outline: "none", boxSizing: "border-box", background: "#f8fafc"
+                  border: readyTimeError ? "2px solid #ef4444" : `1.5px solid ${colors.border}`,
+                  background: readyTimeError ? "#fef2f2" : "#f8fafc",
+                  animation: readyTimeError ? "ab-shake 0.35s ease" : "none",
+                  fontSize: "14px", fontWeight: "600",
+                  outline: "none", boxSizing: "border-box"
                 }}
               />
+              {readyTimeError && (
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "12px", fontWeight: "700", marginTop: "6px" }}>
+                  <AlertTriangle size={14} color="#dc2626" /> {readyTimeError}
+                </div>
+              )}
               <div style={{ display: "flex", gap: "6px", marginTop: "8px", flexWrap: "wrap" }}>
                 {["+30 mins", "+1 hour", "+2 hours"].map(preset => (
                   <button

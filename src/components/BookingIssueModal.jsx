@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { colors, ErrorModal, SuccessModal, CustomDropdown } from "../screens/dashboardShared";
@@ -20,13 +20,22 @@ export default function BookingIssueModal({ booking, onClose, onSuccess }) {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const descriptionRef = useRef(null);
 
   if (!booking) return null;
 
   const handleSubmit = async (e) => {
     e?.preventDefault();
     if (!description.trim()) {
-      return setErrorMsg("Please explain the issue you experienced with this booking.");
+      setFieldErrors({ description: "Please explain the issue you experienced with this booking." });
+      setErrorMsg("");
+      if (descriptionRef.current) {
+        descriptionRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        descriptionRef.current.focus?.();
+      }
+      return;
     }
 
     const user = auth.currentUser;
@@ -34,6 +43,7 @@ export default function BookingIssueModal({ booking, onClose, onSuccess }) {
       return setErrorMsg("You must be signed in to report a booking issue.");
     }
 
+    setFieldErrors({});
     setSubmitting(true);
     try {
       const ticketNumber = `BK-${Date.now().toString().slice(-6)}`;
@@ -169,6 +179,13 @@ export default function BookingIssueModal({ booking, onClose, onSuccess }) {
 
           {/* FORM */}
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <style>{`
+              @keyframes ab-shake {
+                0%, 100% { transform: translateX(0); }
+                20%, 60% { transform: translateX(-4px); }
+                40%, 80% { transform: translateX(4px); }
+              }
+            `}</style>
             <div>
               <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" }}>
                 What went wrong? <span style={{ color: colors.danger }}>*</span>
@@ -196,17 +213,28 @@ export default function BookingIssueModal({ booking, onClose, onSuccess }) {
                 Describe what happened <span style={{ color: colors.danger }}>*</span>
               </label>
               <textarea
+                ref={descriptionRef}
                 rows={4}
                 placeholder="Provide as much detail as possible (e.g. promised work not done, unexpected charges, shop not available, etc.)..."
                 value={description}
-                onChange={e => setDescription(e.target.value)}
+                onChange={e => {
+                  setDescription(e.target.value);
+                  if (fieldErrors.description) setFieldErrors({});
+                }}
                 style={{
                   width: "100%", padding: "12px 14px", borderRadius: "12px",
-                  border: `1px solid ${colors.border}`, background: "#f8fafc",
+                  border: fieldErrors.description ? "2px solid #ef4444" : `1px solid ${colors.border}`,
+                  background: fieldErrors.description ? "#fef2f2" : "#f8fafc",
+                  animation: fieldErrors.description ? "ab-shake 0.35s ease" : "none",
                   fontSize: "14px", color: colors.textPrimary, outline: "none",
                   resize: "vertical", boxSizing: "border-box", fontFamily: "inherit", lineHeight: "1.5"
                 }}
               />
+              {fieldErrors.description && (
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "12px", fontWeight: "700", marginTop: "6px" }}>
+                  <AlertTriangle size={14} color="#dc2626" /> {fieldErrors.description}
+                </div>
+              )}
             </div>
 
             <div style={{ background: "rgba(220, 38, 38, 0.05)", border: "1px solid rgba(220, 38, 38, 0.2)", borderRadius: "12px", padding: "12px", fontSize: "12px", color: "#991b1b", lineHeight: "1.4" }}>

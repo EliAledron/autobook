@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { colors, sh, ErrorModal, SuccessModal } from "../screens/dashboardShared";
-import { Wrench, Calendar, Gauge, Store, FileText, DollarSign, X } from "lucide-react";
+import { Wrench, Calendar, Gauge, Store, FileText, DollarSign, X, AlertTriangle } from "lucide-react";
 
 const STANDARD_SERVICES = [
   { key: "oil", label: "Oil Change" },
@@ -43,22 +43,41 @@ export default function LogServiceModal({
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const vehicleRef = useRef(null);
+  const customServiceRef = useRef(null);
+  const dateRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const errs = {};
+    let firstRef = null;
+
     if (!vehicleId) {
-      setError("Please select a vehicle.");
-      return;
+      errs.vehicle = "Please select a vehicle.";
+      if (!firstRef) firstRef = vehicleRef;
     }
     if (!date) {
-      setError("Please select the service date.");
-      return;
+      errs.date = "Please select the service date.";
+      if (!firstRef) firstRef = dateRef;
     }
     if (serviceKey === "other" && !customServiceName.trim()) {
-      setError("Please enter the name of the custom service.");
+      errs.customService = "Please enter the name of the custom service.";
+      if (!firstRef) firstRef = customServiceRef;
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      setError("");
+      if (firstRef && firstRef.current) {
+        firstRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        firstRef.current.focus?.();
+      }
       return;
     }
 
+    setFieldErrors({});
     setSaving(true);
     setError("");
 
@@ -162,6 +181,13 @@ export default function LogServiceModal({
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        <style>{`
+          @keyframes ab-shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
+          }
+        `}</style>
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -258,14 +284,32 @@ export default function LogServiceModal({
               })}
             </div>
             {serviceKey === "other" && (
-              <input
-                type="text"
-                placeholder="Enter custom service name (e.g. Spark Plugs, Coolant Flush)"
-                value={customServiceName}
-                onChange={(e) => setCustomServiceName(e.target.value)}
-                style={inputStyle}
-                required
-              />
+              <div>
+                <input
+                  ref={customServiceRef}
+                  type="text"
+                  placeholder="Enter custom service name (e.g. Spark Plugs, Coolant Flush)"
+                  value={customServiceName}
+                  onChange={(e) => {
+                    setCustomServiceName(e.target.value);
+                    if (fieldErrors.customService) setFieldErrors(prev => { const n = { ...prev }; delete n.customService; return n; });
+                  }}
+                  style={{
+                    ...inputStyle,
+                    ...(fieldErrors.customService ? {
+                      border: "2px solid #ef4444",
+                      backgroundColor: "#fef2f2",
+                      animation: "ab-shake 0.35s ease",
+                    } : {})
+                  }}
+                  required
+                />
+                {fieldErrors.customService && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "12px", fontWeight: "700", marginTop: "6px" }}>
+                    <AlertTriangle size={14} color="#dc2626" /> {fieldErrors.customService}
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
@@ -276,13 +320,29 @@ export default function LogServiceModal({
                 <Calendar size={13} /> Service Date *
               </label>
               <input
+                ref={dateRef}
                 type="date"
                 max={new Date().toISOString().split("T")[0]}
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
-                style={inputStyle}
+                onChange={(e) => {
+                  setDate(e.target.value);
+                  if (fieldErrors.date) setFieldErrors(prev => { const n = { ...prev }; delete n.date; return n; });
+                }}
+                style={{
+                  ...inputStyle,
+                  ...(fieldErrors.date ? {
+                    border: "2px solid #ef4444",
+                    backgroundColor: "#fef2f2",
+                    animation: "ab-shake 0.35s ease",
+                  } : {})
+                }}
                 required
               />
+              {fieldErrors.date && (
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "12px", fontWeight: "700", marginTop: "6px" }}>
+                  <AlertTriangle size={14} color="#dc2626" /> {fieldErrors.date}
+                </div>
+              )}
             </div>
             <div>
               <label style={labelStyle}>

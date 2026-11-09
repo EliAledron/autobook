@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { colors, sh, ErrorModal } from "../screens/dashboardShared";
-import { Star, X } from "lucide-react";
+import { Star, X, AlertTriangle } from "lucide-react";
 
 export default function ReviewAppModal({ onClose, userProfile }) {
   const [rating, setRating] = useState(0);
@@ -11,9 +11,19 @@ export default function ReviewAppModal({ onClose, userProfile }) {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const ratingRef = useRef(null);
 
   const handleSubmit = async () => {
-    if (rating === 0) return;
+    if (rating === 0) {
+      setFieldErrors({ rating: "Please select a star rating (1 to 5 stars)." });
+      if (ratingRef.current) {
+        ratingRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
+    setFieldErrors({});
     setSaving(true);
     try {
       await addDoc(collection(db, "reviews"), {
@@ -61,21 +71,55 @@ export default function ReviewAppModal({ onClose, userProfile }) {
           </div>
         ) : (
           <>
+            <style>{`
+              @keyframes ab-shake {
+                0%, 100% { transform: translateX(0); }
+                20%, 60% { transform: translateX(-4px); }
+                40%, 80% { transform: translateX(4px); }
+              }
+            `}</style>
             <h2 style={{ margin: "0 0 8px 0", fontSize: "20px", fontWeight: "800", color: colors.textPrimary }}>Rate AutoBook</h2>
             <p style={{ margin: "0 0 24px 0", fontSize: "14px", color: colors.textSecondary, lineHeight: "1.5" }}>How is your experience with our platform?</p>
             
-            <div style={{ display: "flex", justifyContent: "center", gap: "8px", marginBottom: "24px" }}>
-              {[1, 2, 3, 4, 5].map(i => (
-                <div 
-                  key={i} 
-                  onMouseEnter={() => setHovered(i)} 
-                  onMouseLeave={() => setHovered(0)}
-                  onClick={() => setRating(i)}
-                  style={{ cursor: "pointer", transition: "transform 0.1s" }}
-                >
-                  <Star size={36} fill={i <= (hovered || rating) ? colors.warning : "none"} color={i <= (hovered || rating) ? colors.warning : colors.border} />
+            <div
+              ref={ratingRef}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "8px",
+                padding: "12px",
+                borderRadius: "16px",
+                marginBottom: "20px",
+                transition: "all 0.2s ease",
+                ...(fieldErrors.rating ? {
+                  border: "2px solid #ef4444",
+                  backgroundColor: "#fef2f2",
+                  animation: "ab-shake 0.35s ease",
+                } : {})
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "center", gap: "8px" }}>
+                {[1, 2, 3, 4, 5].map(i => (
+                  <div 
+                    key={i} 
+                    onMouseEnter={() => setHovered(i)} 
+                    onMouseLeave={() => setHovered(0)}
+                    onClick={() => {
+                      setRating(i);
+                      if (fieldErrors.rating) setFieldErrors({});
+                    }}
+                    style={{ cursor: "pointer", transition: "transform 0.1s" }}
+                  >
+                    <Star size={36} fill={i <= (hovered || rating) ? colors.warning : "none"} color={i <= (hovered || rating) ? colors.warning : colors.border} />
+                  </div>
+                ))}
+              </div>
+              {fieldErrors.rating && (
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "12px", fontWeight: "700", marginTop: "4px" }}>
+                  <AlertTriangle size={14} color="#dc2626" /> {fieldErrors.rating}
                 </div>
-              ))}
+              )}
             </div>
 
             <textarea 
@@ -86,7 +130,7 @@ export default function ReviewAppModal({ onClose, userProfile }) {
             />
 
             <button 
-              disabled={rating === 0 || saving}
+              disabled={saving}
               onClick={handleSubmit}
               style={{ width: "100%", padding: "16px", borderRadius: "16px", background: rating > 0 ? colors.navy : colors.border, color: rating > 0 ? "#fff" : colors.textMuted, fontSize: "15px", fontWeight: "800", border: "none", cursor: rating > 0 ? "pointer" : "not-allowed" }}
             >

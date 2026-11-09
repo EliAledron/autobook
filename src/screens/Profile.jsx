@@ -7,7 +7,7 @@ import { sh, colors, getInitials, ErrorModal } from "./dashboardShared";
 import { useUser } from "../UserContext";
 import BackButton from "../components/BackButton";
 import SkeletonLoader from "./SkeletonLoader";
-import { Save, LifeBuoy } from "lucide-react";
+import { Save, LifeBuoy, AlertTriangle } from "lucide-react";
 import ReviewAppModal from "../components/ReviewAppModal";
 import HelpSupportModal from "../components/HelpSupportModal";
 // push notifications managed automatically via UserContext
@@ -62,8 +62,11 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showSupportModal, setShowSupportModal] = useState(false);
+
+  const nameRef = useRef(null);
 
   const isAdmin = userProfile?.role?.toLowerCase() === "admin";
   if (isAdmin) return <DesktopAdminProfile />;
@@ -131,7 +134,16 @@ export default function Profile() {
   };
 
   const handleSave = async () => {
-    if (!name.trim()) { setError("Full name cannot be empty."); return; }
+    if (!name.trim()) {
+      setFieldErrors({ name: "Full name cannot be empty." });
+      setError("");
+      if (nameRef.current) {
+        nameRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        nameRef.current.focus?.();
+      }
+      return;
+    }
+    setFieldErrors({});
     setError("");
     setSaving(true);
     try {
@@ -435,6 +447,13 @@ export default function Profile() {
         </div>
       </div>
 
+      <style>{`
+        @keyframes ab-shake {
+          0%, 100% { transform: translateX(0); }
+          20%, 60% { transform: translateX(-4px); }
+          40%, 80% { transform: translateX(4px); }
+        }
+      `}</style>
       <div style={sh.content} className="stagger-slide-up">
 
         <ErrorModal error={error} onClose={() => setError("")} />
@@ -454,7 +473,33 @@ export default function Profile() {
             </div>
             <div style={{ paddingLeft: "42px" }}>
               {editing
-                ? <input style={{ ...inputStyle, background: "#f8fafc" }} value={name} onChange={(e) => setName(e.target.value.replace(/[^a-zA-Z\s]/g, ''))} placeholder="Full name" />
+                ? (
+                  <>
+                    <input
+                      ref={nameRef}
+                      style={{
+                        ...inputStyle,
+                        background: "#f8fafc",
+                        ...(fieldErrors.name ? {
+                          border: "2px solid #ef4444",
+                          backgroundColor: "#fef2f2",
+                          animation: "ab-shake 0.35s ease",
+                        } : {})
+                      }}
+                      value={name}
+                      onChange={(e) => {
+                        setName(e.target.value.replace(/[^a-zA-Z\s]/g, ''));
+                        if (fieldErrors.name) setFieldErrors((prev) => { const n = { ...prev }; delete n.name; return n; });
+                      }}
+                      placeholder="Full name"
+                    />
+                    {fieldErrors.name && (
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "12px", fontWeight: "700", marginTop: "8px" }}>
+                        <AlertTriangle size={14} color="#dc2626" /> {fieldErrors.name}
+                      </div>
+                    )}
+                  </>
+                )
                 : <div style={{ fontSize: "16px", color: colors.textPrimary, fontWeight: "600" }}>{name}</div>
               }
             </div>

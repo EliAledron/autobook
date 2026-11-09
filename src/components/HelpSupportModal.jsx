@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { collection, addDoc, serverTimestamp, query, where, onSnapshot } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { colors, sh, ErrorModal, SuccessModal, CustomDropdown } from "../screens/dashboardShared";
@@ -73,6 +73,10 @@ export default function HelpSupportModal({ onClose, userProfile, defaultTab = "f
   // Modals / Feedback
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const subjectRef = useRef(null);
+  const messageRef = useRef(null);
 
   const user = auth.currentUser;
   const uid = user?.uid || userProfile?.id;
@@ -106,10 +110,32 @@ export default function HelpSupportModal({ onClose, userProfile, defaultTab = "f
 
   const handleSubmitTicket = async (e) => {
     e?.preventDefault();
-    if (!subject.trim()) return setErrorMsg("Please provide a subject for your request.");
-    if (!message.trim()) return setErrorMsg("Please enter a detailed message explaining your issue.");
+    const errs = {};
+    let firstRef = null;
+
+    if (!subject.trim()) {
+      errs.subject = "Please enter a subject for your request.";
+      if (!firstRef) firstRef = subjectRef;
+    }
+    if (!message.trim()) {
+      errs.message = "Please enter a detailed message explaining your issue.";
+      if (!firstRef) firstRef = messageRef;
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      setErrorMsg("");
+      if (firstRef && firstRef.current) {
+        firstRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        firstRef.current.focus?.();
+      }
+      return;
+    }
+
     if (!uid) return setErrorMsg("You must be logged in to submit a support ticket.");
 
+    setFieldErrors({});
+    setErrorMsg("");
     setSubmitting(true);
     try {
       const ticketNumber = `AB-${Date.now().toString().slice(-6)}`;
@@ -413,6 +439,13 @@ export default function HelpSupportModal({ onClose, userProfile, defaultTab = "f
             {/* TAB 2: SUBMIT TICKET */}
             {activeTab === "ticket" && (
               <form onSubmit={handleSubmitTicket} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <style>{`
+                  @keyframes ab-shake {
+                    0%, 100% { transform: translateX(0); }
+                    20%, 60% { transform: translateX(-4px); }
+                    40%, 80% { transform: translateX(4px); }
+                  }
+                `}</style>
                 <div>
                   <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" }}>
                     Issue Category
@@ -440,16 +473,27 @@ export default function HelpSupportModal({ onClose, userProfile, defaultTab = "f
                     Subject <span style={{ color: colors.danger }}>*</span>
                   </label>
                   <input
+                    ref={subjectRef}
                     type="text"
                     placeholder="Brief summary of your issue..."
                     value={subject}
-                    onChange={e => setSubject(e.target.value)}
+                    onChange={e => {
+                      setSubject(e.target.value);
+                      if (fieldErrors.subject) setFieldErrors(prev => { const n = { ...prev }; delete n.subject; return n; });
+                    }}
                     style={{
                       width: "100%", padding: "12px 14px", borderRadius: "12px",
-                      border: `1px solid ${colors.border}`, background: "#f8fafc",
+                      border: fieldErrors.subject ? "2px solid #ef4444" : `1px solid ${colors.border}`,
+                      background: fieldErrors.subject ? "#fef2f2" : "#f8fafc",
+                      animation: fieldErrors.subject ? "ab-shake 0.35s ease" : "none",
                       fontSize: "14px", color: colors.textPrimary, outline: "none", boxSizing: "border-box"
                     }}
                   />
+                  {fieldErrors.subject && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "12px", fontWeight: "700", marginTop: "6px" }}>
+                      <AlertTriangle size={14} color="#dc2626" /> {fieldErrors.subject}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -481,17 +525,28 @@ export default function HelpSupportModal({ onClose, userProfile, defaultTab = "f
                     Detailed Message <span style={{ color: colors.danger }}>*</span>
                   </label>
                   <textarea
+                    ref={messageRef}
                     rows={4}
                     placeholder="Please describe what happened, including any relevant booking details, dates, or error messages..."
                     value={message}
-                    onChange={e => setMessage(e.target.value)}
+                    onChange={e => {
+                      setMessage(e.target.value);
+                      if (fieldErrors.message) setFieldErrors(prev => { const n = { ...prev }; delete n.message; return n; });
+                    }}
                     style={{
                       width: "100%", padding: "12px 14px", borderRadius: "12px",
-                      border: `1px solid ${colors.border}`, background: "#f8fafc",
+                      border: fieldErrors.message ? "2px solid #ef4444" : `1px solid ${colors.border}`,
+                      background: fieldErrors.message ? "#fef2f2" : "#f8fafc",
+                      animation: fieldErrors.message ? "ab-shake 0.35s ease" : "none",
                       fontSize: "14px", color: colors.textPrimary, outline: "none",
                       resize: "vertical", boxSizing: "border-box", fontFamily: "inherit", lineHeight: "1.5"
                     }}
                   />
+                  {fieldErrors.message && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "12px", fontWeight: "700", marginTop: "6px" }}>
+                      <AlertTriangle size={14} color="#dc2626" /> {fieldErrors.message}
+                    </div>
+                  )}
                 </div>
 
                 <div style={{ fontSize: "12px", color: colors.textMuted }}>

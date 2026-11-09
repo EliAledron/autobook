@@ -1,5 +1,5 @@
 import React from "react";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   collection, getDocs, query, where, doc, updateDoc,
@@ -176,6 +176,10 @@ function CarPartsModal({ user, onClose, onSaved, shopId }) {
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const partNameRef = useRef(null);
+  const quantityRef = useRef(null);
 
   const inputStyle = {
     width: "100%", padding: "16px", borderRadius: "16px",
@@ -186,8 +190,29 @@ function CarPartsModal({ user, onClose, onSaved, shopId }) {
   };
 
   const handleSubmit = async () => {
-    if (!partName.trim()) { setError("Please enter the part name."); return; }
-    if (!quantity || isNaN(Number(quantity)) || Number(quantity) < 1) { setError("Please enter a valid quantity."); return; }
+    const errs = {};
+    let firstRef = null;
+
+    if (!partName.trim()) {
+      errs.partName = "Please enter the part name.";
+      if (!firstRef) firstRef = partNameRef;
+    }
+    if (!quantity || isNaN(Number(quantity)) || Number(quantity) < 1) {
+      errs.quantity = "Please enter a valid quantity (at least 1).";
+      if (!firstRef) firstRef = quantityRef;
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      setError("");
+      if (firstRef && firstRef.current) {
+        firstRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        firstRef.current.focus?.();
+      }
+      return;
+    }
+
+    setFieldErrors({});
     setError("");
     setSaving(true);
     try {
@@ -214,6 +239,13 @@ function CarPartsModal({ user, onClose, onSaved, shopId }) {
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.6)", backdropFilter: "blur(6px)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", animation: "ab-fade-in 0.2s ease-out", padding: "20px" }} onClick={onClose}>
       <div style={{ background: colors.white, borderRadius: "28px", width: "100%", maxWidth: "400px", padding: "2rem", maxHeight: "90vh", overflowY: "auto", animation: "ab-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards", boxShadow: "0 24px 48px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
+        <style>{`
+          @keyframes ab-shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
+          }
+        `}</style>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem" }}>
           <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
             <div style={{ width: "56px", height: "56px", borderRadius: "18px", background: `linear-gradient(135deg, ${colors.infoBg}, #e0f2fe)`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 16px rgba(14,165,233,0.15)" }}>
@@ -233,14 +265,65 @@ function CarPartsModal({ user, onClose, onSaved, shopId }) {
           <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
             Part Name <span style={{ color: colors.danger }}>*</span>
           </div>
-          <input type="text" style={inputStyle} placeholder="e.g. Brake Pad, Air Filter..." value={partName} onChange={e => setPartName(e.target.value.replace(/[^a-zA-Z\s0-9-]/g, ''))} onFocus={e => e.currentTarget.style.borderColor = colors.info} onBlur={e => e.currentTarget.style.borderColor = colors.border} />
+          <input
+            ref={partNameRef}
+            type="text"
+            style={{
+              ...inputStyle,
+              ...(fieldErrors.partName ? {
+                border: "2px solid #ef4444",
+                backgroundColor: "#fef2f2",
+                animation: "ab-shake 0.35s ease",
+              } : {})
+            }}
+            placeholder="e.g. Brake Pad, Air Filter..."
+            value={partName}
+            onChange={e => {
+              setPartName(e.target.value.replace(/[^a-zA-Z\s0-9-]/g, ''));
+              if (fieldErrors.partName) setFieldErrors(prev => { const n = { ...prev }; delete n.partName; return n; });
+            }}
+            onFocus={e => { if (!fieldErrors.partName) e.currentTarget.style.borderColor = colors.info; }}
+            onBlur={e => { if (!fieldErrors.partName) e.currentTarget.style.borderColor = colors.border; }}
+          />
+          {fieldErrors.partName && (
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "12px", fontWeight: "700", marginTop: "6px" }}>
+              <AlertTriangle size={14} color="#dc2626" /> {fieldErrors.partName}
+            </div>
+          )}
         </div>
 
         <div style={{ marginBottom: "1.5rem" }}>
           <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
             Quantity <span style={{ color: colors.danger }}>*</span>
           </div>
-          <input type="number" style={{...inputStyle, width: "120px", textAlign: "center"}} placeholder="1" value={quantity} onChange={e => setQuantity(e.target.value.replace(/[^0-9]/g, ''))} min="1" onFocus={e => e.currentTarget.style.borderColor = colors.info} onBlur={e => e.currentTarget.style.borderColor = colors.border} />
+          <input
+            ref={quantityRef}
+            type="number"
+            style={{
+              ...inputStyle,
+              width: "120px",
+              textAlign: "center",
+              ...(fieldErrors.quantity ? {
+                border: "2px solid #ef4444",
+                backgroundColor: "#fef2f2",
+                animation: "ab-shake 0.35s ease",
+              } : {})
+            }}
+            placeholder="1"
+            value={quantity}
+            onChange={e => {
+              setQuantity(e.target.value.replace(/[^0-9]/g, ''));
+              if (fieldErrors.quantity) setFieldErrors(prev => { const n = { ...prev }; delete n.quantity; return n; });
+            }}
+            min="1"
+            onFocus={e => { if (!fieldErrors.quantity) e.currentTarget.style.borderColor = colors.info; }}
+            onBlur={e => { if (!fieldErrors.quantity) e.currentTarget.style.borderColor = colors.border; }}
+          />
+          {fieldErrors.quantity && (
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "12px", fontWeight: "700", marginTop: "6px" }}>
+              <AlertTriangle size={14} color="#dc2626" /> {fieldErrors.quantity}
+            </div>
+          )}
         </div>
 
         <div style={{ marginBottom: "2rem" }}>

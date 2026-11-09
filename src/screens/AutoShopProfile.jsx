@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { sh, colors, getInitials, ErrorModal, SuccessModal, CustomDropdown } from "./dashboardShared";
 import { doc, updateDoc, addDoc, setDoc, collection, serverTimestamp, getDocs, query, where, orderBy, getDoc, arrayUnion, arrayRemove } from "firebase/firestore";
@@ -93,6 +93,9 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId, isFirstSetup }) {
   const [logoPreview, setLogoPreview] = useState(shop?.logoURL || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const nameRef = useRef(null);
 
   const inputStyle = {
     width: "100%", padding: "16px", borderRadius: "16px",
@@ -103,7 +106,16 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId, isFirstSetup }) {
   };
 
   const handleSubmit = async () => {
-    if (!name.trim()) { setError("Shop name is required."); return; }
+    if (!name.trim()) {
+      setFieldErrors({ name: "Shop name is required." });
+      setError("");
+      if (nameRef.current) {
+        nameRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        nameRef.current.focus?.();
+      }
+      return;
+    }
+    setFieldErrors({});
     setError("");
     setSaving(true);
     try {
@@ -162,6 +174,13 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId, isFirstSetup }) {
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(15,38,64,0.65)", backdropFilter: "blur(6px)", zIndex: 1200, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px", animation: "ab-fade-in 0.2s ease-out" }} onClick={onClose}>
       <div style={{ background: colors.white, borderRadius: "28px", width: "100%", maxWidth: "600px", padding: "2rem 1.5rem calc(2rem + env(safe-area-inset-bottom)) 1.5rem", maxHeight: "90vh", overflowY: "auto", animation: "ab-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards", boxShadow: "0 20px 60px rgba(0,0,0,0.25)", boxSizing: "border-box" }} onClick={e => e.stopPropagation()}>
+        <style>{`
+          @keyframes ab-shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
+          }
+        `}</style>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <div style={{ width: "48px", height: "48px", borderRadius: "16px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.info }}><Store size={24} /></div>
@@ -222,7 +241,28 @@ function ShopEditModal({ shop, onClose, onSaved, ownerId, isFirstSetup }) {
 
         <div style={{ marginBottom: "1.25rem" }}>
           <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Shop Name *</div>
-          <input type="text" style={inputStyle} value={name} onChange={e => setName(e.target.value.replace(/[^a-zA-Z\s]/g, ''))} />
+          <input
+            ref={nameRef}
+            type="text"
+            style={{
+              ...inputStyle,
+              ...(fieldErrors.name ? {
+                border: "2px solid #ef4444",
+                backgroundColor: "#fef2f2",
+                animation: "ab-shake 0.35s ease",
+              } : {})
+            }}
+            value={name}
+            onChange={e => {
+              setName(e.target.value.replace(/[^a-zA-Z\s]/g, ''));
+              if (fieldErrors.name) setFieldErrors(prev => { const n = { ...prev }; delete n.name; return n; });
+            }}
+          />
+          {fieldErrors.name && (
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "12px", fontWeight: "700", marginTop: "6px" }}>
+              <AlertTriangle size={14} color="#dc2626" /> {fieldErrors.name}
+            </div>
+          )}
         </div>
         <div style={{ marginBottom: "1.25rem" }}>
           <div style={{ fontSize: "12px", color: colors.textSecondary, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Short Name</div>
@@ -453,11 +493,14 @@ export default function AutoShopProfile() {
   // Report Modal State
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState("");
+  const [reportFieldError, setReportFieldError] = useState("");
   const [reporting, setReporting] = useState(false);
   const [reportCount, setReportCount] = useState(0);
   const [loadingShop, setLoadingShop] = useState(!location.state?.shop && !!shopId);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+
+  const reportReasonRef = useRef(null);
   
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
@@ -620,7 +663,15 @@ export default function AutoShopProfile() {
   };
 
   const submitReport = async () => {
-    if (!reportReason.trim()) return;
+    if (!reportReason.trim()) {
+      setReportFieldError("Please enter the reason for reporting this shop.");
+      if (reportReasonRef.current) {
+        reportReasonRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        reportReasonRef.current.focus?.();
+      }
+      return;
+    }
+    setReportFieldError("");
     setReporting(true);
     
     try {
@@ -1421,15 +1472,34 @@ export default function AutoShopProfile() {
             </p>
             
             <textarea
+              ref={reportReasonRef}
               value={reportReason}
-              onChange={e => setReportReason(e.target.value)}
+              onChange={e => {
+                setReportReason(e.target.value);
+                if (reportFieldError) setReportFieldError("");
+              }}
               placeholder="e.g. Inappropriate content, Scam, Fake shop..."
-              style={{ width: "100%", padding: "14px", borderRadius: "12px", border: `1px solid ${colors.border}`, fontSize: "14px", fontFamily: "inherit", minHeight: "100px", resize: "vertical", boxSizing: "border-box", marginBottom: "20px", outline: "none", background: colors.bg }}
+              style={{
+                width: "100%", padding: "14px", borderRadius: "12px",
+                border: reportFieldError ? "2px solid #ef4444" : `1px solid ${colors.border}`,
+                background: reportFieldError ? "#fef2f2" : colors.bg,
+                animation: reportFieldError ? "ab-shake 0.35s ease" : "none",
+                fontSize: "14px", fontFamily: "inherit", minHeight: "100px", resize: "vertical",
+                boxSizing: "border-box", marginBottom: reportFieldError ? "8px" : "20px", outline: "none"
+              }}
             />
+            {reportFieldError && (
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontSize: "12px", fontWeight: "700", marginBottom: "16px" }}>
+                <AlertTriangle size={14} color="#dc2626" /> {reportFieldError}
+              </div>
+            )}
             
             <div style={{ display: "flex", gap: "10px" }}>
               <button 
-                onClick={() => setShowReportModal(false)}
+                onClick={() => {
+                  setShowReportModal(false);
+                  setReportFieldError("");
+                }}
                 disabled={reporting}
                 style={{ flex: 1, padding: "12px", background: colors.bg, color: colors.textPrimary, border: `1px solid ${colors.border}`, borderRadius: "12px", fontWeight: "700", cursor: "pointer", fontSize: "14px" }}
               >
@@ -1437,8 +1507,8 @@ export default function AutoShopProfile() {
               </button>
               <button 
                 onClick={submitReport}
-                disabled={reporting || !reportReason.trim()}
-                style={{ flex: 1, padding: "12px", background: colors.danger, color: "#fff", border: "none", borderRadius: "12px", fontWeight: "700", cursor: reporting || !reportReason.trim() ? "not-allowed" : "pointer", fontSize: "14px", opacity: reporting || !reportReason.trim() ? 0.6 : 1 }}
+                disabled={reporting}
+                style={{ flex: 1, padding: "12px", background: colors.danger, color: "#fff", border: "none", borderRadius: "12px", fontWeight: "700", cursor: reporting ? "not-allowed" : "pointer", fontSize: "14px", opacity: reporting ? 0.6 : 1 }}
               >
                 {reporting ? "Submitting..." : "Submit Report"}
               </button>
