@@ -827,7 +827,7 @@ export default function OwnerDashboard({ user }) {
         </div>
       </div>
 
-      <div style={{ ...sh.content, paddingTop: "2rem", position: "relative", zIndex: 2, maxWidth: "1200px", margin: "0 auto", width: "100%", boxSizing: "border-box" }} className="stagger-slide-up">
+      <div style={{ ...sh.content, paddingTop: "0.85rem", position: "relative", zIndex: 2 }} className="stagger-slide-up">
 
         {!isAdmin && shopData && (!shopData.isSetupCompleted && (!shopData.services || shopData.services.length === 0)) && (
           <div style={{
