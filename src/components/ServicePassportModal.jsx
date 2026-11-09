@@ -4,7 +4,7 @@ import { db } from "../firebase";
 import { colors, sh, ConfirmModal } from "../screens/dashboardShared";
 import { 
   BookOpen, Car, Calendar, Gauge, Store, FileText, 
-  Trash2, Plus, CheckCircle2, DollarSign, X, Search, Filter, ShieldCheck
+  Trash2, Plus, CheckCircle2, X, Search, Filter, ShieldCheck
 } from "lucide-react";
 
 const parseServiceDate = (val) => {
@@ -249,9 +249,9 @@ export default function ServicePassportModal({
                 <div style={{ fontSize: "18px", fontWeight: "800", marginTop: "2px" }}>{allRecords.length}</div>
               </div>
               <div style={{ textAlign: "center", borderLeft: "1px solid rgba(255,255,255,0.15)", borderRight: "1px solid rgba(255,255,255,0.15)" }}>
-                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.7)", fontWeight: "600" }}>Total Logged Cost</div>
+                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.7)", fontWeight: "600" }}>Verified Shop Jobs</div>
                 <div style={{ fontSize: "18px", fontWeight: "800", marginTop: "2px" }}>
-                  {totalCost > 0 ? `₱${totalCost.toLocaleString()}` : "—"}
+                  {allRecords.filter((r) => !r.isManual).length}
                 </div>
               </div>
               <div style={{ textAlign: "center" }}>
@@ -449,11 +449,7 @@ export default function ServicePassportModal({
                       </div>
 
                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        {r.cost > 0 && (
-                          <div style={{ fontSize: "14px", fontWeight: "800", color: colors.navy, background: "#f1f5f9", padding: "4px 8px", borderRadius: "8px" }}>
-                            ₱{r.cost.toLocaleString()}
-                          </div>
-                        )}
+
                         {r.isManual && (
                           <button
                             disabled={deletingId === r.id}

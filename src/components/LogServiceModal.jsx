@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { colors, sh, ErrorModal, SuccessModal } from "../screens/dashboardShared";
-import { Wrench, Calendar, Gauge, Store, FileText, DollarSign, X, AlertTriangle } from "lucide-react";
+import { Wrench, Calendar, Gauge, Store, FileText, X, AlertTriangle } from "lucide-react";
 
 const STANDARD_SERVICES = [
   { key: "oil", label: "Oil Change" },
@@ -39,7 +39,6 @@ export default function LogServiceModal({
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [mileage, setMileage] = useState(currentMileage || activeVehicle?.mileage || "");
   const [shopName, setShopName] = useState("");
-  const [cost, setCost] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -114,7 +113,6 @@ export default function LogServiceModal({
       const selectedStandard = STANDARD_SERVICES.find((s) => s.key === serviceKey);
       const finalServiceName = serviceKey === "other" ? customServiceName.trim() : selectedStandard.label;
       const parsedMileage = mileage ? parseInt(mileage, 10) : null;
-      const parsedCost = cost ? parseFloat(cost) : null;
       const targetVehicle = vehicles.find((v) => v.id === targetVehicleId) || activeVehicle;
 
       // 1. Add log to serviceLogs collection with comprehensive identifiers
@@ -130,7 +128,6 @@ export default function LogServiceModal({
         date: date,
         mileage: parsedMileage,
         shopName: shopName.trim() || "Self-Serviced / Garage",
-        cost: parsedCost,
         notes: notes.trim(),
         isManual: true,
         createdAt: serverTimestamp(),
@@ -391,32 +388,18 @@ export default function LogServiceModal({
             </div>
           </div>
 
-          {/* Shop / Provider & Cost */}
-          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "12px" }}>
-            <div>
-              <label style={labelStyle}>
-                <Store size={13} /> Provider / Garage
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Shell, DIY, Motech"
-                value={shopName}
-                onChange={(e) => setShopName(e.target.value)}
-                style={inputStyle}
-              />
-            </div>
-            <div>
-              <label style={labelStyle}>
-                <DollarSign size={13} /> Cost (₱)
-              </label>
-              <input
-                type="number"
-                placeholder="e.g. 2500"
-                value={cost}
-                onChange={(e) => setCost(e.target.value)}
-                style={inputStyle}
-              />
-            </div>
+          {/* Shop / Provider */}
+          <div>
+            <label style={labelStyle}>
+              <Store size={13} /> Provider / Garage
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Shell, DIY, Motech, or Self-Serviced"
+              value={shopName}
+              onChange={(e) => setShopName(e.target.value)}
+              style={inputStyle}
+            />
           </div>
 
           {/* Notes */}

@@ -1411,11 +1411,7 @@ export default function CustomerDashboard() {
                       <div style={{ fontSize: "12px", fontWeight: "700", color: colors.textPrimary }}>
                         {rec.date ? rec.date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}
                       </div>
-                      {rec.cost !== null && rec.cost !== undefined && (
-                        <div style={{ fontSize: "12px", fontWeight: "800", color: colors.success }}>
-                          ₱{Number(rec.cost).toLocaleString()}
-                        </div>
-                      )}
+
                     </div>
                   </div>
                 ))}
