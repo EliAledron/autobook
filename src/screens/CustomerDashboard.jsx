@@ -510,6 +510,10 @@ export default function CustomerDashboard() {
       }
     }
 
+    const isCustomRoadmap = !!rule.isCustom;
+    const isUpdatedToday = hasRecord && daysSince !== null && daysSince === 0;
+    const isRecentlyUpdated = hasRecord && daysSince !== null && daysSince <= 7;
+
     return {
       ...rule,
       lastRecord,
@@ -527,6 +531,9 @@ export default function CustomerDashboard() {
       bgColor,
       urgencyRank,
       remainingEstimate,
+      isCustomRoadmap,
+      isUpdatedToday,
+      isRecentlyUpdated,
     };
   });
 
@@ -969,7 +976,8 @@ export default function CustomerDashboard() {
             {displayRules.map((rule) => {
               const {
                 hasRecord, lastRecord, progress, color, bgColor, statusText,
-                remainingEstimate, isOverdue, isDueSoon
+                remainingEstimate, isOverdue, isDueSoon, isCustomRoadmap,
+                isUpdatedToday, isRecentlyUpdated
               } = rule;
 
               return (
@@ -979,16 +987,46 @@ export default function CustomerDashboard() {
                     background: colors.white,
                     borderRadius: "24px",
                     padding: "20px",
-                    border: `1.5px solid ${isOverdue ? colors.danger + "40" : isDueSoon ? colors.warning + "40" : colors.border}`,
+                    border: isCustomRoadmap
+                      ? `1.5px solid ${colors.blue}`
+                      : `1.5px solid ${isOverdue ? colors.danger + "40" : isDueSoon ? colors.warning + "40" : colors.border}`,
                     display: "flex",
                     flexDirection: "column",
                     gap: "14px",
-                    boxShadow: isOverdue ? "0 8px 24px rgba(220,38,38,0.08)" : "0 8px 24px rgba(0,0,0,0.04)",
+                    boxShadow: isCustomRoadmap
+                      ? "0 8px 24px rgba(37,99,235,0.08)"
+                      : isOverdue
+                      ? "0 8px 24px rgba(220,38,38,0.08)"
+                      : "0 8px 24px rgba(0,0,0,0.04)",
                     position: "relative",
                     overflow: "hidden",
                     cursor: "default",
                   }}
                 >
+                  {/* Newly added roadmap banner */}
+                  {isCustomRoadmap && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        right: 0,
+                        background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`,
+                        color: "#fff",
+                        fontSize: "10px",
+                        fontWeight: "800",
+                        padding: "4px 12px 4px 14px",
+                        borderRadius: "0 0 0 14px",
+                        letterSpacing: "0.5px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        zIndex: 3,
+                        boxShadow: "0 2px 8px rgba(37,99,235,0.25)",
+                      }}
+                    >
+                      <Sparkles size={11} /> Newly Added Roadmap
+                    </div>
+                  )}
                   {/* Status glow */}
                   <div
                     style={{
@@ -1029,6 +1067,62 @@ export default function CustomerDashboard() {
                           <span style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary, letterSpacing: "-0.2px" }}>
                             {rule.label}
                           </span>
+                          {isCustomRoadmap && (
+                            <span
+                              style={{
+                                fontSize: "10px",
+                                fontWeight: "800",
+                                background: "rgba(37,99,235,0.1)",
+                                color: colors.blue,
+                                border: "1px solid rgba(37,99,235,0.25)",
+                                padding: "2px 8px",
+                                borderRadius: "8px",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              <Sparkles size={10} /> Newly Added
+                            </span>
+                          )}
+                          {isUpdatedToday && (
+                            <span
+                              style={{
+                                fontSize: "10px",
+                                fontWeight: "800",
+                                background: "#dcfce7",
+                                color: "#15803d",
+                                border: "1px solid #86efac",
+                                padding: "2px 8px",
+                                borderRadius: "8px",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#22c55e", display: "inline-block" }} />
+                              Updated Today
+                            </span>
+                          )}
+                          {!isUpdatedToday && isRecentlyUpdated && (
+                            <span
+                              style={{
+                                fontSize: "10px",
+                                fontWeight: "800",
+                                background: "#ecfdf5",
+                                color: "#047857",
+                                border: "1px solid #a7f3d0",
+                                padding: "2px 8px",
+                                borderRadius: "8px",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10b981", display: "inline-block" }} />
+                              Recently Updated
+                            </span>
+                          )}
                           {hasRecord && lastRecord.isManual ? (
                             <span style={{ fontSize: "10px", fontWeight: "700", background: "#f1f5f9", color: colors.textSecondary, padding: "2px 6px", borderRadius: "6px" }}>
                               Self-Logged
@@ -1372,6 +1466,22 @@ export default function CustomerDashboard() {
                           <span style={{ fontSize: "14px", fontWeight: "800", color: colors.textPrimary }}>
                             {rec.serviceType}
                           </span>
+                          {rec.date && Math.floor((Date.now() - rec.date.getTime()) / (1000 * 3600 * 24)) <= 3 && (
+                            <span
+                              style={{
+                                fontSize: "9px",
+                                fontWeight: "900",
+                                padding: "2px 6px",
+                                borderRadius: "6px",
+                                background: "#eff6ff",
+                                color: "#1d4ed8",
+                                border: "1px solid #bfdbfe",
+                                letterSpacing: "0.5px",
+                              }}
+                            >
+                              NEW
+                            </span>
+                          )}
                           <span
                             style={{
                               fontSize: "10px",
