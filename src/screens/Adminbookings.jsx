@@ -506,6 +506,9 @@ export default function AdminBookings() {
         updates.mechanicName = getMechanicName(newMechanic);
       }
 
+      if (newStatus === "Completed" && selected.status !== "Completed") {
+        updates.completedAt = serverTimestamp();
+      }
       await updateDoc(doc(db, "bookings", selected.id), updates);
 
 
@@ -534,6 +537,28 @@ export default function AdminBookings() {
       }
 
       if (newStatus === "Completed" && selected.status !== "Completed" && selected.customerId) {
+        // Auto-record to serviceLogs to ensure the completed service is immediately tracked in Roadmap
+        try {
+          await addDoc(collection(db, "serviceLogs"), {
+            ownerId: selected.customerId,
+            userId: selected.customerId,
+            customerId: selected.customerId,
+            bookingId: selected.id,
+            vehicleId: selected.vehicleId || null,
+            vehicleLabel: selected.vehicleLabel || "",
+            plate: selected.plate || selected.plateNumber || "",
+            serviceType: selected.serviceType || "AutoBook Service",
+            date: selected.date || new Date().toISOString().split("T")[0],
+            mileage: selected.mileage ? Number(selected.mileage) : null,
+            shopName: selected.shopName || "AutoBook Verified Shop",
+            cost: selected.totalPrice || selected.amount || null,
+            notes: selected.notes || "Completed AutoBook service",
+            isManual: false,
+            createdAt: serverTimestamp(),
+          });
+        } catch (autoLogErr) {
+          console.warn("Failed auto-syncing to serviceLogs:", autoLogErr);
+        }
         await addDoc(collection(db, "notifications"), {
           userId: selected.customerId,
           title: "Job Completed!",
@@ -645,6 +670,9 @@ export default function AdminBookings() {
         updates.cancelReason = archiveCancelReason.trim();
       }
       
+      if (newStatus === "Completed" && selected.status !== "Completed") {
+        updates.completedAt = serverTimestamp();
+      }
       await updateDoc(doc(db, "bookings", selected.id), updates);
       
       if (isActive && selected.customerId) {

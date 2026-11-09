@@ -7,6 +7,27 @@ import {
   Trash2, Plus, CheckCircle2, DollarSign, X, Search, Filter, ShieldCheck
 } from "lucide-react";
 
+const parseServiceDate = (val) => {
+  if (!val) return null;
+  if (val.toDate && typeof val.toDate === "function") return val.toDate();
+  if (val.seconds) return new Date(val.seconds * 1000);
+  if (val instanceof Date) return val;
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d;
+};
+
+const isRecordForVehicle = (recordVehicleId, targetVehicle, recordPlate, recordLabel) => {
+  if (!targetVehicle) return true;
+  if (!recordVehicleId && !recordPlate && !recordLabel) return true;
+  if (recordVehicleId && recordVehicleId === targetVehicle.id) return true;
+  if (targetVehicle.plate) {
+    const cleanPlate = targetVehicle.plate.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (recordPlate && recordPlate.toLowerCase().replace(/[^a-z0-9]/g, "") === cleanPlate) return true;
+    if (recordLabel && recordLabel.toLowerCase().replace(/[^a-z0-9]/g, "").includes(cleanPlate)) return true;
+  }
+  return false;
+};
+
 export default function ServicePassportModal({
   isOpen,
   onClose,
@@ -26,14 +47,15 @@ export default function ServicePassportModal({
   // 1. Process AutoBook Bookings for this vehicle
   const bookingEntries = (bookings || [])
     .filter((b) => {
-      if ((b.status || "").toLowerCase() !== "completed") return false;
-      if (b.vehicleId && b.vehicleId !== vehicle.id) return false;
-      return true;
+      const st = (b.status || "").trim().toLowerCase();
+      if (st !== "completed" && st !== "complete" && st !== "done") return false;
+      return isRecordForVehicle(b.vehicleId, vehicle, b.plate || b.plateNumber, b.vehicleLabel);
     })
     .map((b) => ({
       id: b.id,
+      bookingId: b.id,
       serviceType: b.serviceType || "AutoBook Service",
-      date: b.date ? new Date(b.date) : (b.createdAt?.seconds ? new Date(b.createdAt.seconds * 1000) : new Date()),
+      date: parseServiceDate(b.completedAt) || parseServiceDate(b.date) || parseServiceDate(b.createdAt) || new Date(),
       mileage: b.mileage ? Number(b.mileage) : null,
       shopName: b.shopName || "AutoBook Verified Shop",
       cost: b.totalPrice || b.amount || null,
@@ -44,24 +66,27 @@ export default function ServicePassportModal({
 
   // 2. Process Manual Service Logs for this vehicle
   const manualEntries = (serviceLogs || [])
-    .filter((s) => s.vehicleId === vehicle.id)
+    .filter((s) => {
+      if (s.bookingId && bookingEntries.some((b) => b.id === s.bookingId)) return false;
+      return isRecordForVehicle(s.vehicleId, vehicle, s.plate, s.vehicleLabel);
+    })
     .map((s) => ({
       id: s.id,
       serviceType: s.serviceType || "Maintenance Service",
       serviceKey: s.serviceKey || "other",
-      date: s.date ? new Date(s.date) : (s.createdAt?.seconds ? new Date(s.createdAt.seconds * 1000) : new Date()),
+      date: parseServiceDate(s.date) || parseServiceDate(s.createdAt) || new Date(),
       mileage: s.mileage ? Number(s.mileage) : null,
       shopName: s.shopName || "Self-Serviced / Garage",
       cost: s.cost ? Number(s.cost) : null,
       notes: s.notes || "",
-      isManual: true,
-      source: "Manual Log",
+      isManual: s.isManual !== false,
+      source: s.isManual === false ? "AutoBook Verified" : "Manual Log",
     }));
 
   // Combine and sort newest first
-  const allRecords = [...bookingEntries, ...manualEntries].sort(
-    (a, b) => b.date.getTime() - a.date.getTime()
-  );
+  const allRecords = [...bookingEntries, ...manualEntries]
+    .filter((r) => r.date && !isNaN(r.date.getTime()))
+    .sort((a, b) => b.date.getTime() - a.date.getTime());
 
   const filteredRecords = allRecords.filter((r) => {
     // Type filter

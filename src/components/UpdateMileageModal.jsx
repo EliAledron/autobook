@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { colors, sh, ErrorModal } from "../screens/dashboardShared";
@@ -11,6 +11,12 @@ export default function UpdateMileageModal({ isOpen, onClose, vehicle, onUpdated
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
+
+  useEffect(() => {
+    if (vehicle?.mileage !== undefined) {
+      setMileage(vehicle.mileage || "");
+    }
+  }, [vehicle, isOpen]);
 
   const mileageRef = useRef(null);
 

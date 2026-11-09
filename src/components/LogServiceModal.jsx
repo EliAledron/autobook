@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { colors, sh, ErrorModal, SuccessModal } from "../screens/dashboardShared";
@@ -45,6 +45,29 @@ export default function LogServiceModal({
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
 
+  // Sync state whenever modal opens or active vehicle / prefill changes
+  useEffect(() => {
+    if (isOpen) {
+      const active = vehicles.find((v) => v.id === selectedVehicleId) || vehicles[0] || null;
+      if (active?.id) {
+        setVehicleId(active.id);
+        if (active.mileage && !mileage) setMileage(active.mileage);
+      }
+      if (prefilledService) {
+        const matched = STANDARD_SERVICES.find(
+          (s) => s.label.toLowerCase() === prefilledService.toLowerCase() || s.key === prefilledService.toLowerCase()
+        );
+        if (matched) {
+          setServiceKey(matched.key);
+          setCustomServiceName("");
+        } else {
+          setServiceKey("other");
+          setCustomServiceName(prefilledService);
+        }
+      }
+    }
+  }, [isOpen, selectedVehicleId, vehicles, prefilledService]);
+
   const vehicleRef = useRef(null);
   const customServiceRef = useRef(null);
   const dateRef = useRef(null);
@@ -54,7 +77,13 @@ export default function LogServiceModal({
     const errs = {};
     let firstRef = null;
 
-    if (!vehicleId) {
+    let targetVehicleId = vehicleId;
+    if (!targetVehicleId && vehicles.length > 0) {
+      targetVehicleId = vehicles[0].id;
+      setVehicleId(vehicles[0].id);
+    }
+
+    if (!targetVehicleId) {
       errs.vehicle = "Please select a vehicle.";
       if (!firstRef) firstRef = vehicleRef;
     }
@@ -86,11 +115,16 @@ export default function LogServiceModal({
       const finalServiceName = serviceKey === "other" ? customServiceName.trim() : selectedStandard.label;
       const parsedMileage = mileage ? parseInt(mileage, 10) : null;
       const parsedCost = cost ? parseFloat(cost) : null;
+      const targetVehicle = vehicles.find((v) => v.id === targetVehicleId) || activeVehicle;
 
-      // 1. Add log to serviceLogs collection
+      // 1. Add log to serviceLogs collection with comprehensive identifiers
       await addDoc(collection(db, "serviceLogs"), {
         ownerId: userId,
-        vehicleId: vehicleId,
+        userId: userId,
+        customerId: userId,
+        vehicleId: targetVehicleId,
+        plate: targetVehicle?.plate || "",
+        vehicleLabel: targetVehicle ? `${targetVehicle.year || ""} ${targetVehicle.make || ""} ${targetVehicle.model || ""}`.trim() : "",
         serviceKey: serviceKey,
         serviceType: finalServiceName,
         date: date,
@@ -103,10 +137,9 @@ export default function LogServiceModal({
       });
 
       // 2. If entered mileage is higher than vehicle's current mileage, update vehicle
-      const targetVehicle = vehicles.find((v) => v.id === vehicleId);
       if (parsedMileage && (!targetVehicle?.mileage || parsedMileage > Number(targetVehicle.mileage))) {
         try {
-          await updateDoc(doc(db, "vehicles", vehicleId), {
+          await updateDoc(doc(db, "vehicles", targetVehicleId), {
             mileage: parsedMileage,
             updatedAt: serverTimestamp(),
           });

@@ -97,7 +97,35 @@ export default function MechanicBookings() {
       await updateDoc(doc(db, "bookings", bookingId), {
         status: newStatus,
         updatedAt: serverTimestamp(),
+        ...(newStatus === "Completed" ? { completedAt: serverTimestamp() } : {}),
       });
+
+      if (newStatus === "Completed" && booking) {
+        const cId = booking.customerId || booking.userId;
+        if (cId) {
+          try {
+            await addDoc(collection(db, "serviceLogs"), {
+              ownerId: cId,
+              userId: cId,
+              customerId: cId,
+              bookingId: booking.id,
+              vehicleId: booking.vehicleId || null,
+              vehicleLabel: booking.vehicleLabel || "",
+              plate: booking.plate || booking.plateNumber || "",
+              serviceType: booking.serviceType || "AutoBook Service",
+              date: booking.date || new Date().toISOString().split("T")[0],
+              mileage: booking.mileage ? Number(booking.mileage) : null,
+              shopName: booking.shopName || "AutoBook Verified Shop",
+              cost: booking.totalPrice || booking.amount || null,
+              notes: booking.notes || "Completed by mechanic",
+              isManual: false,
+              createdAt: serverTimestamp(),
+            });
+          } catch (autoLogErr) {
+            console.warn("Mechanic auto-log to serviceLogs failed:", autoLogErr);
+          }
+        }
+      }
 
       // Notify customer
       const customerId = booking?.customerId || booking?.userId;

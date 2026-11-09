@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, collection, query, where, getDocs, orderBy, addDoc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, orderBy, addDoc, serverTimestamp, updateDoc, onSnapshot } from "firebase/firestore";
 import { sh, colors, getGreeting, EmptyState } from "./dashboardShared";
 import TopbarAvatar from "./TopbarAvatar";
 import SkeletonLoader from "./SkeletonLoader";
@@ -86,29 +86,57 @@ const SectionTitle = ({ title, badge, action, style = {} }) => (
   </div>
 );
 
+const parseServiceDate = (val) => {
+  if (!val) return null;
+  if (val.toDate && typeof val.toDate === "function") return val.toDate();
+  if (val.seconds) return new Date(val.seconds * 1000);
+  if (val instanceof Date) return val;
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d;
+};
+
+const isRecordForVehicle = (recordVehicleId, activeVeh, recordPlate, recordLabel) => {
+  if (!activeVeh) return true;
+  if (!recordVehicleId && !recordPlate && !recordLabel) return true;
+  if (recordVehicleId && recordVehicleId === activeVeh.id) return true;
+  if (activeVeh.plate) {
+    const cleanPlate = activeVeh.plate.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (recordPlate && recordPlate.toLowerCase().replace(/[^a-z0-9]/g, "") === cleanPlate) return true;
+    if (recordLabel && recordLabel.toLowerCase().replace(/[^a-z0-9]/g, "").includes(cleanPlate)) return true;
+  }
+  return false;
+};
+
 const MAINTENANCE_RULES = [
-  { key: "oil",     label: "Oil Change",       icon: <Droplet size={22} />,     intervalDays: 180, intervalKm: 5000,  keywords: ["oil"] },
-  { key: "tire",    label: "Tire Rotation",    icon: <Settings size={22} />,    intervalDays: 365, intervalKm: 10000, keywords: ["tire"] },
-  { key: "brake",   label: "Brake Inspection", icon: <ShieldAlert size={22} />, intervalDays: 365, intervalKm: 15000, keywords: ["brake"] },
-  { key: "aircon",  label: "Aircon Cleaning",  icon: <Snowflake size={22} />,   intervalDays: 365, intervalKm: 20000, keywords: ["aircon", "air con", "ac "] },
-  { key: "battery", label: "Battery Check",    icon: <AlertTriangle size={22} />,intervalDays: 730, intervalKm: 40000, keywords: ["battery"] },
-  { key: "checkup", label: "General Checkup",  icon: <Wrench size={22} />,      intervalDays: 365, intervalKm: 10000, keywords: ["checkup", "general", "pms"] },
+  { key: "oil",          label: "Oil Change",                  icon: <Droplet size={22} />,       intervalDays: 180, intervalKm: 5000,  keywords: ["oil", "lube", "change oil", "engine oil", "motor oil"] },
+  { key: "tire",         label: "Tire Rotation & Alignment",   icon: <Settings size={22} />,      intervalDays: 365, intervalKm: 10000, keywords: ["tire", "tyre", "wheel", "alignment", "balancing", "rotation"] },
+  { key: "brake",        label: "Brake System Inspection",     icon: <ShieldAlert size={22} />,   intervalDays: 365, intervalKm: 15000, keywords: ["brake", "rotor", "pad", "caliper", "brake fluid"] },
+  { key: "aircon",       label: "Aircon Cleaning & AC Service",icon: <Snowflake size={22} />,     intervalDays: 365, intervalKm: 20000, keywords: ["aircon", "air con", "air-con", "ac ", "a/c", "freon", "air conditioning", "cabin filter", "evaporator", "compressor"] },
+  { key: "battery",      label: "Battery & Electrical Check",  icon: <AlertTriangle size={22} />, intervalDays: 730, intervalKm: 40000, keywords: ["battery", "alternator", "starter", "charging", "electrical", "wiring"] },
+  { key: "checkup",      label: "General Checkup & PMS",       icon: <Wrench size={22} />,        intervalDays: 365, intervalKm: 10000, keywords: ["checkup", "check up", "check-up", "general", "pms", "preventive", "periodic", "tune-up", "tune up", "inspection", "maintenance"] },
+  { key: "transmission", label: "Transmission & Drivetrain",   icon: <Gauge size={22} />,         intervalDays: 730, intervalKm: 40000, keywords: ["transmission", "atf", "clutch", "gearbox", "gear oil", "cvt", "differential"] },
+  { key: "diagnostics",  label: "Engine Diagnostics & Tune-up",icon: <Activity size={22} />,      intervalDays: 365, intervalKm: 20000, keywords: ["diagnostic", "engine diagnostic", "scan", "check engine", "spark", "plug", "timing belt"] },
+  { key: "detailing",    label: "Detailing & Body Care",       icon: <Sparkles size={22} />,      intervalDays: 180, intervalKm: 5000,  keywords: ["detail", "detailing", "wash", "car wash", "paint", "body", "wax", "polish", "ceramic"] },
 ];
 
-const getLastServiceRecord = (bookings, serviceLogs, keywords, serviceKey, vehicleId) => {
+const getLastServiceRecord = (bookings, serviceLogs, keywords, serviceKey, activeVeh) => {
   const matches = [];
 
   (bookings || []).forEach((b) => {
-    if ((b.status || "").toLowerCase() !== "completed") return;
-    if (vehicleId && b.vehicleId && b.vehicleId !== vehicleId) return;
+    const st = (b.status || "").trim().toLowerCase();
+    if (st !== "completed" && st !== "complete" && st !== "done") return;
+    if (!isRecordForVehicle(b.vehicleId, activeVeh, b.plate || b.plateNumber, b.vehicleLabel)) return;
+
     const sType = (b.serviceType || "").toLowerCase();
-    if (keywords.some((kw) => sType.includes(kw.toLowerCase()))) {
-      const date = b.date ? new Date(b.date) : (b.createdAt?.seconds ? new Date(b.createdAt.seconds * 1000) : null);
+    const isKeywordMatch = keywords.some((kw) => sType.includes(kw.toLowerCase()));
+    if (isKeywordMatch) {
+      const date = parseServiceDate(b.completedAt) || parseServiceDate(b.date) || parseServiceDate(b.createdAt);
       if (date && !isNaN(date.getTime())) {
         matches.push({
           date,
           mileage: b.mileage ? Number(b.mileage) : null,
-          shopName: b.shopName || "AutoBook Verified",
+          shopName: b.shopName || "AutoBook Verified Shop",
+          cost: b.totalPrice || b.amount || null,
           isManual: false,
           notes: b.notes || "",
         });
@@ -117,20 +145,22 @@ const getLastServiceRecord = (bookings, serviceLogs, keywords, serviceKey, vehic
   });
 
   (serviceLogs || []).forEach((s) => {
-    if (vehicleId && s.vehicleId && s.vehicleId !== vehicleId) return;
+    if (!isRecordForVehicle(s.vehicleId, activeVeh, s.plate, s.vehicleLabel)) return;
+
     const sKey = (s.serviceKey || "").toLowerCase();
     const sType = (s.serviceType || "").toLowerCase();
     const isKeyMatch = serviceKey && sKey === serviceKey.toLowerCase();
-    const isKeywordMatch = keywords.some((kw) => sType.includes(kw.toLowerCase()) || sKey.includes(kw.toLowerCase()));
+    const isKeywordMatch = keywords.some((kw) => sType.includes(kw.toLowerCase()) || (sKey && sKey.includes(kw.toLowerCase())));
+
     if (isKeyMatch || isKeywordMatch) {
-      const date = s.date ? new Date(s.date) : (s.createdAt?.seconds ? new Date(s.createdAt.seconds * 1000) : null);
+      const date = parseServiceDate(s.date) || parseServiceDate(s.createdAt);
       if (date && !isNaN(date.getTime())) {
         matches.push({
           date,
           mileage: s.mileage ? Number(s.mileage) : null,
           shopName: s.shopName || "Self-Logged",
           cost: s.cost ? Number(s.cost) : null,
-          isManual: true,
+          isManual: s.isManual !== false,
           notes: s.notes || "",
         });
       }
@@ -167,25 +197,58 @@ export default function CustomerDashboard() {
     let fetchedVehicles = [];
 
     try {
-      const bQuery = query(
-        collection(db, "bookings"),
-        where("customerId", "==", uid),
-        orderBy("createdAt", "desc")
-      );
-      const bSnap = await getDocs(bQuery);
-      fetchedBookings = bSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      let bSnap;
+      try {
+        const bQuery = query(
+          collection(db, "bookings"),
+          where("customerId", "==", uid),
+          orderBy("createdAt", "desc")
+        );
+        bSnap = await getDocs(bQuery);
+      } catch (idxErr) {
+        console.warn("Falling back to unordered bookings query:", idxErr);
+        bSnap = await getDocs(query(collection(db, "bookings"), where("customerId", "==", uid)));
+      }
+      const bMap = new Map();
+      bSnap.docs.forEach((d) => bMap.set(d.id, { id: d.id, ...d.data() }));
+
+      try {
+        const uSnap = await getDocs(query(collection(db, "bookings"), where("userId", "==", uid)));
+        uSnap.docs.forEach((d) => {
+          if (!bMap.has(d.id)) bMap.set(d.id, { id: d.id, ...d.data() });
+        });
+      } catch (_) {}
+
+      fetchedBookings = Array.from(bMap.values()).sort((a, b) => {
+        const tA = a.createdAt?.seconds || 0;
+        const tB = b.createdAt?.seconds || 0;
+        return tB - tA;
+      });
       setBookings(fetchedBookings);
     } catch (e) {
       console.error("Failed to load bookings:", e);
     }
 
     try {
-      const sQuery = query(
-        collection(db, "serviceLogs"),
-        where("ownerId", "==", uid)
-      );
-      const sSnap = await getDocs(sQuery);
-      fetchedLogs = sSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const sMap = new Map();
+      const sSnap = await getDocs(query(collection(db, "serviceLogs"), where("ownerId", "==", uid)));
+      sSnap.docs.forEach((d) => sMap.set(d.id, { id: d.id, ...d.data() }));
+
+      try {
+        const uSnap = await getDocs(query(collection(db, "serviceLogs"), where("userId", "==", uid)));
+        uSnap.docs.forEach((d) => {
+          if (!sMap.has(d.id)) sMap.set(d.id, { id: d.id, ...d.data() });
+        });
+      } catch (_) {}
+
+      try {
+        const cSnap = await getDocs(query(collection(db, "serviceLogs"), where("customerId", "==", uid)));
+        cSnap.docs.forEach((d) => {
+          if (!sMap.has(d.id)) sMap.set(d.id, { id: d.id, ...d.data() });
+        });
+      } catch (_) {}
+
+      fetchedLogs = Array.from(sMap.values());
       setServiceLogs(fetchedLogs);
     } catch (e) {
       console.error("Failed to load service logs:", e);
@@ -225,7 +288,8 @@ export default function CustomerDashboard() {
   }, [loading]);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+    let unsubs = [];
+    const authUnsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) { navigate("/"); return; }
       
       let userData = {};
@@ -239,69 +303,50 @@ export default function CustomerDashboard() {
         console.error("Failed to load user:", e);
       }
 
-      const { bookings: fetchedBookings, serviceLogs: fetchedLogs } = await loadDashboardData(firebaseUser.uid);
+      await loadDashboardData(firebaseUser.uid);
 
-      // --- PUSH NOTIFICATIONS ---
-      const now = Date.now();
-      let updatesNeeded = false;
-      const userUpdates = {};
+      // Real-time snapshot listener on bookings
+      try {
+        const bSub = onSnapshot(query(collection(db, "bookings"), where("customerId", "==", firebaseUser.uid)), (snap) => {
+          const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+          setBookings((prev) => {
+            const map = new Map();
+            list.forEach(b => map.set(b.id, b));
+            prev.forEach(b => { if (!map.has(b.id)) map.set(b.id, b); });
+            return Array.from(map.values()).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+          });
+        }, (err) => console.warn("Bookings snapshot error:", err));
+        unsubs.push(bSub);
+      } catch (_) {}
 
-      MAINTENANCE_RULES.forEach((rule) => {
-        const lastRecord = getLastServiceRecord(fetchedBookings, fetchedLogs, rule.keywords, rule.key, null);
-        if (lastRecord?.date) {
-          const daysSince = Math.floor((now - lastRecord.date.getTime()) / (1000 * 3600 * 24));
-          const progress = Math.min(100, Math.max(0, Math.round((daysSince / rule.intervalDays) * 100)));
+      // Real-time snapshot listener on serviceLogs
+      try {
+        const sSub = onSnapshot(query(collection(db, "serviceLogs"), where("ownerId", "==", firebaseUser.uid)), (snap) => {
+          const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+          setServiceLogs(list);
+        }, (err) => console.warn("ServiceLogs snapshot error:", err));
+        unsubs.push(sSub);
+      } catch (_) {}
 
-          if (progress >= 90) {
-            const lastNotified = userData.lastMaintenanceAlerts?.[rule.key];
-            const daysSinceLastAlert = lastNotified ? Math.floor((now - lastNotified) / (1000 * 3600 * 24)) : Infinity;
-
-            if (daysSinceLastAlert > 30) {
-              const alertTitle = `${rule.label} Due Soon!`;
-              const alertBody = `Your ${rule.label} wear progress is at ${progress}%. It's recommended to schedule a service soon.`;
-
-              addDoc(collection(db, "notifications"), {
-                userId: firebaseUser.uid,
-                title: alertTitle,
-                message: alertBody,
-                type: "status_update",
-                read: false,
-                createdAt: serverTimestamp(),
-              });
-
-              try {
-                if ("Notification" in window && window.Notification) {
-                  if (Notification.permission === "granted") {
-                    new Notification(alertTitle, { body: alertBody });
-                  } else if (Notification.permission !== "denied") {
-                    Notification.requestPermission().then(permission => {
-                      if (permission === "granted") new Notification(alertTitle, { body: alertBody });
-                    }).catch(() => {});
-                  }
-                }
-              } catch (err) {
-                console.log("System notifications restricted in this mobile view.");
-              }
-
-              if (!userUpdates.lastMaintenanceAlerts) userUpdates.lastMaintenanceAlerts = { ...userData.lastMaintenanceAlerts };
-              userUpdates.lastMaintenanceAlerts[rule.key] = now;
-              updatesNeeded = true;
-            }
+      // Real-time snapshot listener on vehicles
+      try {
+        const vSub = onSnapshot(query(collection(db, "vehicles"), where("ownerId", "==", firebaseUser.uid)), (snap) => {
+          const vList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          setVehicles(vList);
+          if (vList.length > 0) {
+            setSelectedVehicleId(prev => (prev && vList.some(v => v.id === prev) ? prev : vList[0].id));
           }
-        }
-      });
-
-      if (updatesNeeded) {
-        try {
-          await updateDoc(doc(db, "users", firebaseUser.uid), userUpdates);
-        } catch (e) {
-          console.error("Failed to update user alerts:", e);
-        }
-      }
+        }, (err) => console.warn("Vehicles snapshot error:", err));
+        unsubs.push(vSub);
+      } catch (_) {}
 
       setLoading(false);
     });
-    return () => unsub();
+
+    return () => {
+      authUnsub();
+      unsubs.forEach((u) => typeof u === "function" && u());
+    };
   }, [navigate]);
 
   if (loading) {
@@ -325,9 +370,76 @@ export default function CustomerDashboard() {
   const activeVehicle = vehicles.find((v) => v.id === selectedVehicleId) || vehicles[0] || null;
   const currentOdometer = activeVehicle?.mileage ? Number(activeVehicle.mileage) : null;
 
+  // Unified records for the active vehicle (both completed bookings and service logs)
+  const vehicleBookings = (bookings || []).filter((b) => {
+    const st = (b.status || "").trim().toLowerCase();
+    if (st !== "completed" && st !== "complete" && st !== "done") return false;
+    return isRecordForVehicle(b.vehicleId, activeVehicle, b.plate || b.plateNumber, b.vehicleLabel);
+  });
+
+  const vehicleLogs = (serviceLogs || []).filter((s) => {
+    return isRecordForVehicle(s.vehicleId, activeVehicle, s.plate, s.vehicleLabel);
+  });
+
+  const unifiedRecords = [
+    ...vehicleBookings.map((b) => ({
+      id: b.id,
+      bookingId: b.id,
+      serviceType: b.serviceType || "AutoBook Service",
+      date: parseServiceDate(b.completedAt) || parseServiceDate(b.date) || parseServiceDate(b.createdAt) || new Date(),
+      mileage: b.mileage ? Number(b.mileage) : null,
+      shopName: b.shopName || "AutoBook Verified Shop",
+      cost: b.totalPrice || b.amount || null,
+      notes: b.notes || "",
+      isManual: false,
+    })),
+    ...vehicleLogs
+      .filter((s) => !s.bookingId || !vehicleBookings.some((b) => b.id === s.bookingId))
+      .map((s) => ({
+        id: s.id,
+        serviceType: s.serviceType || "Maintenance Service",
+        serviceKey: s.serviceKey || "other",
+        date: parseServiceDate(s.date) || parseServiceDate(s.createdAt) || new Date(),
+        mileage: s.mileage ? Number(s.mileage) : null,
+        shopName: s.shopName || "Self-Serviced / Garage",
+        cost: s.cost ? Number(s.cost) : null,
+        notes: s.notes || "",
+        isManual: s.isManual !== false,
+      }))
+  ]
+    .filter((r) => r.date && !isNaN(r.date.getTime()))
+    .sort((a, b) => b.date.getTime() - a.date.getTime());
+
+  // Dynamic custom rules for any logged/booked service not covered by standard rules
+  const customRules = [];
+  const coveredServiceNames = new Set();
+  unifiedRecords.forEach((rec) => {
+    const sName = (rec.serviceType || "").trim();
+    if (!sName) return;
+    const lowerName = sName.toLowerCase();
+    const matchedStandard = MAINTENANCE_RULES.some((rule) =>
+      rule.keywords.some((kw) => lowerName.includes(kw.toLowerCase()))
+    );
+
+    if (!matchedStandard && !coveredServiceNames.has(lowerName)) {
+      coveredServiceNames.add(lowerName);
+      customRules.push({
+        key: `custom_${sName.toLowerCase().replace(/[^a-z0-9]/g, "_")}`,
+        label: sName,
+        icon: <Wrench size={22} />,
+        intervalDays: 365,
+        intervalKm: 10000,
+        keywords: [sName.toLowerCase()],
+        isCustom: true,
+      });
+    }
+  });
+
+  const allRulesToEvaluate = [...MAINTENANCE_RULES, ...customRules];
+
   // Process all maintenance rules with dual time & mileage wear tracking
-  const evaluatedRules = MAINTENANCE_RULES.map((rule) => {
-    const lastRecord = getLastServiceRecord(bookings, serviceLogs, rule.keywords, rule.key, activeVehicle?.id);
+  const evaluatedRules = allRulesToEvaluate.map((rule) => {
+    const lastRecord = getLastServiceRecord(bookings, serviceLogs, rule.keywords, rule.key, activeVehicle);
     const hasRecord = !!lastRecord;
 
     const daysSince = hasRecord ? Math.floor((Date.now() - lastRecord.date.getTime()) / (1000 * 3600 * 24)) : null;
@@ -1127,6 +1239,208 @@ export default function CustomerDashboard() {
                 </div>
               );
             })}
+          </div>
+
+          {/* SERVICE HISTORY & LOGGED RECORDS SECTION */}
+          <div style={{ background: colors.white, borderRadius: "24px", padding: "20px", border: `1px solid ${colors.border}`, boxShadow: "0 6px 24px rgba(0,0,0,0.04)", marginBottom: "1.5rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div style={{ width: "36px", height: "36px", borderRadius: "12px", background: colors.infoBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.navy }}>
+                  <BookOpen size={18} />
+                </div>
+                <div>
+                  <div style={{ fontSize: "15px", fontWeight: "800", color: colors.textPrimary, display: "flex", alignItems: "center", gap: "8px" }}>
+                    Service History & Records
+                    <span style={{ fontSize: "11px", fontWeight: "800", background: "#f1f5f9", color: colors.textSecondary, padding: "2px 8px", borderRadius: "10px" }}>
+                      {unifiedRecords.length}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "11px", color: colors.textSecondary }}>
+                    {[activeVehicle?.year, activeVehicle?.make, activeVehicle?.model].filter(Boolean).join(" ") || "Your vehicle"}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button
+                  onClick={() => {
+                    setLogPrefilledService("");
+                    setLogModalOpen(true);
+                  }}
+                  style={{
+                    padding: "7px 12px",
+                    background: colors.bg,
+                    color: colors.navy,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: "10px",
+                    fontSize: "12px",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                  }}
+                >
+                  <Plus size={13} /> Log Service
+                </button>
+                <button
+                  onClick={() => setPassportModalOpen(true)}
+                  style={{
+                    padding: "7px 12px",
+                    background: `linear-gradient(135deg, ${colors.navy}, ${colors.blue})`,
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "10px",
+                    fontSize: "12px",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                  }}
+                >
+                  Full Passport →
+                </button>
+              </div>
+            </div>
+
+            {unifiedRecords.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "24px 16px", background: "#f8fafc", borderRadius: "16px", border: `1px dashed ${colors.border}` }}>
+                <Wrench size={26} color={colors.textMuted} style={{ marginBottom: "6px" }} />
+                <div style={{ fontSize: "13px", fontWeight: "700", color: colors.textPrimary, marginBottom: "2px" }}>
+                  No Service Records Yet
+                </div>
+                <div style={{ fontSize: "12px", color: colors.textSecondary, maxWidth: "340px", margin: "0 auto 12px", lineHeight: "1.4" }}>
+                  When you complete a booking or log past maintenance, your records and reset timers will immediately show up here.
+                </div>
+                <button
+                  onClick={() => {
+                    setLogPrefilledService("");
+                    setLogModalOpen(true);
+                  }}
+                  style={{
+                    padding: "8px 16px",
+                    background: colors.white,
+                    color: colors.navy,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: "10px",
+                    fontSize: "12px",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
+                  }}
+                >
+                  + Log First Service Record
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {unifiedRecords.slice(0, 5).map((rec) => (
+                  <div
+                    key={rec.id}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 14px",
+                      background: "#f8fafc",
+                      borderRadius: "14px",
+                      border: `1px solid ${colors.border}`,
+                      flexWrap: "wrap",
+                      gap: "10px",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <div
+                        style={{
+                          width: "38px",
+                          height: "38px",
+                          borderRadius: "12px",
+                          background: rec.isManual ? "#f1f5f9" : colors.successBg,
+                          color: rec.isManual ? colors.navy : colors.success,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {rec.isManual ? <Wrench size={18} /> : <CheckCircle2 size={18} />}
+                      </div>
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                          <span style={{ fontSize: "14px", fontWeight: "800", color: colors.textPrimary }}>
+                            {rec.serviceType}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: "10px",
+                              fontWeight: "700",
+                              padding: "2px 7px",
+                              borderRadius: "6px",
+                              background: rec.isManual ? "#e2e8f0" : colors.successBg,
+                              color: rec.isManual ? "#475569" : colors.success,
+                            }}
+                          >
+                            {rec.isManual ? "Self-Logged" : "AutoBook Verified"}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: "12px", color: colors.textSecondary, marginTop: "2px", display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                          <span>{rec.shopName}</span>
+                          {rec.mileage && (
+                            <>
+                              <span>·</span>
+                              <span style={{ color: colors.navy, fontWeight: "600" }}>
+                                {rec.mileage.toLocaleString()} km
+                              </span>
+                            </>
+                          )}
+                          {rec.notes && (
+                            <>
+                              <span>·</span>
+                              <span style={{ fontStyle: "italic", maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {rec.notes}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ textAlign: "right", marginLeft: "auto" }}>
+                      <div style={{ fontSize: "12px", fontWeight: "700", color: colors.textPrimary }}>
+                        {rec.date ? rec.date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}
+                      </div>
+                      {rec.cost !== null && rec.cost !== undefined && (
+                        <div style={{ fontSize: "12px", fontWeight: "800", color: colors.success }}>
+                          ₱{Number(rec.cost).toLocaleString()}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {unifiedRecords.length > 5 && (
+                  <button
+                    onClick={() => setPassportModalOpen(true)}
+                    style={{
+                      padding: "10px",
+                      background: "none",
+                      border: `1px dashed ${colors.border}`,
+                      borderRadius: "10px",
+                      color: colors.blue,
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                      textAlign: "center",
+                      marginTop: "4px",
+                    }}
+                  >
+                    View {unifiedRecords.length - 5} more records in Service Passport →
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </>
       )}
