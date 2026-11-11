@@ -387,6 +387,7 @@ export default function CustomerDashboard() {
       bookingId: b.id,
       serviceType: b.serviceType || "AutoBook Service",
       date: parseServiceDate(b.completedAt) || parseServiceDate(b.date) || parseServiceDate(b.createdAt) || new Date(),
+      createdAt: parseServiceDate(b.createdAt) || parseServiceDate(b.completedAt) || parseServiceDate(b.date) || null,
       mileage: b.mileage ? Number(b.mileage) : null,
       shopName: b.shopName || "AutoBook Verified Shop",
       cost: b.totalPrice || b.amount || null,
@@ -400,6 +401,7 @@ export default function CustomerDashboard() {
         serviceType: s.serviceType || "Maintenance Service",
         serviceKey: s.serviceKey || "other",
         date: parseServiceDate(s.date) || parseServiceDate(s.createdAt) || new Date(),
+        createdAt: parseServiceDate(s.createdAt) || parseServiceDate(s.date) || null,
         mileage: s.mileage ? Number(s.mileage) : null,
         shopName: s.shopName || "Self-Serviced / Garage",
         cost: s.cost ? Number(s.cost) : null,
@@ -423,6 +425,17 @@ export default function CustomerDashboard() {
 
     if (!matchedStandard && !coveredServiceNames.has(lowerName)) {
       coveredServiceNames.add(lowerName);
+
+      // Find the earliest record to determine when this roadmap was first created
+      const matchingRecords = unifiedRecords.filter(
+        (r) => (r.serviceType || "").trim().toLowerCase() === lowerName
+      );
+      const creationDates = matchingRecords
+        .map((r) => r.createdAt || r.date)
+        .filter((d) => d && !isNaN(d.getTime()))
+        .sort((a, b) => a.getTime() - b.getTime());
+      const addedAt = creationDates[0] || rec.createdAt || rec.date || new Date();
+
       customRules.push({
         key: `custom_${sName.toLowerCase().replace(/[^a-z0-9]/g, "_")}`,
         label: sName,
@@ -431,6 +444,7 @@ export default function CustomerDashboard() {
         intervalKm: 10000,
         keywords: [sName.toLowerCase()],
         isCustom: true,
+        addedAt,
       });
     }
   });
@@ -510,6 +524,12 @@ export default function CustomerDashboard() {
       }
     }
 
+    // A custom roadmap is only "Newly Added" within 3 days (72 hours) of being created/logged
+    const NEWLY_ADDED_THRESHOLD_DAYS = 3;
+    const daysSinceAdded = rule.addedAt
+      ? (Date.now() - new Date(rule.addedAt).getTime()) / (1000 * 3600 * 24)
+      : null;
+    const isNewlyAdded = !!rule.isCustom && daysSinceAdded !== null && daysSinceAdded <= NEWLY_ADDED_THRESHOLD_DAYS && daysSinceAdded >= -1;
     const isCustomRoadmap = !!rule.isCustom;
     const isUpdatedToday = hasRecord && daysSince !== null && daysSince === 0;
     const isRecentlyUpdated = hasRecord && daysSince !== null && daysSince <= 7;
@@ -532,6 +552,7 @@ export default function CustomerDashboard() {
       urgencyRank,
       remainingEstimate,
       isCustomRoadmap,
+      isNewlyAdded,
       isUpdatedToday,
       isRecentlyUpdated,
     };
@@ -977,7 +998,7 @@ export default function CustomerDashboard() {
               const {
                 hasRecord, lastRecord, progress, color, bgColor, statusText,
                 remainingEstimate, isOverdue, isDueSoon, isCustomRoadmap,
-                isUpdatedToday, isRecentlyUpdated
+                isNewlyAdded, isUpdatedToday, isRecentlyUpdated
               } = rule;
 
               return (
@@ -987,13 +1008,13 @@ export default function CustomerDashboard() {
                     background: colors.white,
                     borderRadius: "24px",
                     padding: "20px",
-                    border: isCustomRoadmap
+                    border: isNewlyAdded
                       ? `1.5px solid ${colors.blue}`
                       : `1.5px solid ${isOverdue ? colors.danger + "40" : isDueSoon ? colors.warning + "40" : colors.border}`,
                     display: "flex",
                     flexDirection: "column",
                     gap: "14px",
-                    boxShadow: isCustomRoadmap
+                    boxShadow: isNewlyAdded
                       ? "0 8px 24px rgba(37,99,235,0.08)"
                       : isOverdue
                       ? "0 8px 24px rgba(220,38,38,0.08)"
@@ -1004,7 +1025,7 @@ export default function CustomerDashboard() {
                   }}
                 >
                   {/* Newly added roadmap banner */}
-                  {isCustomRoadmap && (
+                  {isNewlyAdded && (
                     <div
                       style={{
                         position: "absolute",
@@ -1067,7 +1088,7 @@ export default function CustomerDashboard() {
                           <span style={{ fontSize: "16px", fontWeight: "800", color: colors.textPrimary, letterSpacing: "-0.2px" }}>
                             {rule.label}
                           </span>
-                          {isCustomRoadmap && (
+                          {isNewlyAdded && (
                             <span
                               style={{
                                 fontSize: "10px",
