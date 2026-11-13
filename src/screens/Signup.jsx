@@ -234,6 +234,10 @@ export default function Signup() {
     const errs = {};
     let firstRef = null;
 
+    if (!role) {
+      errs.role = "Please select a role to continue.";
+      if (!firstRef) firstRef = roleBoxRef;
+    }
     if (!firstName.trim()) {
       errs.firstName = "First name is required.";
       if (!firstRef) firstRef = firstNameRef;
@@ -253,10 +257,6 @@ export default function Signup() {
     if (password !== confirmPassword) {
       errs.confirmPassword = "Passwords do not match.";
       if (!firstRef) firstRef = confirmPasswordRef;
-    }
-    if (!role) {
-      errs.role = "Please select a role to continue.";
-      if (!firstRef) firstRef = roleBoxRef;
     }
 
     if (Object.keys(errs).length > 0) {
@@ -573,6 +573,45 @@ export default function Signup() {
         <div style={s.card}>
           {step === 1 ? (
             <>
+              <label style={s.label}>I am a… *</label>
+              <div
+                ref={roleBoxRef}
+                style={{
+                  display: "flex", gap: "8px",
+                  marginBottom: fieldErrors.role ? "8px" : "20px",
+                  flexWrap: "wrap",
+                  padding: fieldErrors.role ? "4px" : "0",
+                  borderRadius: "14px",
+                  border: fieldErrors.role ? "2px solid #ef4444" : "none",
+                  background: fieldErrors.role ? "rgba(239,68,68,0.06)" : "transparent",
+                  animation: fieldErrors.role ? "ab-shake 0.35s ease" : "none",
+                }}
+              >
+                {ROLES.map((r) => {
+                  const roleIcon = r === "Customer" ? <Car size={16} style={{marginBottom: "-2px"}} /> : r === "Owner" ? <Store size={16} style={{marginBottom: "-2px"}} /> : <Wrench size={16} style={{marginBottom: "-2px"}} />;
+                  const roleSub  = r === "Customer" ? "Book services" : r === "Owner" ? "Manage the shop" : "Fix & repair";
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => { setRole(r); setError(""); clearFieldError("role"); }}
+                      style={{
+                        flex: 1, minWidth: "90px", padding: "14px 8px", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit",
+                        border: role === r ? "none" : "1.5px solid #e5e7eb",
+                        background: role === r ? "linear-gradient(135deg, #1a3a5c, #2a5298)" : "#f9fafb",
+                        color: role === r ? "#fff" : "#6b7280",
+                        boxShadow: role === r ? "0 4px 12px rgba(26,58,92,0.25)" : "none",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      {roleIcon} {r}
+                      <div style={{ fontSize: "10px", fontWeight: "500", marginTop: "4px", opacity: 0.75 }}>{roleSub}</div>
+                    </button>
+                  );
+                })}
+              </div>
+              {renderFieldError("role")}
+
               <label style={s.label}>First Name *</label>
               <input
                 ref={firstNameRef}
@@ -656,45 +695,6 @@ export default function Signup() {
                 required
               />
               {renderFieldError("confirmPassword")}
-
-              <label style={s.label}>I am a… *</label>
-              <div
-                ref={roleBoxRef}
-                style={{
-                  display: "flex", gap: "8px",
-                  marginBottom: fieldErrors.role ? "8px" : "20px",
-                  flexWrap: "wrap",
-                  padding: fieldErrors.role ? "4px" : "0",
-                  borderRadius: "14px",
-                  border: fieldErrors.role ? "2px solid #ef4444" : "none",
-                  background: fieldErrors.role ? "rgba(239,68,68,0.06)" : "transparent",
-                  animation: fieldErrors.role ? "ab-shake 0.35s ease" : "none",
-                }}
-              >
-                {ROLES.map((r) => {
-                  const roleIcon = r === "Customer" ? <Car size={16} style={{marginBottom: "-2px"}} /> : r === "Owner" ? <Store size={16} style={{marginBottom: "-2px"}} /> : <Wrench size={16} style={{marginBottom: "-2px"}} />;
-                  const roleSub  = r === "Customer" ? "Book services" : r === "Owner" ? "Manage the shop" : "Fix & repair";
-                  return (
-                    <button
-                      key={r}
-                      type="button"
-                      onClick={() => { setRole(r); setError(""); clearFieldError("role"); }}
-                      style={{
-                        flex: 1, minWidth: "90px", padding: "14px 8px", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit",
-                        border: role === r ? "none" : "1.5px solid #e5e7eb",
-                        background: role === r ? "linear-gradient(135deg, #1a3a5c, #2a5298)" : "#f9fafb",
-                        color: role === r ? "#fff" : "#6b7280",
-                        boxShadow: role === r ? "0 4px 12px rgba(26,58,92,0.25)" : "none",
-                        transition: "all 0.15s ease",
-                      }}
-                    >
-                      {roleIcon} {r}
-                      <div style={{ fontSize: "10px", fontWeight: "500", marginTop: "4px", opacity: 0.75 }}>{roleSub}</div>
-                    </button>
-                  );
-                })}
-              </div>
-              {renderFieldError("role")}
 
               <button
                 onClick={handleNext}

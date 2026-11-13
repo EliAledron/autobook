@@ -494,6 +494,10 @@ function SignupForm({ goBack, navigate, onSwitch }) {
     const errs = {};
     let firstRef = null;
 
+    if (!role) {
+      errs.role = "Please select a role to continue.";
+      if (!firstRef) firstRef = roleBoxRef;
+    }
     if (!firstName.trim()) {
       errs.firstName = "First name is required.";
       if (!firstRef) firstRef = firstNameRef;
@@ -513,10 +517,6 @@ function SignupForm({ goBack, navigate, onSwitch }) {
     if (password !== confirmPassword) {
       errs.confirmPassword = "Passwords do not match.";
       if (!firstRef) firstRef = confirmPasswordRef;
-    }
-    if (!role) {
-      errs.role = "Please select a role to continue.";
-      if (!firstRef) firstRef = roleBoxRef;
     }
 
     if (Object.keys(errs).length > 0) {
@@ -806,6 +806,52 @@ function SignupForm({ goBack, navigate, onSwitch }) {
         <div style={s.formCard}>
           {step === 1 ? (
             <>
+              <label style={s.label}>Select Your Role *</label>
+              <div
+                ref={roleBoxRef}
+                style={{
+                  display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px",
+                  marginBottom: fieldErrors.role ? "8px" : "20px",
+                  padding: fieldErrors.role ? "4px" : "0",
+                  borderRadius: "18px",
+                  border: fieldErrors.role ? "2px solid #ef4444" : "none",
+                  background: fieldErrors.role ? "rgba(239,68,68,0.06)" : "transparent",
+                  animation: fieldErrors.role ? "ab-shake 0.35s ease" : "none",
+                }}
+              >
+                {ROLES.map((r) => {
+                  const isSelected = role === r;
+                  return (
+                  <div
+                    key={r}
+                    onClick={() => { setRole(r); setError(""); clearFieldError("role"); }}
+                    style={{
+                      padding: "16px 12px",
+                      borderRadius: "16px",
+                      cursor: "pointer",
+                      border: isSelected ? "2px solid #2a5298" : "1.5px solid #e5e7eb",
+                      background: isSelected ? "rgba(42,82,152,0.04)" : "#ffffff",
+                      display: "flex", flexDirection: "column", alignItems: "center", gap: "8px",
+                      transition: "all 0.2s ease",
+                      transform: isSelected ? "translateY(-2px)" : "none",
+                      boxShadow: isSelected ? "0 8px 16px rgba(42,82,152,0.12)" : "0 2px 4px rgba(0,0,0,0.02)",
+                    }}
+                  >
+                    <div style={{ fontSize: "28px" }}>{r === "Customer" ? <Car size={28} /> : r === "Owner" ? <Store size={28} /> : <Wrench size={28} />}</div>
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: "14px", fontWeight: "800", color: isSelected ? "#1a3a5c" : "#374151" }}>
+                        {r} {isSelected && <Check size={14} />}
+                      </div>
+                      <div style={{ fontSize: "11px", fontWeight: "600", color: "#6b7280", marginTop: "4px" }}>
+                      {r === "Customer" ? "Book services" : r === "Owner" ? "Manage the shop" : "Service vehicles"}
+                      </div>
+                    </div>
+                  </div>
+                  )
+                })}
+              </div>
+              {renderFieldError("role")}
+
               <label style={s.label}>First Name *</label>
               <input
                 ref={firstNameRef}
@@ -890,52 +936,6 @@ function SignupForm({ goBack, navigate, onSwitch }) {
                 style={getFieldInputStyle("confirmPassword")}
               />
               {renderFieldError("confirmPassword")}
-
-              <label style={s.label}>Select Your Role *</label>
-              <div
-                ref={roleBoxRef}
-                style={{
-                  display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px",
-                  marginBottom: fieldErrors.role ? "8px" : "28px",
-                  padding: fieldErrors.role ? "4px" : "0",
-                  borderRadius: "18px",
-                  border: fieldErrors.role ? "2px solid #ef4444" : "none",
-                  background: fieldErrors.role ? "rgba(239,68,68,0.06)" : "transparent",
-                  animation: fieldErrors.role ? "ab-shake 0.35s ease" : "none",
-                }}
-              >
-                {ROLES.map((r) => {
-                  const isSelected = role === r;
-                  return (
-                  <div
-                    key={r}
-                    onClick={() => { setRole(r); setError(""); clearFieldError("role"); }}
-                    style={{
-                      padding: "16px 12px",
-                      borderRadius: "16px",
-                      cursor: "pointer",
-                      border: isSelected ? "2px solid #2a5298" : "1.5px solid #e5e7eb",
-                      background: isSelected ? "rgba(42,82,152,0.04)" : "#ffffff",
-                      display: "flex", flexDirection: "column", alignItems: "center", gap: "8px",
-                      transition: "all 0.2s ease",
-                      transform: isSelected ? "translateY(-2px)" : "none",
-                      boxShadow: isSelected ? "0 8px 16px rgba(42,82,152,0.12)" : "0 2px 4px rgba(0,0,0,0.02)",
-                    }}
-                  >
-                    <div style={{ fontSize: "28px" }}>{r === "Customer" ? <Car size={28} /> : r === "Owner" ? <Store size={28} /> : <Wrench size={28} />}</div>
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: "14px", fontWeight: "800", color: isSelected ? "#1a3a5c" : "#374151" }}>
-                        {r} {isSelected && <Check size={14} />}
-                      </div>
-                      <div style={{ fontSize: "11px", fontWeight: "600", color: "#6b7280", marginTop: "4px" }}>
-                      {r === "Customer" ? "Book services" : r === "Owner" ? "Manage the shop" : "Service vehicles"}
-                      </div>
-                    </div>
-                  </div>
-                  )
-                })}
-              </div>
-              {renderFieldError("role")}
 
               <button onClick={handleNext} className="ab-btn" style={{ ...s.primaryBtn, opacity: loading ? 0.75 : 1 }} disabled={loading}>
                 {loading ? "Please wait…" : role ? "Next Step" : "Create Account"}
