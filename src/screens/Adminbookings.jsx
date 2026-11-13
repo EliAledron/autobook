@@ -1536,17 +1536,6 @@ export default function AdminBookings() {
               </div>
             ))}
 
-            {selected.issueImageUrl && (
-              <div style={{ marginBottom: "1rem" }}>
-                <div style={{ fontSize: "11px", color: colors.textMuted, fontWeight: "600", textTransform: "uppercase", marginBottom: "6px" }}>Reported Issue Photo</div>
-                <img
-                  src={selected.issueImageUrl}
-                  alt="Customer Issue Photo"
-                  style={{ width: "100%", maxHeight: "220px", objectFit: "cover", borderRadius: "14px", border: `1px solid ${colors.border}` }}
-                />
-              </div>
-            )}
-
             {/* Customer Direct Contact Card (Call & Text) */}
             {(() => {
               const custPhone = getCustomerPhone(selected);
