@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { UserProvider } from "./UserContext";
+import { UserProvider, useUser } from "./UserContext";
+import SkeletonLoader from "./screens/SkeletonLoader";
 import Signup from "./screens/Signup";
 import Login from "./screens/Login";
 import ForgotPassword from "./screens/ForgotPassword";
@@ -49,6 +50,22 @@ import MechanicVisitRequests from "./screens/MechanicVisitRequests";
 // Mechanic/job screens
 import MechanicRequests from "./screens/Mechanicrequests";
 
+function RequestsRoute() {
+  const { userProfile, loadingUser } = useUser();
+  if (loadingUser) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#f8fafc", paddingBottom: "80px" }}>
+        <SkeletonLoader type="dashboard" />
+      </div>
+    );
+  }
+  const role = (userProfile?.role || "").toLowerCase();
+  if (role === "mechanic") {
+    return <MechanicVisitRequests />;
+  }
+  return <MechanicRequests />;
+}
+
 function App() {
   return (
     <UserProvider>
@@ -95,10 +112,10 @@ function App() {
           <Route path="/customer/reviews" element={<CustomerReviews />} />
           <Route path="/customer/shop-profile" element={<AutoShopProfile />} />
 
-          {/* Mechanic */}
+          {/* Mechanic / Visit Requests (Role-based: Mechanics see their dispatches, Owners/Admins manage and assign) */}
           <Route path="/mechanic/dashboard" element={<MechanicDashboard />} />
           <Route path="/mechanic/bookings" element={<MechanicBookings />} />
-          <Route path="/mechanic/requests" element={<MechanicVisitRequests />} />
+          <Route path="/mechanic/requests" element={<RequestsRoute />} />
         </Routes>
         <GlobalBottomNav />
       </Router>

@@ -89,8 +89,12 @@ export default function MechanicRequests() {
       }
       if (!isAdmin && userObj?.id) {
         try {
-          const sQuery = query(collection(db, "shops"), where("ownerId", "==", userObj.id));
-          const sSnap = await getDocs(sQuery);
+          let sQuery = query(collection(db, "shops"), where("ownerId", "==", userObj.id));
+          let sSnap = await getDocs(sQuery);
+          if (sSnap.empty && userObj?.shopName) {
+            sQuery = query(collection(db, "shops"), where("name", "==", userObj.shopName));
+            sSnap = await getDocs(sQuery);
+          }
           if (!sSnap.empty) {
             if (!shopId) shopId = sSnap.docs[0].id;
             for (const docSnap of sSnap.docs) {
@@ -143,59 +147,77 @@ export default function MechanicRequests() {
   }, [navigate]);
 
   const loadRequests = async (userObj) => {
-  try {
-    const role = (userObj?.role || "").toLowerCase();
-    const isAdmin = role === "admin";
-    setUserRole(role);
+    try {
+      const role = (userObj?.role || "").toLowerCase();
+      const isAdmin = role === "admin";
+      setUserRole(role);
 
-    let shopId = userObj?.shopId;
-    if (!isAdmin && userObj?.shopName) {
-      const sName = userObj.shopName.toUpperCase();
-      if (sName.includes("JME")) shopId = "JME";
-      else if (sName.includes("GRHE")) shopId = "GRHE";
-    }
-    if (!isAdmin && userObj?.id) {
-      try {
-        const sQuery = query(collection(db, "shops"), where("ownerId", "==", userObj.id));
-        const sSnap = await getDocs(sQuery);
-        if (!sSnap.empty) {
-          if (!shopId) shopId = sSnap.docs[0].id;
-          for (const docSnap of sSnap.docs) {
-            const fetchedName = (docSnap.data().name || "").toUpperCase();
-            if (fetchedName.includes("JME")) { shopId = "JME"; break; }
-            if (fetchedName.includes("GRHE")) { shopId = "GRHE"; break; }
-          }
-        }
-      } catch(e) {}
-    }
+      let shopId = userObj?.shopId;
+      let shopDocId = null;
+      let shopName = userObj?.shopName || "";
 
-    let merged = [];
-    if (isAdmin) {
-      const snap = await getDocs(collection(db, "mechanicRequests"));
-      merged = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    } else {
-      const snap1 = await getDocs(query(collection(db, "mechanicRequests"), where("shopId", "==", shopId || "invalid")));
-      let reqs1 = snap1.docs.map((d) => ({ id: d.id, ...d.data() }));
-      
-      let reqs2 = [];
-      if (userObj?.id) {
-        const snap2 = await getDocs(query(collection(db, "mechanicRequests"), where("ownerId", "==", userObj.id)));
-        reqs2 = snap2.docs.map((d) => ({ id: d.id, ...d.data() }));
+      if (!isAdmin && userObj?.shopName) {
+        const sName = userObj.shopName.toUpperCase();
+        if (sName.includes("JME")) shopId = "JME";
+        else if (sName.includes("GRHE")) shopId = "GRHE";
       }
-      
-      merged = [...reqs1, ...reqs2];
-    }
-    const uniqueMerged = Array.from(new Map(merged.map(r => [r.id, r])).values());
 
-    // Sort newest requests first
-    uniqueMerged.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-    setRequests(uniqueMerged);
-    setMechanicName(uniqueMerged[0]?.mechanicName || uniqueMerged[0]?.assignedMechanicName || "");
-  } catch (e) {
-    console.error("Failed to load requests:", e);
-    setRequests([]);
-  }
-};
+      if (!isAdmin && userObj?.id) {
+        try {
+          let sQuery = query(collection(db, "shops"), where("ownerId", "==", userObj.id));
+          let sSnap = await getDocs(sQuery);
+          if (sSnap.empty && userObj?.shopName) {
+            sQuery = query(collection(db, "shops"), where("name", "==", userObj.shopName));
+            sSnap = await getDocs(sQuery);
+          }
+          if (!sSnap.empty) {
+            shopDocId = sSnap.docs[0].id;
+            if (!shopId) shopId = shopDocId;
+            for (const docSnap of sSnap.docs) {
+              const fetchedName = (docSnap.data().name || "").toUpperCase();
+              if (!shopName) shopName = docSnap.data().name;
+              if (fetchedName.includes("JME")) { shopId = "JME"; break; }
+              if (fetchedName.includes("GRHE")) { shopId = "GRHE"; break; }
+            }
+          }
+        } catch(e) {}
+      }
+
+      let merged = [];
+      if (isAdmin) {
+        const snap = await getDocs(collection(db, "mechanicRequests"));
+        merged = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      } else {
+        const fetchQueries = [];
+        if (shopId) {
+          fetchQueries.push(getDocs(query(collection(db, "mechanicRequests"), where("shopId", "==", shopId))));
+        }
+        if (shopDocId && shopDocId !== shopId) {
+          fetchQueries.push(getDocs(query(collection(db, "mechanicRequests"), where("shopId", "==", shopDocId))));
+        }
+        if (userObj?.id) {
+          fetchQueries.push(getDocs(query(collection(db, "mechanicRequests"), where("ownerId", "==", userObj.id))));
+        }
+        if (shopName) {
+          fetchQueries.push(getDocs(query(collection(db, "mechanicRequests"), where("shopName", "==", shopName))));
+        }
+
+        const results = await Promise.all(fetchQueries);
+        results.forEach((snap) => {
+          snap.docs.forEach((d) => merged.push({ id: d.id, ...d.data() }));
+        });
+      }
+      const uniqueMerged = Array.from(new Map(merged.map(r => [r.id, r])).values());
+
+      // Sort newest requests first
+      uniqueMerged.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setRequests(uniqueMerged);
+      setMechanicName(uniqueMerged[0]?.mechanicName || uniqueMerged[0]?.assignedMechanicName || "");
+    } catch (e) {
+      console.error("Failed to load requests:", e);
+      setRequests([]);
+    }
+  };
 
   const showToast = (msg) => {
     setToast(msg);
