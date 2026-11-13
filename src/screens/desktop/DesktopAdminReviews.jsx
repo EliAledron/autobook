@@ -524,11 +524,10 @@ export default function DesktopAdminReviews() {
                         height: "100%",
                         width: `${pct}%`,
                         background: isSelected
-                          ? colors.blue
-                          : star <= 2
-                          ? "linear-gradient(90deg, #ef4444 0%, #f87171 100%)"
-                          : "linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%)",
+                          ? "linear-gradient(90deg, #1d4ed8 0%, #2563eb 100%)"
+                          : "linear-gradient(90deg, #2563eb 0%, #38bdf8 100%)",
                         borderRadius: "999px",
+                        boxShadow: isSelected ? "0 0 8px rgba(37,99,235,0.3)" : "none",
                         transition: "width 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
                       }} />
                     </div>
