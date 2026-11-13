@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc, collection, query, where, getDocs, updateDoc, addDoc, serverTimestamp } from "firebase/firestore";
+import { useUser } from "../UserContext";
 import CarLoader from "./CarLoader";
 import SkeletonLoader from "./SkeletonLoader";
 import CustomerDashboard from "./CustomerDashboard";
@@ -22,6 +23,7 @@ function resolveName(a, b) {
 }
 
 export default function Dashboard() {
+  const { userProfile } = useUser();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   // CarLoader only shows up when the user has just logged in to their account
@@ -57,6 +59,9 @@ export default function Dashboard() {
 
       if (snap.exists()) {
         const data = snap.data();
+        if (data.role) {
+          localStorage.setItem("userRole", data.role.toLowerCase());
+        }
 
         if (data.status === "restricted") {
           navigate("/restricted");
@@ -177,13 +182,35 @@ export default function Dashboard() {
     navigate("/");
   };
 
-  // 1. Only show full-screen animated CarLoader when user has just logged in
-  if (showLoginLoader) {
+  const effectiveRole = (
+    user?.role ||
+    userProfile?.role ||
+    localStorage.getItem("userRole") ||
+    sessionStorage.getItem("userRole") ||
+    ""
+  ).toLowerCase();
+
+  // 1. Only show full-screen animated CarLoader when a customer/mechanic/owner has just logged in
+  if (showLoginLoader && effectiveRole !== "admin") {
     return <CarLoader text="Logging you in to AutoBook" />;
   }
 
-  // 2. Normal screen transition: render SkeletonLoader instead of full-screen car animation
-  if (loading) {
+  // 2. Normal screen transition: render SkeletonLoader matching the user's role layout
+  if (loading || (showLoginLoader && effectiveRole === "admin")) {
+    if (effectiveRole === "admin") {
+      return (
+        <DesktopOnly>
+          <SkeletonLoader type="admin-dashboard" />
+        </DesktopOnly>
+      );
+    }
+    if (effectiveRole === "mechanic") {
+      return (
+        <div style={{ minHeight: "100vh", background: "#f8fafc", paddingBottom: "80px" }}>
+          <SkeletonLoader type="mechanic-dashboard" />
+        </div>
+      );
+    }
     return (
       <div style={{ minHeight: "100vh", background: "#f8fafc", paddingBottom: "80px" }}>
         <SkeletonLoader type="dashboard" />

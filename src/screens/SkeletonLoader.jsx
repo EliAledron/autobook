@@ -39,6 +39,179 @@ export default function SkeletonLoader({ count = 3, type = "card" }) {
   });
 
   // ─────────────────────────────────────────────────────────────────────────────
+  // 0. ADMIN DASHBOARD (Pixel-accurate desktop layout matching AdminDashboard.jsx & AdminLayout.jsx)
+  // ─────────────────────────────────────────────────────────────────────────────
+  if (type === "admin-dashboard" || type === "admin") {
+    return (
+      <div style={{ display: "flex", height: "100vh", background: "#f4f7fa", fontFamily: "Inter, sans-serif", overflow: "hidden" }}>
+        <style>{skeletonKeyframes}</style>
+
+        {/* SIDEBAR */}
+        <div style={{ width: "260px", background: colors.navy, color: "#fff", display: "flex", flexDirection: "column", flexShrink: 0, borderRight: "1px solid rgba(255,255,255,0.1)", overflowY: "auto" }}>
+          <div style={{ padding: "24px", display: "flex", alignItems: "center", gap: "10px", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+            <div style={{ width: "32px", height: "32px", background: colors.accent, borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", color: colors.navy }}>A</div>
+            <div style={{ fontSize: "20px", fontWeight: "800", letterSpacing: "-0.5px" }}>Auto<span style={{ color: colors.accent }}>Book</span></div>
+          </div>
+
+          <div style={{ padding: "24px 16px", flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ fontSize: "11px", fontWeight: "700", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px", paddingLeft: "12px" }}>Platform Admin</div>
+
+            {[
+              { labelW: "85px", isFirst: true },
+              { labelW: "110px" },
+              { labelW: "95px" },
+              { labelW: "115px" },
+              { labelW: "110px" },
+              { labelW: "105px" },
+              { labelW: "100px" },
+              { labelW: "120px" },
+            ].map((item, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderRadius: "12px", background: item.isFirst ? "rgba(255,255,255,0.1)" : "transparent" }}>
+                <div style={darkShimmer("20px", "20px", "6px")} />
+                <div style={darkShimmer("14px", item.labelW, "4px")} />
+              </div>
+            ))}
+          </div>
+
+          <div style={{ padding: "24px", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px" }}>
+              <div style={darkShimmer("20px", "20px", "6px")} />
+              <div style={darkShimmer("14px", "70px", "4px")} />
+            </div>
+          </div>
+        </div>
+
+        {/* MAIN CONTENT AREA */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }}>
+
+          {/* TOP NAV */}
+          <div style={{ height: "76px", background: "#fff", borderBottom: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "flex-end", padding: "0 32px", flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+              <div style={lightShimmer("24px", "24px", "50%")} />
+              <div style={{ width: "1px", height: "32px", background: colors.border }} />
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                  <div style={lightShimmer("14px", "80px", "4px")} />
+                  <div style={lightShimmer("11px", "65px", "4px")} />
+                </div>
+                <div style={lightShimmer("40px", "40px", "50%")} />
+              </div>
+            </div>
+          </div>
+
+          {/* INJECTED PAGE CONTENT */}
+          <div style={{ flex: 1, overflowY: "auto", position: "relative", background: "#f4f7fa", padding: "32px" }}>
+
+            {/* Header */}
+            <div style={{ marginBottom: "32px" }}>
+              <div style={lightShimmer("28px", "160px", "8px", { marginBottom: "8px" })} />
+              <div style={lightShimmer("15px", "380px", "6px")} />
+            </div>
+
+            {/* STATS GRID (4 cards) */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "24px", marginBottom: "32px" }}>
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} style={{ background: "#fff", padding: "24px", borderRadius: "20px", border: `1px solid ${colors.border}`, display: "flex", flexDirection: "column", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
+                  <div style={lightShimmer("48px", "48px", "14px", { marginBottom: "16px" })} />
+                  <div style={lightShimmer("32px", "70px", "8px", { marginBottom: "8px" })} />
+                  <div style={lightShimmer("14px", "100px", "4px")} />
+                </div>
+              ))}
+            </div>
+
+            {/* GRAPHS SECTION (3 cards) */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px", marginBottom: "32px" }}>
+              {/* User Growth Chart */}
+              <div style={{ background: "#fff", borderRadius: "20px", border: `1px solid ${colors.border}`, padding: "24px", display: "flex", flexDirection: "column", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
+                <div style={lightShimmer("16px", "150px", "6px", { marginBottom: "24px" })} />
+                <div style={{ flex: 1, minHeight: "220px", display: "flex", flexDirection: "column", justifyContent: "flex-end", gap: "10px" }}>
+                  <div style={lightShimmer("150px", "100%", "14px")} />
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", marginTop: "8px" }}>
+                    {[1, 2, 3, 4, 5, 6].map((m) => (
+                      <div key={m} style={lightShimmer("10px", "28px", "3px")} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Shop Status Donut Chart */}
+              <div style={{ background: "#fff", borderRadius: "20px", border: `1px solid ${colors.border}`, padding: "24px", display: "flex", flexDirection: "column", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
+                <div style={lightShimmer("16px", "110px", "6px", { marginBottom: "24px" })} />
+                <div style={{ flex: 1, minHeight: "220px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px" }}>
+                  <div style={lightShimmer("140px", "140px", "50%")} />
+                  <div style={{ display: "flex", gap: "14px" }}>
+                    <div style={lightShimmer("12px", "55px", "4px")} />
+                    <div style={lightShimmer("12px", "55px", "4px")} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Booking Volume Bar Chart */}
+              <div style={{ background: "#fff", borderRadius: "20px", border: `1px solid ${colors.border}`, padding: "24px", display: "flex", flexDirection: "column", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
+                <div style={lightShimmer("16px", "130px", "6px", { marginBottom: "24px" })} />
+                <div style={{ flex: 1, minHeight: "220px", display: "flex", alignItems: "flex-end", gap: "14px", padding: "10px 0" }}>
+                  {[45, 75, 60, 90, 50, 80, 65].map((h, bi) => (
+                    <div key={bi} style={{ flex: 1, display: "flex", alignItems: "flex-end", height: "100%" }}>
+                      <div style={lightShimmer(`${h}%`, "100%", "8px 8px 0 0")} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* SPLIT SECTION (Pending Approvals & Recent Bookings) */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+              {/* Pending Approvals */}
+              <div style={{ background: "#fff", borderRadius: "20px", border: `1px solid ${colors.border}`, padding: "24px", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                  <div style={lightShimmer("18px", "160px", "6px")} />
+                  <div style={lightShimmer("13px", "70px", "4px")} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {[1, 2, 3, 4].map((r) => (
+                    <div key={r} style={{ display: "flex", alignItems: "center", gap: "16px", padding: "12px", background: "#f8fafc", borderRadius: "12px" }}>
+                      <div style={lightShimmer("40px", "40px", "50%")} />
+                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <div style={lightShimmer("14px", "120px", "4px")} />
+                        <div style={lightShimmer("12px", "180px", "4px")} />
+                      </div>
+                      <div style={lightShimmer("22px", "55px", "10px")} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Recent Bookings */}
+              <div style={{ background: "#fff", borderRadius: "20px", border: `1px solid ${colors.border}`, padding: "24px", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                  <div style={lightShimmer("18px", "150px", "6px")} />
+                  <div style={lightShimmer("13px", "70px", "4px")} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {[1, 2, 3, 4].map((r, ri) => (
+                    <div key={r} style={{ display: "flex", alignItems: "center", gap: "16px", padding: "12px", borderBottom: ri < 3 ? `1px solid ${colors.border}` : "none" }}>
+                      <div style={lightShimmer("40px", "40px", "10px")} />
+                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <div style={lightShimmer("14px", "140px", "4px")} />
+                        <div style={lightShimmer("12px", "110px", "4px")} />
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                        <div style={lightShimmer("13px", "60px", "4px")} />
+                        <div style={lightShimmer("11px", "75px", "4px")} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
   // 1. CUSTOMER DASHBOARD (Pixel-accurate to CustomerDashboard.jsx)
   // ─────────────────────────────────────────────────────────────────────────────
   if (type === "dashboard" || type === "customer-dashboard") {

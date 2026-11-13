@@ -26,6 +26,7 @@ export function UserProvider({ children }) {
         setUnreadAlertsCount(0);
         setPendingBookingsCount(0);
         setAssignedJobsCount(0);
+        localStorage.removeItem("userRole");
         if (notifUnsub) { notifUnsub(); notifUnsub = null; }
         if (bookingsUnsub) { bookingsUnsub(); bookingsUnsub = null; }
         return;
@@ -35,6 +36,7 @@ export function UserProvider({ children }) {
         if (snap.exists()) {
           const d = snap.data();
           const role = (d.role || "Customer").toLowerCase();
+          localStorage.setItem("userRole", role);
           setUserProfile({
             uid: firebaseUser.uid,
             email: firebaseUser.email || "",

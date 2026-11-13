@@ -28,6 +28,10 @@ async function checkStatusAndNavigate(uid, navigate, setError) {
   const status = data.status || "pending";
   const role = (data.role || "").toLowerCase();
 
+  if (role) {
+    localStorage.setItem("userRole", role);
+  }
+
   // Legacy Admin roles get direct access
   if (role === "admin") {
     navigate("/dashboard");
