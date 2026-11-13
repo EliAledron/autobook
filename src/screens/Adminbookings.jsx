@@ -8,7 +8,7 @@ import { sh, colors, EmptyState, getInitials, SharedSearchBar, CustomDropdown } 
 import SkeletonLoader from "./SkeletonLoader";
 import TopbarAvatar from "./TopbarAvatar";
 import BackButton from "../components/BackButton";
-import { CheckCircle2, Wrench, XCircle, Clock, Check, X, Trash2, Calendar, Search, AlertTriangle, Phone, MessageSquare } from "lucide-react";
+import { CheckCircle2, Wrench, XCircle, Clock, Check, X, Trash2, Calendar, Search, AlertTriangle, Phone, MessageSquare, Car } from "lucide-react";
 
 const STATUS_TABS = ["All", "Pending", "In Progress", "Completed", "Cancelled", "Archived"];
 
@@ -135,6 +135,7 @@ export default function AdminBookings() {
   const [activeTab, setActiveTab] = useState(location.state?.statusFilter || "All");
   const [selected, setSelected] = useState(null);
   const [customerPhones, setCustomerPhones] = useState({});
+  const [customerVehicles, setCustomerVehicles] = useState({});
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     if (loading) return;
@@ -406,6 +407,44 @@ export default function AdminBookings() {
     return "";
   };
 
+  // Helper: format vehicle object to string
+  const formatVehicleObject = (v) => {
+    if (!v) return null;
+    const parts = [v.year, v.make, v.model].filter(Boolean).join(" ");
+    const plate = v.plate ? ` (${v.plate})` : "";
+    const color = v.color ? ` • ${v.color}` : "";
+    const formatted = `${parts}${plate}${color}`.trim();
+    return formatted || null;
+  };
+
+  // Helper: look up customer vehicle info
+  const getCustomerVehicle = (booking) => {
+    if (!booking) return "";
+    if (booking.vehicleLabel) return booking.vehicleLabel;
+    if (typeof booking.vehicle === "string" && booking.vehicle) return booking.vehicle;
+    if (typeof booking.vehicle === "object" && booking.vehicle) {
+      const formatted = formatVehicleObject(booking.vehicle);
+      if (formatted) return formatted;
+    }
+    if (booking.vehicleMake || booking.vehicleModel) {
+      const formatted = formatVehicleObject({
+        year: booking.vehicleYear,
+        make: booking.vehicleMake,
+        model: booking.vehicleModel,
+        plate: booking.vehiclePlate,
+        color: booking.vehicleColor,
+      });
+      if (formatted) return formatted;
+    }
+    const bid = booking.id;
+    const cid = booking.customerId || booking.userId;
+    const vid = booking.vehicleId;
+    if (bid && customerVehicles[bid]) return customerVehicles[bid];
+    if (cid && customerVehicles[cid]) return customerVehicles[cid];
+    if (vid && customerVehicles[vid]) return customerVehicles[vid];
+    return "";
+  };
+
   useEffect(() => {
     if (!selected) return;
     const cid = selected.customerId || selected.userId;
@@ -416,7 +455,51 @@ export default function AdminBookings() {
         }
       }).catch(() => {});
     }
-  }, [selected, customerPhones]);
+
+    // Vehicle lookup if not directly on the booking document
+    const vid = selected.vehicleId;
+    const bid = selected.id;
+    const hasVehicle = selected.vehicleLabel || selected.vehicleMake || selected.vehicleModel || (typeof selected.vehicle === "string" && selected.vehicle);
+    if (!hasVehicle && !customerVehicles[bid] && (!cid || !customerVehicles[cid]) && (!vid || !customerVehicles[vid])) {
+      const fetchVehicle = async () => {
+        try {
+          if (vid) {
+            const vSnap = await getDoc(doc(db, "vehicles", vid));
+            if (vSnap.exists()) {
+              const formatted = formatVehicleObject(vSnap.data());
+              if (formatted) {
+                setCustomerVehicles((prev) => ({ ...prev, [vid]: formatted, [bid]: formatted, ...(cid ? { [cid]: formatted } : {}) }));
+                return;
+              }
+            }
+          }
+          if (cid) {
+            const qSnap = await getDocs(query(collection(db, "vehicles"), where("ownerId", "==", cid)));
+            if (!qSnap.empty) {
+              const vData = qSnap.docs[0].data();
+              const formatted = formatVehicleObject(vData);
+              if (formatted) {
+                setCustomerVehicles((prev) => ({ ...prev, [cid]: formatted, [bid]: formatted }));
+                return;
+              }
+            }
+            const qSnap2 = await getDocs(query(collection(db, "vehicles"), where("userId", "==", cid)));
+            if (!qSnap2.empty) {
+              const vData = qSnap2.docs[0].data();
+              const formatted = formatVehicleObject(vData);
+              if (formatted) {
+                setCustomerVehicles((prev) => ({ ...prev, [cid]: formatted, [bid]: formatted }));
+                return;
+              }
+            }
+          }
+        } catch (err) {
+          console.warn("Failed to fetch customer vehicle:", err);
+        }
+      };
+      fetchVehicle();
+    }
+  }, [selected, customerPhones, customerVehicles]);
 
   const filtered = bookings
     .filter((b) => {
@@ -431,7 +514,7 @@ export default function AdminBookings() {
         const matchService = (b.serviceType || "").toLowerCase().includes(s);
         const matchCustomer = getCustomerName(b).toLowerCase().includes(s);
         const matchMechanic = getMechanicName(b.mechanicId, b.mechanicName).toLowerCase().includes(s);
-        const matchVehicle = (b.vehicleLabel || "").toLowerCase().includes(s);
+        const matchVehicle = (getCustomerVehicle(b) || b.vehicleLabel || "").toLowerCase().includes(s);
         const matchDate = (b.date || "").toLowerCase().includes(s);
         
         let matchFormattedDate = false;
@@ -870,11 +953,15 @@ export default function AdminBookings() {
         <div style={{ fontSize: "13px", color: colors.textSecondary, display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> {b.date || "No date"} {b.time && `• ${b.time}`}
         </div>
-        {b.vehicleLabel && (
-          <div style={{ fontSize: "13px", color: colors.textSecondary, display: "flex", alignItems: "center", gap: "8px" }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 11l2-6h10l2 6v6h-2v2h-2v-2H9v2H7v-2H5z"></path><circle cx="8" cy="14" r="1"></circle><circle cx="16" cy="14" r="1"></circle></svg> {b.vehicleLabel}
-          </div>
-        )}
+        {(() => {
+          const veh = getCustomerVehicle(b);
+          if (!veh) return null;
+          return (
+            <div style={{ fontSize: "13px", color: colors.textSecondary, display: "flex", alignItems: "center", gap: "8px" }}>
+              <Car size={14} style={{ flexShrink: 0, color: "#2563eb" }} /> {veh}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Footer: Mechanic & Time Ago */}
@@ -1296,10 +1383,26 @@ export default function AdminBookings() {
                       </div>
                     </td>
                     <td style={{ padding: "16px", verticalAlign: "middle" }}>
-                      <div style={{ fontSize: "13px", color: colors.textPrimary, fontWeight: "600", display: "flex", alignItems: "center", gap: "6px" }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 11l2-6h10l2 6v6h-2v2h-2v-2H9v2H7v-2H5z"></path><circle cx="8" cy="14" r="1"></circle><circle cx="16" cy="14" r="1"></circle></svg>
-                        {b.vehicleLabel ? b.vehicleLabel.split('(')[0].trim() : "Unknown"}
-                      </div>
+                      {(() => {
+                        const veh = getCustomerVehicle(b);
+                        if (!veh) return <span style={{ fontSize: "13px", color: colors.textMuted }}>Not specified</span>;
+                        const matchPlate = veh.match(/\(([^)]+)\)/);
+                        const carName = veh.split('(')[0].trim();
+                        const plate = matchPlate ? matchPlate[1] : null;
+                        return (
+                          <div>
+                            <div style={{ fontSize: "13px", color: colors.textPrimary, fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}>
+                              <Car size={14} style={{ flexShrink: 0, color: "#2563eb" }} />
+                              {carName}
+                            </div>
+                            {plate && (
+                              <div style={{ fontSize: "11px", color: colors.textSecondary, marginTop: "2px", fontWeight: "600", paddingLeft: "20px" }}>
+                                {plate}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td style={{ padding: "16px", verticalAlign: "middle" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
@@ -1408,6 +1511,7 @@ export default function AdminBookings() {
             {[
               ["Customer Name", getCustomerName(selected)],
               ["Service Type", selected.serviceType || "N/A"],
+              ["Car Details", getCustomerVehicle(selected) || "Not specified"],
               ["Date", selected.date || "N/A"],
               ["Drop-off Time", selected.dropOffTime || selected.time || "N/A"],
               ["Est. Duration", selected.estimatedDuration || "Standard (~1 – 2 hrs)"],
@@ -1416,9 +1520,32 @@ export default function AdminBookings() {
             ].map(([label, value]) => (
               <div key={label} style={{ marginBottom: "0.75rem" }}>
                 <div style={{ fontSize: "11px", color: colors.textMuted, fontWeight: "600", textTransform: "uppercase", marginBottom: "2px" }}>{label}</div>
-                <div style={{ fontSize: "14px", color: colors.textPrimary }}>{value}</div>
+                <div style={{ fontSize: "14px", color: colors.textPrimary }}>
+                  {label === "Car Details" ? (
+                    value !== "Not specified" ? (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#1e40af", background: "#eff6ff", padding: "5px 12px", borderRadius: "10px", border: "1px solid #bfdbfe", fontWeight: "700", marginTop: "2px" }}>
+                        <Car size={15} color="#2563eb" /> {value}
+                      </span>
+                    ) : (
+                      <span style={{ color: colors.textMuted, fontStyle: "italic" }}>Not specified</span>
+                    )
+                  ) : (
+                    value
+                  )}
+                </div>
               </div>
             ))}
+
+            {selected.issueImageUrl && (
+              <div style={{ marginBottom: "1rem" }}>
+                <div style={{ fontSize: "11px", color: colors.textMuted, fontWeight: "600", textTransform: "uppercase", marginBottom: "6px" }}>Reported Issue Photo</div>
+                <img
+                  src={selected.issueImageUrl}
+                  alt="Customer Issue Photo"
+                  style={{ width: "100%", maxHeight: "220px", objectFit: "cover", borderRadius: "14px", border: `1px solid ${colors.border}` }}
+                />
+              </div>
+            )}
 
             {/* Customer Direct Contact Card (Call & Text) */}
             {(() => {
